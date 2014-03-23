@@ -8,7 +8,7 @@ config = {
 		'author' : 'Abu_Rah',
 		'url' : 'URL to get it at.',
 		'download_url':'where to download at.',
-		'author_email':'82013248d@gmail.com',
+		'author_email':'82013248b@gmail.com',
 		'version':'0.1',
 		'install_requires':['distribute', "pyside"],
 		'packages':['pycode'],

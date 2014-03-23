@@ -1,0 +1,1 @@
+need to create a function that will automatically add a tab every time a new document is opened.
