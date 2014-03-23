@@ -37,6 +37,11 @@ class PyCodeEditor(QtGui.QMainWindow):
 		newdoc.setShortcut("Ctrl+N")
 		newdoc.setStatusTip("Create New document")
 
+		openF = QtGui.QAction("Open", self)
+		openF.setShortcut("Ctrl+O")
+		openF.setStatusTip("Open a file on the file system")
+		# openF.triggered.connect(self, open)
+
 		bolden = QtGui.QAction("Bold", self)
 		bolden.setCheckable(True)
 		bolden.setShortcut("Ctrl+B")
@@ -70,6 +75,23 @@ class PyCodeEditor(QtGui.QMainWindow):
 		# testing code goes here:
 
 
+		class FileView(QtGui.QWidget):
+
+			def __init__(self):
+
+				super(FileView, self).__init__()
+
+				self.initUI()
+
+			def initUI(self):
+				
+			filemodel = QtGui.QFileSystemModel()
+			filemodel.setRootPath(QtCore.QDir.currentPath())
+
+			tree = QtGui.QTreeView()
+			tree.setModel(filemodel)
+
+
 
 
 
@@ -93,6 +115,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 		workarea =QtGui.QTextEdit()
 
 		tabinterface.addTab(workarea, "Current Document")
+		# tabinterface.addTab(tree, "current dir tree")
 
 
 		mainlayout.addWidget(tabinterface)
