@@ -18,35 +18,58 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 		# Here define the various actions the program should take e.g. exit, save, close etc.
 
-		exitAct = QtGui.QAction(QtGui.QIcon("../images_tmp/exit_icon.png"), "&Exit", self)
+		exitAct = QtGui.QAction("Exit", self)
 		exitAct.setShortcut("Ctrl+Q")
 		exitAct.setStatusTip("Exit the Application")
 		exitAct.triggered.connect(self.close) # replace with self.close_event
 
-		saveAct = QtGui.QAction("&Save", self)
+		saveAct = QtGui.QAction("Save", self)
 		saveAct.setShortcut("Ctrl+S")
 		saveAct.setStatusTip("Save Current Document")
 		# saveAct.triggered.connect(self.save)
 		
-		copyAct = QtGui.QAction("&Copy", self)
+		copyAct = QtGui.QAction("Copy", self)
 		copyAct.setShortcut("Ctrl+C")
 		copyAct.setStatusTip("copy current Selection")
+		# copyAct.triggered.
+
+		newdoc = QtGui.QAction("New File", self)
+		newdoc.setShortcut("Ctrl+N")
+		newdoc.setStatusTip("Create New document")
+
+		bolden = QtGui.QAction("Bold", self)
+		bolden.setCheckable(True)
+		bolden.setShortcut("Ctrl+B")
+		bolden.setStatusTip("bold selected text")
 		
 
 		# Here define the menubar and it's functionality
 
 		mainbar = self.menuBar()
 		filemenu = mainbar.addMenu("&File")
+		filemenu.addAction(newdoc)
+		filemenu.addSeparator()
 		filemenu.addAction(exitAct)
 		filemenu.addAction(saveAct)
 		editmenu = mainbar.addMenu("&Edit")
 		editmenu.addAction(copyAct)
+		editmenu.addAction(bolden)
 		viewmenu = mainbar.addMenu("&View")
 		toolmenu = mainbar.addMenu("&Tools")
 		preferences = mainbar.addMenu("&Preferences")
 		aboutmenu = mainbar.addMenu("&About")
 
 		
+
+		# Here define the statusbar and it's functionality
+		status = self.statusBar()
+		status.showMessage("Ready", 3000)
+		# status.addPermamentWidget() <--- add syntax indicator here using QLabel or other widget
+
+
+		# testing code goes here:
+
+
 
 
 
@@ -57,11 +80,10 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 
 		# Here define the final layout of the editor
-		
-		mainlayout = QtGui.QVBoxLayout()
-		mainlayout.addStretch(1)
 
-		# QtCore.QIODevice.write
+		mainlayout = QtGui.QVBoxLayout()
+		# mainlayout.addStretch(0)
+
 		maintabbar = QtGui.QTabBar()
 
 		tabstack = QtGui.QStackedWidget()
@@ -102,6 +124,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 def main():
 	pycodeapp = QtGui.QApplication(sys.argv)
+	# pycodeapp.setStyle("plastique")
 	editor = PyCodeEditor()
 	sys.exit(pycodeapp.exec_())
 
