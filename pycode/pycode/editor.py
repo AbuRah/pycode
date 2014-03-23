@@ -1,5 +1,6 @@
 import sys, os
 from PySide import QtGui, QtCore
+import file_dialogs as FD
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -28,6 +29,11 @@ class PyCodeEditor(QtGui.QMainWindow):
 		saveAct.setStatusTip("Save Current Document")
 		# saveAct.triggered.connect(self.save)
 		
+		saveasAct = QtGui.QAction("Save As ...", self)
+		saveasAct.setShortcut("Shift+Ctrl+S")
+		saveasAct.setStatusTip("Save file as...")
+
+
 		copyAct = QtGui.QAction("Copy", self)
 		copyAct.setShortcut("Ctrl+C")
 		copyAct.setStatusTip("copy current Selection")
@@ -40,7 +46,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 		openF = QtGui.QAction("Open", self)
 		openF.setShortcut("Ctrl+O")
 		openF.setStatusTip("Open a file on the file system")
-		# openF.triggered.connect(self, open)
+		openF.triggered.connect(self.testing_open_file_dialog)
 
 		bolden = QtGui.QAction("Bold", self)
 		bolden.setCheckable(True)
@@ -54,8 +60,10 @@ class PyCodeEditor(QtGui.QMainWindow):
 		filemenu = mainbar.addMenu("&File")
 		filemenu.addAction(newdoc)
 		filemenu.addSeparator()
+		filemenu.addAction(saveasAct)
 		filemenu.addAction(exitAct)
 		filemenu.addAction(saveAct)
+		filemenu.addAction(openF)
 		editmenu = mainbar.addMenu("&Edit")
 		editmenu.addAction(copyAct)
 		editmenu.addAction(bolden)
@@ -74,22 +82,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 		# testing code goes here:
 
-
-		class FileView(QtGui.QWidget):
-
-			def __init__(self):
-
-				super(FileView, self).__init__()
-
-				self.initUI()
-
-			def initUI(self):
-				
-			filemodel = QtGui.QFileSystemModel()
-			filemodel.setRootPath(QtCore.QDir.currentPath())
-
-			tree = QtGui.QTreeView()
-			tree.setModel(filemodel)
+	
 
 
 
@@ -108,14 +101,13 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 		maintabbar = QtGui.QTabBar()
 
-		tabstack = QtGui.QStackedWidget()
+		# tabstack = QtGui.QStackedWidget()
 		# tabstack.addWidget() # this would need to be used for files that are opened. For each file opened, add it to the widget stack
 		
 		tabinterface = QtGui.QTabWidget()
-		workarea =QtGui.QTextEdit()
+		self.workarea = QtGui.QTextEdit()
 
-		tabinterface.addTab(workarea, "Current Document")
-		# tabinterface.addTab(tree, "current dir tree")
+		tabinterface.addTab(self.workarea, "Document")
 
 
 		mainlayout.addWidget(tabinterface)
@@ -123,13 +115,17 @@ class PyCodeEditor(QtGui.QMainWindow):
 		self.setCentralWidget(tabinterface)
 		self.setLayout(mainlayout)
 
+	def testing_open_file_dialog(self):
 
+		fileName,_ = QtGui.QFileDialog.getOpenFileName(self,
+			"Open File",)
 
+		f = open(fileName, "r")
 
+		with f:
+			data = f.read()
+			self.workarea.setText(data)
 
-
-
-		
 
 
 
