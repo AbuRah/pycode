@@ -96,7 +96,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 		filemenu.addAction(closeF)
 		filemenu.addAction(exitAct)
 		
-		editmenu = mainbar.addMenu("&Edit")
+		editmenu = mainbar.addMenu("Edit")
 		editmenu.addAction(findAct)
 		editmenu.addSeparator()
 		editmenu.addAction(copyAct)
@@ -108,13 +108,13 @@ class PyCodeEditor(QtGui.QMainWindow):
 		editmenu.addAction(bolden)
 
 
-		viewmenu = mainbar.addMenu("&View")
+		viewmenu = mainbar.addMenu("View")
 		
-		toolmenu = mainbar.addMenu("&Tools")
+		toolmenu = mainbar.addMenu("Tools")
 		
-		preferences = mainbar.addMenu("&Preferences")
+		preferences = mainbar.addMenu("Preferences")
 		
-		aboutmenu = mainbar.addMenu("&About")
+		aboutmenu = mainbar.addMenu("About")
 
 		
 
@@ -137,13 +137,10 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 
 
-
 		# Here define the final layout of the editor
 
-		mainlayout = QtGui.QVBoxLayout()
-		# mainlayout.addStretch(0)
+		self.mainlayout = QtGui.QVBoxLayout()
 
-		maintabbar = QtGui.QTabBar()
 		self.workarea = QtGui.QTextEdit()
 
 		self.tabinterface = QtGui.QTabWidget(self)
@@ -152,16 +149,18 @@ class PyCodeEditor(QtGui.QMainWindow):
 		self.tabinterface.addTab(self.workarea, "Document")
 
 
-		mainlayout.addWidget(self.tabinterface)
+		self.mainlayout.addWidget(self.tabinterface)
 		
 		self.setCentralWidget(self.tabinterface)
-		self.setLayout(mainlayout)
+		self.setLayout(self.mainlayout)
+
+# ===================================================================================================		
 
 	def open_file_dialog(self):
 		"""	opens file in new tab """
 
 		fileName,_ = QtGui.QFileDialog.getOpenFileName(self,
-			"Open File",)
+			"Open File", os.getcwd())
 
 		if fileName != '':
 
@@ -218,7 +217,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 		""" Working on Custom File Dialog Here """
 		dialog = QtGui.QFileDialog(self)
 		dialog.setFileMode(QtGui.QFileDialog.AnyFile)
-		dialog.setViewMode(QtGui.QFileDialog.Detail)
+		dialog.setViewMode(QtGui.QFileDialog.list)
 		
 		if dialog.exec_():
 			fileNames = dialog.selectedFiles()
@@ -250,9 +249,11 @@ class PyCodeEditor(QtGui.QMainWindow):
 		else:
 			event.ignore()
 
+#==========================================================================================
+
 def main():
 	pycodeapp = QtGui.QApplication(sys.argv)
-	# pycodeapp.setStyle("plastique")
+	pycodeapp.setStyle("plastique")
 	editor = PyCodeEditor()
 	sys.exit(pycodeapp.exec_())
 
