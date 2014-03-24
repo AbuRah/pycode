@@ -127,7 +127,9 @@ class PyCodeEditor(QtGui.QMainWindow):
 		# testing code goes here:
 
 	
-
+		# self.findBar = QtGui.QFrame() # use this to create a pop find menu from status bar
+		self.testwidget = QtGui.QTabBar()
+		# self.addDockWidget(Qt.RightDockWidgetArea, self.testwidget)
 
 
 
@@ -141,7 +143,8 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 		self.mainlayout = QtGui.QVBoxLayout()
 
-		self.workarea = QtGui.QTextEdit()
+		self.workarea = QtGui.QPlainTextEdit()
+		# self.workarea.setBackgroundVisible(True)
 
 		self.tabinterface = QtGui.QTabWidget(self)
 		self.tabinterface.setMovable(True)
@@ -154,6 +157,9 @@ class PyCodeEditor(QtGui.QMainWindow):
 		self.setCentralWidget(self.tabinterface)
 		self.setLayout(self.mainlayout)
 
+
+
+# SLOTS
 # ===================================================================================================		
 
 	def open_file_dialog(self):
@@ -165,14 +171,17 @@ class PyCodeEditor(QtGui.QMainWindow):
 		if fileName != '':
 
 			f = open(fileName, "r")
-			TEholder = QtGui.QTextEdit()
+			TEholder = QtGui.QPlainTextEdit()
 			
 			with f:
 				
 				data = f.read()
-				TEholder.setText(data)
-				
-				self.tabinterface.addTab(TEholder, "file2")
+				TEholder.setPlainText(data)
+
+				nameHolder = QtCore.QFileInfo(fileName)
+				nameOfFile = nameHolder.fileName()
+
+				self.tabinterface.addTab(TEholder, nameOfFile)
 				f.close()
 				
 		else:
@@ -186,15 +195,29 @@ class PyCodeEditor(QtGui.QMainWindow):
 	def new_file(self):
 		""" Opens a plain rich-text document """
 		
-		TEholder = QtGui.QTextEdit()
+		TEholder = QtGui.QPlainTextEdit()
 		self.tabinterface.addTab(TEholder, "Untitled")
 
 
 	def save_file(self):
 		""" Save current file"""
 		fileName, _ = QtGui.QFileDialog.getSaveFileName(self,
-			"Save File")
+			"Save File", os.getcwd())
 
+
+		if fileName != '':
+
+			f = open(fileName, "w")
+
+			with f:
+
+				focusedPage = self.tabinterface.currentWidget()
+				changes = focusedPage.toPlainText()
+				
+				updated_data = f.write(changes)
+				f.close()
+		else:
+			pass
 
 	def cut_selection(self):
 		""" copy/cut selected text """
