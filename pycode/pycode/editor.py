@@ -65,6 +65,16 @@ class PyCodeEditor(QtGui.QMainWindow):
 		findAct.setStatusTip("Find indicated text within current document")
 		findAct.triggered.connect(self.find_text)
 
+		cutAct = QtGui.QAction("Cut selection", self)
+		cutAct.setShortcut("Ctrl+X")
+		cutAct.setStatusTip("Copy selected text to clipboard, then remove from tab page")
+		cutAct.triggered.connect(self.cut_selection)
+
+		pasteAct = QtGui.QAction("Paste from clipboard", self)
+		pasteAct.setShortcut("Ctrl+V")
+		pasteAct.setStatusTip("Paste text in clipboard to page")
+		pasteAct.triggered.connect(self.paste_selection)
+
 		# Here define the menubar and it's functionality
 
 		mainbar = self.menuBar()
@@ -79,10 +89,15 @@ class PyCodeEditor(QtGui.QMainWindow):
 		filemenu.addAction(exitAct)
 		
 		editmenu = mainbar.addMenu("&Edit")
-		editmenu.addAction(copyAct)
-		editmenu.addAction(bolden)
 		editmenu.addAction(findAct)
-		
+		editmenu.addSeparator()
+		editmenu.addAction(copyAct)
+		editmenu.addAction(cutAct)
+		editmenu.addAction(pasteAct)
+		editmenu.addSeparator()
+		editmenu.addAction(bolden)
+
+
 		viewmenu = mainbar.addMenu("&View")
 		
 		toolmenu = mainbar.addMenu("&Tools")
@@ -172,8 +187,22 @@ class PyCodeEditor(QtGui.QMainWindow):
 			"Save File")
 
 
+	def cut_selection(self):
+		""" copy/cut selected text """
+		currentPage = self.tabinterface.currentWidget()
+		currentPage.cut()
 
+	def find_text(self):
+		""" Find the indicated text within the current tab page"""
+		# currentTabIndex = self.tabinterface.currentIndex()
+		### need to add a dialog window OR a pop-up bar.
+		currentTab = self.tabinterface.currentWidget()
+		currentTab.find()# text goes here
 
+	def paste_selection(self):
+		""" paste text from clipboard to tab page """
+		currentTab = self.tabinterface.currentWidget()
+		currentTab.paste()
 
 	def custom_dialog(self):
 		""" Working on Custom File Dialog Here """
@@ -183,13 +212,6 @@ class PyCodeEditor(QtGui.QMainWindow):
 		
 		if dialog.exec_():
 			fileNames = dialog.selectedFiles()
-
-	def find_text(self):
-		""" Find the indicated text within the current tab page"""
-		# currentTabIndex = self.tabinterface.currentIndex()
-		### need to add a dialog window OR a pop-up bar.
-		currentTab = self.tabinterface.currentWidget()
-		currentTab.find()# text goes here
 
 
 

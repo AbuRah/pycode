@@ -4,3 +4,5 @@
 # override/add new functionality to the QTabWidget class
 
 # Create the ctrl+pgup/pgdn shortcut that moves between tabs
+
+# i may keep the more commonly known shortcuts implicit rather than displayed. e.g edit menu without "cut" option
