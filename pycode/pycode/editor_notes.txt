@@ -1,1 +1,6 @@
-need to create a function that will automatically add a tab every time a new document is opened.
+# Need to create a function that will automatically add a tab every time a new document is opened. DONE.
+
+# May need to create a custom TabBar in order to define shortcuts and pull specific functionality out of it. That or 
+# override/add new functionality to the QTabWidget class
+
+# Create the ctrl+pgup/pgdn shortcut that moves between tabs

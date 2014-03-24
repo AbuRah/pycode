@@ -27,17 +27,12 @@ class PyCodeEditor(QtGui.QMainWindow):
 		saveAct = QtGui.QAction("Save", self)
 		saveAct.setShortcut("Ctrl+S")
 		saveAct.setStatusTip("Save Current Document")
-		# saveAct.triggered.connect(self.save)
+		saveAct.triggered.connect(self.save_file)
 		
 		saveasAct = QtGui.QAction("Save As ...", self)
 		saveasAct.setShortcut("Shift+Ctrl+S")
 		saveasAct.setStatusTip("Save file as...")
 
-
-		copyAct = QtGui.QAction("Copy", self)
-		copyAct.setShortcut("Ctrl+C")
-		copyAct.setStatusTip("copy current Selection")
-		# copyAct.triggered.
 
 		newF = QtGui.QAction("New File", self)
 		newF.setShortcut("Ctrl+N")
@@ -60,6 +55,15 @@ class PyCodeEditor(QtGui.QMainWindow):
 		bolden.setShortcut("Ctrl+B")
 		bolden.setStatusTip("bold selected text")
 		
+		copyAct = QtGui.QAction("Copy", self)
+		copyAct.setShortcut("Ctrl+C")
+		copyAct.setStatusTip("copy current Selection")
+		# copyAct.triggered.
+
+		findAct = QtGui.QAction("Find", self)
+		findAct.setShortcut("Ctrl+F")
+		findAct.setStatusTip("Find indicated text within current document")
+		findAct.triggered.connect(self.find_text)
 
 		# Here define the menubar and it's functionality
 
@@ -77,6 +81,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 		editmenu = mainbar.addMenu("&Edit")
 		editmenu.addAction(copyAct)
 		editmenu.addAction(bolden)
+		editmenu.addAction(findAct)
 		
 		viewmenu = mainbar.addMenu("&View")
 		
@@ -114,9 +119,10 @@ class PyCodeEditor(QtGui.QMainWindow):
 		# mainlayout.addStretch(0)
 
 		maintabbar = QtGui.QTabBar()
+		self.workarea = QtGui.QTextEdit()
 
 		self.tabinterface = QtGui.QTabWidget(self)
-		self.workarea = QtGui.QTextEdit()
+		self.tabinterface.setMovable(True)
 		self.tabinterface.setTabsClosable(True)
 		self.tabinterface.addTab(self.workarea, "Document")
 
@@ -143,6 +149,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 				TEholder.setText(data)
 				
 				self.tabinterface.addTab(TEholder, "file2")
+				f.close()
 				
 		else:
 			pass
@@ -159,6 +166,15 @@ class PyCodeEditor(QtGui.QMainWindow):
 		self.tabinterface.addTab(TEholder, "Untitled")
 
 
+	def save_file(self):
+		""" Save current file"""
+		fileName, _ = QtGui.QFileDialog.getSaveFileName(self,
+			"Save File")
+
+
+
+
+
 	def custom_dialog(self):
 		""" Working on Custom File Dialog Here """
 		dialog = QtGui.QFileDialog(self)
@@ -167,6 +183,16 @@ class PyCodeEditor(QtGui.QMainWindow):
 		
 		if dialog.exec_():
 			fileNames = dialog.selectedFiles()
+
+	def find_text(self):
+		""" Find the indicated text within the current tab page"""
+		# currentTabIndex = self.tabinterface.currentIndex()
+		### need to add a dialog window OR a pop-up bar.
+		currentTab = self.tabinterface.currentWidget()
+		currentTab.find()# text goes here
+
+
+
 
 
 	def exit_message(self):
