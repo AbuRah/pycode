@@ -6,3 +6,5 @@
 # Create the ctrl+pgup/pgdn shortcut that moves between tabs
 
 # i may keep the more commonly known shortcuts implicit rather than displayed. e.g edit menu without "cut" option
+
+# Need to look at QSettings, QFileDialog more in depth, and saving, changing states. <=== this is more of Core Functionality

@@ -75,6 +75,14 @@ class PyCodeEditor(QtGui.QMainWindow):
 		pasteAct.setStatusTip("Paste text in clipboard to page")
 		pasteAct.triggered.connect(self.paste_selection)
 
+		redoAct = QtGui.QAction("Redo", self)
+		redoAct.setShortcut("Ctrl+Shift+Z")
+		redoAct.triggered.connect(self.redo_last)
+
+		undoAct = QtGui.QAction("Undo", self)
+		undoAct.setShortcut("Crtl+Z")
+		undoAct.triggered.connect(self.undo_last)
+
 		# Here define the menubar and it's functionality
 
 		mainbar = self.menuBar()
@@ -94,6 +102,8 @@ class PyCodeEditor(QtGui.QMainWindow):
 		editmenu.addAction(copyAct)
 		editmenu.addAction(cutAct)
 		editmenu.addAction(pasteAct)
+		editmenu.addAction(redoAct)
+		editmenu.addAction(undoAct)
 		editmenu.addSeparator()
 		editmenu.addAction(bolden)
 
@@ -110,7 +120,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 		# Here define the statusbar and it's functionality
 		status = self.statusBar()
-		status.showMessage("Ready", 3000)
+		status.showMessage("Ready", 4000)
 		# status.addPermamentWidget() <--- add syntax indicator here using QLabel or other widget
 
 
@@ -213,7 +223,17 @@ class PyCodeEditor(QtGui.QMainWindow):
 		if dialog.exec_():
 			fileNames = dialog.selectedFiles()
 
+	def undo_last(self):
+		""" Steps back in operation history"""
+		currentTab = self.tabinterface.currentWidget()
+		currentTab.undo()
 
+
+
+	def redo_last(self):
+		""" Steps forward in operation history"""
+		currentTab = self.tabinterface.currentWidget()
+		currentTab.redo()
 
 
 
