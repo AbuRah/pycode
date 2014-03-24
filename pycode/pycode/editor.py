@@ -22,7 +22,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 		exitAct = QtGui.QAction("Exit", self)
 		exitAct.setShortcut("Ctrl+Q")
 		exitAct.setStatusTip("Exit the Application")
-		exitAct.triggered.connect(self.close) # replace with self.close_event
+		exitAct.triggered.connect(self.close) # replace with self.exit_message()
 
 		saveAct = QtGui.QAction("Save", self)
 		saveAct.setShortcut("Ctrl+S")
@@ -39,9 +39,10 @@ class PyCodeEditor(QtGui.QMainWindow):
 		copyAct.setStatusTip("copy current Selection")
 		# copyAct.triggered.
 
-		newdoc = QtGui.QAction("New File", self)
-		newdoc.setShortcut("Ctrl+N")
-		newdoc.setStatusTip("Create New document")
+		newF = QtGui.QAction("New File", self)
+		newF.setShortcut("Ctrl+N")
+		newF.setStatusTip("Create New document")
+		newF.triggered.connect(self.new_file)
 
 		openF = QtGui.QAction("Open", self)
 		openF.setShortcut("Ctrl+O")
@@ -64,7 +65,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 		mainbar = self.menuBar()
 		filemenu = mainbar.addMenu("&File")
-		filemenu.addAction(newdoc)
+		filemenu.addAction(newF)
 		filemenu.addSeparator()
 		filemenu.addAction(openF)
 		filemenu.addAction(saveAct)
@@ -114,10 +115,9 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 		maintabbar = QtGui.QTabBar()
 
-		self.tabinterface = QtGui.QTabWidget()
-		# self.tabinterface.documentMode()
+		self.tabinterface = QtGui.QTabWidget(self)
 		self.workarea = QtGui.QTextEdit()
-
+		self.tabinterface.setTabsClosable(True)
 		self.tabinterface.addTab(self.workarea, "Document")
 
 
@@ -149,9 +149,14 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 	def close_tab(self):
 		""" Closes focused tab """
-		tabnum = self.tabinterface.currentIndex()
-		self.tabinterface.removeTab(tabnum)
+		currentTabIndex = self.tabinterface.currentIndex()
+		self.tabinterface.removeTab(currentTabIndex)
 
+	def new_file(self):
+		""" Opens a plain rich-text document """
+		
+		TEholder = QtGui.QTextEdit()
+		self.tabinterface.addTab(TEholder, "Untitled")
 
 
 	def custom_dialog(self):
@@ -164,7 +169,7 @@ class PyCodeEditor(QtGui.QMainWindow):
 			fileNames = dialog.selectedFiles()
 
 
-	def close_event(self):
+	def exit_message(self):
 		""" Causes a message box specific to closing """
 
 		ask = QtGui.QMessageBox.question(self, "WARNING!",
