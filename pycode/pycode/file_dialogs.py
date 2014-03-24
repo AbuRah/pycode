@@ -28,7 +28,9 @@ class FileView(QtGui.QWidget):
 		self.show()
 
 	# here i'm experimenting with creating my own file dialog
-	
-	dialog = QtGui.QFileDialog(self)
-	dialog.setFileMode(Qtgui.QFileDialog.AnyFile)
-	dialog.setViewMode(QtGui.QFileDialog.List)
+
+	# dialog = QtGui.QFileDialog(self)
+	# dialog.setFileMode(Qtgui.QFileDialog.AnyFile)
+	# dialog.setViewMode(QtGui.QFileDialog.List)
+	# if dialog.exec_():
+	# 	fileNames = dialog.selectedFiles()
