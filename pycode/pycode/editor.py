@@ -128,9 +128,11 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 	
 		# self.findBar = QtGui.QFrame() # use this to create a pop find menu from status bar
-		self.testwidget = QtGui.QTabBar()
-		# self.addDockWidget(Qt.RightDockWidgetArea, self.testwidget)
+		
+		SM = QtGui.QSessionManger()
 
+
+		settings = QSettings("Autodidactic Engineering", "PyCode The Editor")
 
 
 
@@ -144,12 +146,13 @@ class PyCodeEditor(QtGui.QMainWindow):
 		self.mainlayout = QtGui.QVBoxLayout()
 
 		self.workarea = QtGui.QPlainTextEdit()
-		# self.workarea.setBackgroundVisible(True)
 
 		self.tabinterface = QtGui.QTabWidget(self)
+		self.tabinterface.setDocumentMode(True)
 		self.tabinterface.setMovable(True)
 		self.tabinterface.setTabsClosable(True)
-		self.tabinterface.addTab(self.workarea, "Document")
+		self.tabinterface.addTab(self.workarea, "Untitled")
+
 
 
 		self.mainlayout.addWidget(self.tabinterface)
@@ -214,6 +217,12 @@ class PyCodeEditor(QtGui.QMainWindow):
 				focusedPage = self.tabinterface.currentWidget()
 				changes = focusedPage.toPlainText()
 				
+				nameHolder = QtCore.QFileInfo(fileName)
+				nameOfFile = nameHolder.fileName()
+
+				self.tabinterface.setTabText(self.tabinterface.currentIndex(), nameOfFile)
+
+
 				updated_data = f.write(changes)
 				f.close()
 		else:
