@@ -1,0 +1,12 @@
+Close button on tab does NOT close the tab window.
+need to be able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
+
+The ctrl+w will only close the focused tab if it is unique. e.g. if all open tabs are new pages, ctrl+w will start closing them from the far rightmost tab 
+NOT the one currently in focus
+
+Need to get rid of the tab highlighting. all shortcuts should work from the main text area WITHOUT infering with the common text edit shortcuts
+
+I think i can modify the x button that appears on the tab by creating a custom widget and setting it with QTabBar.setTabButton()/
+I should consider using a custom QTabBar instead of the built-in one. This should give me much more flexbility in designing & coding it.
+
+Make a command that copies the entire document and prompts the user for a new filename. Use the QFile object.

@@ -1,16 +1,20 @@
 import sys, os
-from PySide import QtGui, QtCore
-# import file_dialogs as FD
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+from PySide.QtGui import (QAction,QMainWindow,QTabWidget,QPlainTextEdit,
+	QFileDialog,QMessageBox,QApplication,QVBoxLayout)
 
-class PyCodeEditor(QtGui.QMainWindow):
+from PySide.QtCore import (QSettings,QFileInfo,QSize,QPoint,QFile,QDir,QIODevice)
+
+# BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+class PyCodeEditor(QMainWindow):
 
 	def __init__(self):
 		super(PyCodeEditor, self).__init__()
 		
 		self.initUI()
-		self.setGeometry(150, 150, 800, 600)
+		self.settings = None
+		self.read_settings()
 		self.setWindowTitle("PyCode The Editor")
 		self.show()
 
@@ -19,67 +23,69 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 		# Here define the various actions the program should take e.g. exit, save, close etc.
 
-		exitAct = QtGui.QAction("Exit", self)
+		exitAct = QAction("Exit", self)
 		exitAct.setShortcut("Ctrl+Q")
 		exitAct.setStatusTip("Exit the Application")
-		exitAct.triggered.connect(self.close) # replace with self.exit_message()
+		exitAct.triggered.connect(self.exit_event) # replace with self.exit_message()
+		# exitAct.triggered.connect(self.exit_message)
 
-		saveAct = QtGui.QAction("Save", self)
+		saveAct = QAction("Save", self)
 		saveAct.setShortcut("Ctrl+S")
 		saveAct.setStatusTip("Save Current Document")
-		saveAct.triggered.connect(self.save_file)
+		saveAct.triggered.connect(self.save_event)
 		
-		saveasAct = QtGui.QAction("Save As ...", self)
+		saveasAct = QAction("Save As ...", self)
 		saveasAct.setShortcut("Shift+Ctrl+S")
 		saveasAct.setStatusTip("Save file as...")
+		saveasAct.triggered.connect(self.save_file_as)
 
 
-		newF = QtGui.QAction("New File", self)
+		newF = QAction("New File", self)
 		newF.setShortcut("Ctrl+N")
 		newF.setStatusTip("Create New document")
 		newF.triggered.connect(self.new_file)
 
-		openF = QtGui.QAction("Open", self)
+		openF = QAction("Open", self)
 		openF.setShortcut("Ctrl+O")
 		openF.setStatusTip("Open a file on the file system")
 		openF.triggered.connect(self.open_file_dialog)
 		# openF.triggered.connect(self.custom_dialog)
 
-		closeF = QtGui.QAction("Close File", self)
+		closeF = QAction("Close File", self)
 		closeF.setShortcut("Ctrl+W")
 		closeF.setStatusTip("Close current file in tab")
 		closeF.triggered.connect(self.close_tab)
 
-		bolden = QtGui.QAction("Bold", self)
+		bolden = QAction("Bold", self)
 		bolden.setCheckable(True)
 		bolden.setShortcut("Ctrl+B")
 		bolden.setStatusTip("bold selected text")
 		
-		copyAct = QtGui.QAction("Copy", self)
+		copyAct = QAction("Copy", self)
 		copyAct.setShortcut("Ctrl+C")
 		copyAct.setStatusTip("copy current Selection")
 		# copyAct.triggered.
 
-		findAct = QtGui.QAction("Find", self)
+		findAct = QAction("Find", self)
 		findAct.setShortcut("Ctrl+F")
 		findAct.setStatusTip("Find indicated text within current document")
 		findAct.triggered.connect(self.find_text)
 
-		cutAct = QtGui.QAction("Cut selection", self)
+		cutAct = QAction("Cut selection", self)
 		cutAct.setShortcut("Ctrl+X")
 		cutAct.setStatusTip("Copy selected text to clipboard, then remove from tab page")
 		cutAct.triggered.connect(self.cut_selection)
 
-		pasteAct = QtGui.QAction("Paste from clipboard", self)
+		pasteAct = QAction("Paste from clipboard", self)
 		pasteAct.setShortcut("Ctrl+V")
 		pasteAct.setStatusTip("Paste text in clipboard to page")
 		pasteAct.triggered.connect(self.paste_selection)
 
-		redoAct = QtGui.QAction("Redo", self)
+		redoAct = QAction("Redo", self)
 		redoAct.setShortcut("Ctrl+Shift+Z")
 		redoAct.triggered.connect(self.redo_last)
 
-		undoAct = QtGui.QAction("Undo", self)
+		undoAct = QAction("Undo", self)
 		undoAct.setShortcut("Crtl+Z")
 		undoAct.triggered.connect(self.undo_last)
 
@@ -126,15 +132,9 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 		# testing code goes here:
 
-	
-		# self.findBar = QtGui.QFrame() # use this to create a pop find menu from status bar
-		
-		SM = QtGui.QSessionManger()
-
-
-		settings = QSettings("Autodidactic Engineering", "PyCode The Editor")
-
-
+		# self.setDocumentMode(True)	
+		self.setTabShape(QTabWidget.Triangular)
+				
 
 
 
@@ -143,15 +143,19 @@ class PyCodeEditor(QtGui.QMainWindow):
 
 		# Here define the final layout of the editor
 
-		self.mainlayout = QtGui.QVBoxLayout()
+		self.mainlayout = QVBoxLayout()
 
-		self.workarea = QtGui.QPlainTextEdit()
+		self.workarea = QPlainTextEdit()
 
-		self.tabinterface = QtGui.QTabWidget(self)
+		self.tabinterface = QTabWidget(self)
 		self.tabinterface.setDocumentMode(True)
 		self.tabinterface.setMovable(True)
 		self.tabinterface.setTabsClosable(True)
 		self.tabinterface.addTab(self.workarea, "Untitled")
+
+
+
+		# self.tabinterface.setTabShape(QTabWidget.Triangular)
 
 
 
@@ -168,21 +172,21 @@ class PyCodeEditor(QtGui.QMainWindow):
 	def open_file_dialog(self):
 		"""	opens file in new tab """
 
-		fileName,_ = QtGui.QFileDialog.getOpenFileName(self,
+		filename,_ = QFileDialog.getOpenFileName(self,
 			"Open File", os.getcwd())
 
-		if fileName != '':
+		if filename != '':
 
-			f = open(fileName, "r")
-			TEholder = QtGui.QPlainTextEdit()
+			f = open(filename, "r")
+			TEholder = QPlainTextEdit()
 			
 			with f:
 				
 				data = f.read()
 				TEholder.setPlainText(data)
 
-				nameHolder = QtCore.QFileInfo(fileName)
-				nameOfFile = nameHolder.fileName()
+				nameHolder = QFileInfo(filename)
+				nameOfFile = nameHolder.filename()
 
 				self.tabinterface.addTab(TEholder, nameOfFile)
 				f.close()
@@ -193,31 +197,58 @@ class PyCodeEditor(QtGui.QMainWindow):
 	def close_tab(self):
 		""" Closes focused tab """
 		currentTabIndex = self.tabinterface.currentIndex()
-		self.tabinterface.removeTab(currentTabIndex)
+		return self.tabinterface.removeTab(currentTabIndex)
 
 	def new_file(self):
 		""" Opens a plain rich-text document """
+		import re
 		
-		TEholder = QtGui.QPlainTextEdit()
-		self.tabinterface.addTab(TEholder, "Untitled")
+		TEholder = QPlainTextEdit()
+		
+		return self.tabinterface.addTab(TEholder, "Untitled 1")
+		
 
 
-	def save_file(self):
+
+
+	def save_event(self):
+		""" Saves file with current tab title text, no prompting """
+		filename = self.tabinterface.tabText(self.tabinterface.currentIndex())		
+		
+		
+		save_file = QFile(filename)
+
+
+		save_file_name = QFile.fileName(save_file)
+
+		
+		save_file.open(QIODevice.WriteOnly)
+
+		focusedPage = self.tabinterface.currentWidget()
+		changes = focusedPage.toPlainText()
+
+		save_file.write(changes)
+
+		save_file.close()
+
+
+
+	def save_file_as(self):
 		""" Save current file"""
-		fileName, _ = QtGui.QFileDialog.getSaveFileName(self,
+		filename, _ = QFileDialog.getSaveFileName(self,
 			"Save File", os.getcwd())
 
 
-		if fileName != '':
+		if filename != '':
 
-			f = open(fileName, "w")
+			f = open(filename, "w")
 
 			with f:
 
 				focusedPage = self.tabinterface.currentWidget()
 				changes = focusedPage.toPlainText()
 				
-				nameHolder = QtCore.QFileInfo(fileName)
+				nameHolder = QFileInfo(filename)
 				nameOfFile = nameHolder.fileName()
 
 				self.tabinterface.setTabText(self.tabinterface.currentIndex(), nameOfFile)
@@ -246,13 +277,16 @@ class PyCodeEditor(QtGui.QMainWindow):
 		currentTab.paste()
 
 	def custom_dialog(self):
-		""" Working on Custom File Dialog Here """
-		dialog = QtGui.QFileDialog(self)
-		dialog.setFileMode(QtGui.QFileDialog.AnyFile)
-		dialog.setViewMode(QtGui.QFileDialog.list)
+		""" 
+		Working on Custom File Dialog Here 
+		
+		"""
+		dialog = QFileDialog(self)
+		dialog.setFileMode(QFileDialog.AnyFile)
+		dialog.setViewMode(QFileDialog.list)
 		
 		if dialog.exec_():
-			fileNames = dialog.selectedFiles()
+			filenames = dialog.selectedFiles()
 
 	def undo_last(self):
 		""" Steps back in operation history"""
@@ -267,24 +301,50 @@ class PyCodeEditor(QtGui.QMainWindow):
 		currentTab.redo()
 
 
+	def exit_event(self):
+		""" Exits without prompting """
+		self.write_settings()
+		self.close()
 
 	def exit_message(self):
 		""" Causes a message box specific to closing """
 
-		ask = QtGui.QMessageBox.question(self, "WARNING!",
+		ask = QMessageBox.question(self, "WARNING!",
 			"Are You Sure You Want To Quit?",
-			QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, 
-			QtGui.QMessageBox.No)
+			QMessageBox.Yes | QMessageBox.No, 
+			QMessageBox.No)
 
-		if ask == QtGui.QMessageBox.Yes:
+		if ask == QMessageBox.Yes:
+			self.write_settings()
 			self.close()
+		
 		else:
-			event.ignore()
+			# event.ignore()
+			pass
+
+
+	def write_settings(self):
+		""" Writes the current user settings """
+		self.settings = QSettings(QSettings.UserScope, "Autodidactic Engineering", "PyCode The Editor")
+		self.settings.beginGroup("Main Window")
+		self.settings.setValue("Geometry", self.saveGeometry())
+		self.settings.setValue("Window State", self.saveState())
+		self.settings.endGroup()
+
+
+	def read_settings(self):
+		""" Loads the saved settings from a previous session """
+		self.settings = QSettings("Autodidactic Engineering", "PyCode The Editor")
+		self.settings.beginGroup("Main Window")
+		self.restoreGeometry(self.settings.value("Geometry"))
+		self.restoreState(self.settings.value("Window State"))
+		self.settings.endGroup()
+
 
 #==========================================================================================
 
 def main():
-	pycodeapp = QtGui.QApplication(sys.argv)
+	pycodeapp = QApplication(sys.argv)
 	pycodeapp.setStyle("plastique")
 	editor = PyCodeEditor()
 	sys.exit(pycodeapp.exec_())
