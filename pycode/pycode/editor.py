@@ -186,7 +186,7 @@ class PyCodeEditor(QMainWindow):
 				TEholder.setPlainText(data)
 
 				nameHolder = QFileInfo(filename)
-				nameOfFile = nameHolder.filename()
+				nameOfFile = nameHolder.fileName()
 
 				self.tabinterface.addTab(TEholder, nameOfFile)
 				f.close()
@@ -215,26 +215,29 @@ class PyCodeEditor(QMainWindow):
 		""" Saves file with current tab title text, no prompting """
 		filename = self.tabinterface.tabText(self.tabinterface.currentIndex())		
 		
-		
+
 		save_file = QFile(filename)
 
 
 		save_file_name = QFile.fileName(save_file)
 
-		
-		save_file.open(QIODevice.WriteOnly)
+		f = open(save_file_name, "w")
 
-		focusedPage = self.tabinterface.currentWidget()
-		changes = focusedPage.toPlainText()
+		with f:
 
-		save_file.write(changes)
 
-		save_file.close()
-
+			# save_file.open(QIODevice.WriteOnly)
+			focusedPage = self.tabinterface.currentWidget()
+			changes = focusedPage.toPlainText()
+			f.write(changes)
+			# save_file.write(changes)
+			f.close()
+			# save_file.close()
 
 
 	def save_file_as(self):
-		""" Save current file"""
+		""" Save current file as"""
+
 		filename, _ = QFileDialog.getSaveFileName(self,
 			"Save File", os.getcwd())
 
