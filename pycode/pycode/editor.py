@@ -1,11 +1,14 @@
 import sys, os
 
 from PySide.QtGui import (QAction,QMainWindow,QTabWidget,QPlainTextEdit,
-	QFileDialog,QMessageBox,QApplication,QVBoxLayout)
+	QFileDialog,QMessageBox,QApplication,QVBoxLayout,QSyntaxHighlighter,
+	QFont,QTextCharFormat,QBrush,QColor,QTextEdit)
 
-from PySide.QtCore import (QSettings,QFileInfo,QSize,QPoint,QFile,QDir,QIODevice)
+from PySide.QtCore import (QSettings,QFileInfo,QSize,QPoint,QFile,QDir,QIODevice,
+	QRegExp)
 
-# BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+from PySide import QtCore
+from PySide import QtGui
 
 class PyCodeEditor(QMainWindow):
 
@@ -132,8 +135,6 @@ class PyCodeEditor(QMainWindow):
 
 		# testing code goes here:
 
-		# self.setDocumentMode(True)	
-		self.setTabShape(QTabWidget.Triangular)
 				
 
 
@@ -144,8 +145,10 @@ class PyCodeEditor(QMainWindow):
 		# Here define the final layout of the editor
 
 		self.mainlayout = QVBoxLayout()
+		self.workarea = QPlainTextEdit() # ! this should be plainTextEdit(). Changed for testing!
 
-		self.workarea = QPlainTextEdit()
+		# set the syntax highlighter to the intial texteditor
+		self.workarea_highlight = python_syntax(self.workarea.document())
 
 		self.tabinterface = QTabWidget(self)
 		self.tabinterface.setDocumentMode(True)
@@ -205,7 +208,7 @@ class PyCodeEditor(QMainWindow):
 		
 		TEholder = QPlainTextEdit()
 		
-		return self.tabinterface.addTab(TEholder, "Untitled 1")
+		return self.tabinterface.addTab(TEholder, "Untitled x")
 		
 
 
@@ -221,18 +224,22 @@ class PyCodeEditor(QMainWindow):
 
 		save_file_name = QFile.fileName(save_file)
 
-		f = open(save_file_name, "w")
 
-		with f:
+		if save_file_name != "Untitled":
+			f = open(save_file_name, "w")
+
+			with f:
 
 
-			# save_file.open(QIODevice.WriteOnly)
-			focusedPage = self.tabinterface.currentWidget()
-			changes = focusedPage.toPlainText()
-			f.write(changes)
-			# save_file.write(changes)
-			f.close()
-			# save_file.close()
+				# save_file.open(QIODevice.WriteOnly)
+				focusedPage = self.tabinterface.currentWidget()
+				changes = focusedPage.toPlainText()
+				f.write(changes)
+				# save_file.write(changes)
+				f.close()
+				# save_file.close()
+		else:
+			return self.save_file_as()
 
 
 	def save_file_as(self):
@@ -325,6 +332,7 @@ class PyCodeEditor(QMainWindow):
 			# event.ignore()
 			pass
 
+# SETTINGS/STATE SLOTS ====================================================================================
 
 	def write_settings(self):
 		""" Writes the current user settings """
@@ -344,8 +352,89 @@ class PyCodeEditor(QMainWindow):
 		self.settings.endGroup()
 
 
-#==========================================================================================
+# Syntax Highlighting CLASSES ==========================================================================================
 
+class python_syntax(QSyntaxHighlighter):
+	""" Highlights regular python syntax"""
+	
+	# tmp attr =========================
+	myColor = QBrush(50)
+
+	def highlightBlock(self, text):
+	
+		myClassFormat = QTextCharFormat()
+		myClassFormat.setFontWeight(QFont.Bold)
+		myClassFormat.setForeground(self.myColor)
+		# pattern = QtGui.QString("\\bMy[A-Za-z]+\\b")
+
+		expression = QRegExp("\\b[for]+\\b")
+		index = expression.indexIn(text)
+		print 'testing'
+		
+		while index >= 0:
+			length = expression.matchedLength()
+			self.setFormat(index, length, myClassFormat)
+			index = expression.indexIn(text, index + length)
+
+
+		# python_for_format = QTextCharFormat()
+		# python_for_format.setFontWeight(QFont.Bold)
+		# python_for_format.setForeground(self.myColor)
+		
+		# expression = QRegExp("\\bfor\\b")
+		# index = text.indexOf(expression)
+
+		# while index >= 0:
+		# 	length = expression.matchedLength()
+		# 	self.setFormat(index, length, python_for_format)
+		# 	index = text.indexOf(expression, index + length)
+		# It may be possible to condense some of these together in one definition block. I.E. since some are highlighted the same color.
+
+		python_in_format = QTextCharFormat()
+		python_def_format = QTextCharFormat()
+		python_class_format = QTextCharFormat()
+		python_while_format = QTextCharFormat()
+
+
+		# testing syntax highlight here
+
+		# python_commentL_format = QTextCharFormat()
+		# python_commentL_format.setFontWeight(QFont.bold)
+		# python_commentL_format.setBackground(self.myColor)
+		# start_pattern = QRegExp("\"\"\"")
+		# end_pattern = QRegExp("\"\"\"")
+
+		# setCurrentBlockState(0)
+
+		# startIndex= 0
+		# if previousBlockState() != 1:
+		# 	startIndex =text.indexOf(start_pattern)
+
+		# while startIndex >= 0:
+		# 	endIndex = text.indexOf(end_pattern, startIndex)
+		# 	if endIndex == -1:
+		# 		setCurrentBlockState(1)
+		# 		commentLength = text.length() - startIndex
+		# 	else:
+		# 		commentLength = (endIndex - startIndex
+		# 			+ end_pattern.matchedLength())
+
+		# setFormat(startIndex, commentLength, python_commentL_format)
+		# startIndex = text.indexOf(start_pattern,
+		# 	startIndex + commentLength)
+
+
+
+
+
+
+
+
+
+
+
+
+#===========================================================================================
 def main():
 	pycodeapp = QApplication(sys.argv)
 	pycodeapp.setStyle("plastique")

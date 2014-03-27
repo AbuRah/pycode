@@ -4,9 +4,13 @@ need to be able to reopen a closed application with the previous work state auto
 The ctrl+w will only close the focused tab if it is unique. e.g. if all open tabs are new pages, ctrl+w will start closing them from the far rightmost tab 
 NOT the one currently in focus
 
-Need to get rid of the tab highlighting. all shortcuts should work from the main text area WITHOUT infering with the common text edit shortcuts
+Need to get rid of the tab highlighting. all shortcuts should work from the main text area WITHOUT interfering with the common text edit shortcuts
 
 I think i can modify the x button that appears on the tab by creating a custom widget and setting it with QTabBar.setTabButton()/
-I should consider using a custom QTabBar instead of the built-in one. This should give me much more flexbility in designing & coding it.
+I should consider using a custom QTabBar instead of the built-in one. This should give me much more flexibility in designing & coding it.
 
 Make a command that copies the entire document and prompts the user for a new filename. Use the QFile object.
+
+!IMPORTANT!: There is a problem with importing Qt from QtCore. Python isn't recognizing it even though i'm attempting to make the import as explicit as possible.
+Also, there seems to be an issue with text.indexOf() property; Python isn't recognizing that either. I already searched online for a solution but there isn't any clear problem that relates to what i'm experiencing.
+I hypothesize there is an issue with pyside libraries and installation. there could also be an issue with the version that i do have installed currently.

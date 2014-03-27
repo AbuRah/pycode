@@ -1,0 +1,17 @@
+Notes on Syntax highlighting and Color:
+
+1. For: foreground color: red
+
+2. in : foreground color: red
+
+3. while: foreground color: red
+
+4. if, elif, else: foreground color: red
+
+5. class : foreground color: ~light red 
+
+6. def, function name: foreground color: ~light red, light grey
+
+7. xrange, range: foreground color: light grey
+
+8. 
