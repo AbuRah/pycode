@@ -1,3 +1,0 @@
-Testing this program....
-
-Ok I believe, IF not mistaken, i'm using the QFile object w/ QIODevice incorrectly. The file will be written if i use the python open() function and write to it in that manner. 

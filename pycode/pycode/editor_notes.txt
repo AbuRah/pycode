@@ -1,16 +1,74 @@
-Close button on tab does NOT close the tab window.
-need to be able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
+KNOWN BUGS + ISSUES TO ADDRESS:
+====================
 
-The ctrl+w will only close the focused tab if it is unique. e.g. if all open tabs are new pages, ctrl+w will start closing them from the far rightmost tab 
-NOT the one currently in focus
+1- Close button on tab does NOT close the tab window.
 
-Need to get rid of the tab highlighting. all shortcuts should work from the main text area WITHOUT interfering with the common text edit shortcuts
+2- Syntax highlighter keeps freezing when new code is added. At the moment, Not sure as to why.
 
-I think i can modify the x button that appears on the tab by creating a custom widget and setting it with QTabBar.setTabButton()/
-I should consider using a custom QTabBar instead of the built-in one. This should give me much more flexibility in designing & coding it.
+3- save state error if pycode is closed with find QDockWidget open
 
-Make a command that copies the entire document and prompts the user for a new filename. Use the QFile object.
+General NOTES:
+==============
+!IMPORTANT: I believe there is a major lack of foresight regarding my use of root to perform the tests. I know, quite glibly, the root user env may
+have limited access to resources as a preventative security measure. This may explain why i was having trouble importing the Qt. module from PySide.QtCore. Now, 
+for some "unknown" reason, python has been able to recognize Qt. as a legitimate module. i used: from PySide.QtCore import Qt
 
-!IMPORTANT!: There is a problem with importing Qt from QtCore. Python isn't recognizing it even though i'm attempting to make the import as explicit as possible.
-Also, there seems to be an issue with text.indexOf() property; Python isn't recognizing that either. I already searched online for a solution but there isn't any clear problem that relates to what i'm experiencing.
-I hypothesize there is an issue with pyside libraries and installation. there could also be an issue with the version that i do have installed currently.
+! - I plan on making the whole editor customizable. I will get to the style and various layout options when the CORE functionality is set and stable.
+
+- I think i should develop a separate module for keyboard shortcuts and syntax highlighting classes. I'm also considering doing the same for class methods though
+that may not pan out correctly.
+
+- I think i can modify the x button that appears on the tab by creating a custom widget and setting it with QTabBar.setTabButton()/
+	I should consider using a custom QTabBar instead of the built-in one. This should give me much more flexibility in designing & coding it.
+
+- Later on i can make the shortcuts customizable using the isEnabled() method of the QShortcut class.
+
+- Ctrl+pgup/pgdn slot/func works, the application is simply not recognizing the pgdn key.
+
+TO-DO LIST:
+==========
+
+get rid of frame for main textedit area
+
+use ESC key to close find bar DockWidget
+
+need to set option for modifying the tab width
+
+utilize a layout for the main window
+
+- Make a command that copies the entire document and prompts the user for a new filename. Use the QFile object.
+
+- need to be able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
+
+- make the tab text a bright color red (or some other color) to indicate the file has been modified yet not saved.
+
+- I will, Inshallah, use QtGui.QCompleter to implement the auto-complete function based upon pre-defined item models. This will automatically look for the commonly
+	known blocks of code and finish fill it in for the user.
+
+
+POSSIBLE SOLUTIONS & WORKAROUNDS:
+================================
+
+- i believe i can switch between tabs using the .setFocus() func.
+
+UPDATES SINCE LAST GIT COMMIT:
+==============================
+
+- added func tab_seek_right to move between tabs with ctrl+pgup; not yet working
+- syntax highlighter works for all new tabs.
+
+NOTED FIXES:
+==============
+- for now, QPlainTextEdit is fine.
+
+- I was able to set the focus to the text edit as soon as the app is opened.
+
+- I was able to find a workaround for the .indexOf() method failure. I used the QRegExp.indexIn() method instead which got the syntax highlighter to work.
+
+- I've decided to leave out the Qt.GlobalColor import. I believe i was going about it the wrong way. Instead, I'll use the QColor class to create colors.
+
+- Figured out that Ctrl+W does in fact close the focused tab. I was deceived due to there being no clear difference between the newly opened tabs, and the current tab in focus.
+
+-syntax highlighter works for all newly constructed tabs
+
+- Ctrl+pgup cycles through all tabs now. Error was occuring due to the tab index being zero based. incorrect if statement.

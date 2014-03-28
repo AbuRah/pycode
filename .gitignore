@@ -1,3 +1,4 @@
 *.pyc
 .pycode
-editor_notes.txt
+*editor_notes.txt
+*Bench.py
