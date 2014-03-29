@@ -1,5 +1,7 @@
 import sys, os
 
+from exceptions import IOError, AttributeError
+
 from PySide.QtGui import (QAction, QMainWindow, QTabWidget, QPlainTextEdit, 
 	QFileDialog, QMessageBox, QApplication, QHBoxLayout, QSyntaxHighlighter, 
 	QFont, QTextCharFormat, QBrush, QColor, QTextEdit, QShortcut, QListView, 
@@ -24,6 +26,8 @@ class PyCodeEditor(QMainWindow):
 		self.read_settings()
 		self.setWindowTitle("PyCode The Editor")
 		self.show()
+
+	closed_tab_list = []
 
 	def initUI(self):
 
@@ -118,6 +122,7 @@ class PyCodeEditor(QMainWindow):
 		tabW8.triggered.connect(self.tab_width8)
 
 		reopenT = QAction("Re-Open last Tab", self)
+		reopenT.setShortcut("Ctrl+Shift+T")
 		reopenT.triggered.connect(self.reopen_last_tab)
 
 		# MENUBAR Specific ==================================================
@@ -159,7 +164,7 @@ class PyCodeEditor(QMainWindow):
 		
 		preferences = mainbar.addMenu("Preferences")
 		
-		aboutmenu = mainbar.addMenu("About")
+		# aboutmenu = mainbar.addMenu("About")
 
 		
 
@@ -167,7 +172,6 @@ class PyCodeEditor(QMainWindow):
 		status = self.statusBar()
 		status.showMessage("Ready", 4000)
 		# status.addPermamentWidget() <--- add syntax indicator here using
-		# QLabel or other widget
 
 
 		# TESTING Area ============================================
@@ -186,23 +190,34 @@ class PyCodeEditor(QMainWindow):
 		self.tabinterface.setMovable(True)
 		self.tabinterface.setTabsClosable(True)
 		self.tabinterface.addTab(QPlainTextEdit(self.tabinterface), "Untitled")
-		# self.workarea = CustomPlainTextEdit(self.tabinterface)
-		# self.tabinterface.addTab(self.workarea, "Untitled")
 		self.tabinterface.setElideMode(Qt.ElideRight)
 
 		self.setCentralWidget(self.tabinterface)
 		self.tabinterface.currentWidget().setFocus()
+		self.tabinterface.currentWidget().setStyleSheet("background:transparent;")
 
+		
 
+		# palette = QPalette(self.palette())
+		# palette.setColor(palette.Background, QColor(100, 100, 100, 40))
+		# self.setPalette(palette)
+		# self.tabinterface.setWindowOpacity(0.5)
+		# self.tabinterface.currentWidget().setWindowFlags(Qt.FramelessWindowHint)
 		# self.mainlayout.addWidget(self.tabinterface)
 		# self.setLayout(self.mainlayout)
 
 		current_workarea = self.tabinterface.currentWidget()
 		python_syntax(current_workarea.document())
 
+
+		# Checks if document has been modified.
+		self.tabinterface.currentWidget().document().contentsChanged.connect(self.changed_since_save)
+
 		# SHORTCUT ====================================================
 		# may be able to move by setting parent to mainwindow.This way, i can place it
 		# as an ATTR of the main class.
+		# I want to condense the following four codes:
+
 
 		move_right_between_tabs = QShortcut("Ctrl+pgup", self.tabinterface, 
 									self.tab_seek_right)
@@ -213,9 +228,9 @@ class PyCodeEditor(QMainWindow):
 									self.tab_seek_left)
 		move_left_between_tabs.setAutoRepeat(True)
 
-		move_right_between_tabs = QShortcut("Ctrl+Tab", self.tabinterface, 
-									self.tab_seek_right)
-		move_right_between_tabs.setAutoRepeat(True)
+		# move_right_between_tabs = QShortcut("Ctrl+Tab", self.tabinterface, 
+		# 							self.tab_seek_right)
+		# move_right_between_tabs.setAutoRepeat(True)
 
 
 		move_left_between_tabs = QShortcut("Ctrl+Shift+Tab", self.tabinterface, 
@@ -266,8 +281,17 @@ class PyCodeEditor(QMainWindow):
 	
 	def close_tab(self):
 		"""Closes focused tab"""
-		currentTabIndex = self.tabinterface.currentIndex()
-		return self.tabinterface.removeTab(currentTabIndex)
+		current_index = self.tabinterface.currentIndex()
+		self.closed_tab_list.append(self.tabinterface.tabText(current_index))
+		
+		self.tabinterface.removeTab(current_index)
+
+		try:
+		
+			return self.tabinterface.currentWidget().setFocus()
+		
+		except AttributeError:
+			pass
 	
 	def new_file(self):
 		"""Opens a plain rich-text document"""
@@ -277,6 +301,7 @@ class PyCodeEditor(QMainWindow):
 		new_workarea = QPlainTextEdit(self.tabinterface)
 		python_syntax(new_workarea.document())
 		new_workarea.setFocus()
+		new_workarea.setStyleSheet("background:transparent;")
 		return self.tabinterface.addTab(new_workarea, "Untitled")
 
 	def save_event(self):
@@ -343,6 +368,7 @@ class PyCodeEditor(QMainWindow):
 	
 	def find_text(self):
 		"""Find the indicated text within the current tab page"""
+		###!!! INCOMPLETE
 		### need to add a dialog window OR a pop-up bar for user input
 
 		user_input = QLineEdit(self)
@@ -445,6 +471,7 @@ class PyCodeEditor(QMainWindow):
 		"""Close active window"""
 		return self.close()
 
+	# Need to be able to condense the following four functions into one.
 	def tab_width2(self):
 		return self.tabinterface.currentWidget().setTabStopWidth(20)
 	
@@ -458,8 +485,37 @@ class PyCodeEditor(QMainWindow):
 		return self.tabinterface.currentWidget().setTabStopWidth(80)
 
 	def reopen_last_tab(self):
+		"""Opens the last tab closed"""
+
+		if len(self.closed_tab_list) > 0:
+
+			new_workarea = QPlainTextEdit(self.tabinterface)
+			python_syntax(new_workarea.document())
+			
+			last_file = self.closed_tab_list.pop()
+			try:
+
+				with open(last_file, "r") as f:
+				# f = open(last_file, "r")
+					data = f.read()
+					new_workarea.setPlainText(data)
+
+					self.tabinterface.addTab(new_workarea, last_file)
+		
+			except IOError:
+				pass
+
+		else:
+			pass
+
+	def select_syntax(self):
+		"""sets selected syntax by user for the current document in focus"""
 		pass
 
+	def changed_since_save(self):
+		"""Makes the tab text turn red if document has been changed since last save"""
+		current_index = self.tabinterface.currentIndex()
+		return self.tabinterface.tabBar().setTabTextColor(current_index, QColor("#e52b50"))
 
 # SETTINGS/STATE SLOTS ========================================================
 
@@ -484,6 +540,8 @@ class PyCodeEditor(QMainWindow):
 		self.restoreState(self.settings.value("Window State"))
 		self.settings.endGroup()
 
+
+
 # QDialog Classes ===============================================
 
 class NewWindow(PyCodeEditor):
@@ -494,22 +552,22 @@ class NewWindow(PyCodeEditor):
 		self.setGeometry(100, 100, 800, 500)
 		self.show()
 
-class CustomPlainTextEdit(QPlainTextEdit):
-	def __init__(self, parent=None):
-		super(CustomPlainTextEdit, self).__init__(parent)
+# class CustomPlainTextEdit(QPlainTextEdit):
+# 	def __init__(self, parent=None):
+# 		super(CustomPlainTextEdit, self).__init__(parent)
 
-		# palette = QPalette(self.palette())
-		# palette.setColor(palette.Background, Qt.transparent)
+# 		# palette = QPalette(self.palette())
+# 		# palette.setColor(palette.Background, Qt.transparent)
 
-		# self.setPalette(palette)
+# 		# self.setPalette(palette)
 	
-	# # qp.begin(self)
-	# qp.setRenderHint(QPainter.Antialiasing)
-	# qp.setPen(QPen(Qt.NoPen))
-	# qp.end()
-	def update_test(self):
-		qp = QPainter(self)
-		self.update(qp.fillRect(self.rect(), QBrush(Qt.transparent)))
+# 	# # qp.begin(self)
+# 	# qp.setRenderHint(QPainter.Antialiasing)
+# 	# qp.setPen(QPen(Qt.NoPen))
+# 	# qp.end()
+# 	def update_test(self):
+# 		qp = QPainter(self)
+# 		self.update(qp.fillRect(self.rect(), QBrush(Qt.transparent)))
 	
 
 	# def paintEvent(self, e):
