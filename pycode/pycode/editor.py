@@ -3,7 +3,8 @@ import sys, os
 from PySide.QtGui import (QAction, QMainWindow, QTabWidget, QPlainTextEdit, 
 	QFileDialog, QMessageBox, QApplication, QHBoxLayout, QSyntaxHighlighter, 
 	QFont, QTextCharFormat, QBrush, QColor, QTextEdit, QShortcut, QListView, 
-	QSplitter, QKeySequence, QLineEdit, QDockWidget, QPainter)
+	QSplitter, QKeySequence, QLineEdit, QDockWidget, QPainter, QDialog, QPalette,
+	QPen)
 
 from PySide.QtCore import (QSettings, QFileInfo, QSize, QPoint, QFile, 
 	QDir, QIODevice, QRegExp)
@@ -15,8 +16,8 @@ from PySide.QtCore import Qt
 
 class PyCodeEditor(QMainWindow):
 
-	def __init__(self):
-		super(PyCodeEditor, self).__init__()
+	def __init__(self, parent=None):
+		super(PyCodeEditor, self).__init__(parent)
 		
 		self.initUI()
 		self.settings = None
@@ -32,8 +33,8 @@ class PyCodeEditor(QMainWindow):
 		exitAct = QAction("Exit", self)
 		exitAct.setShortcut("Ctrl+Q")
 		exitAct.setStatusTip("Exit the Application")
-		exitAct.triggered.connect(self.exit_event) # replace with self.exit_message()
-		# exitAct.triggered.connect(self.exit_message)
+		exitAct.setShortcutContext(Qt.ApplicationShortcut)
+		exitAct.triggered.connect(self.exit_event)
 
 		saveAct = QAction("Save", self)
 		saveAct.setShortcut("Ctrl+S")
@@ -47,9 +48,13 @@ class PyCodeEditor(QMainWindow):
 
 
 		newF = QAction("New File", self)
-		newF.setShortcut("Ctrl+T")
+		newF.setShortcut("Ctrl+N")
 		newF.setStatusTip("Create New document")
 		newF.triggered.connect(self.new_file)
+
+		newW = QAction("New Window", self)
+		newW.setShortcut("Ctrl+Shift+N")
+		newW.triggered.connect(self.new_window)
 
 		openF = QAction("Open", self)
 		openF.setShortcut("Ctrl+O")
@@ -61,6 +66,11 @@ class PyCodeEditor(QMainWindow):
 		closeF.setShortcut("Ctrl+W")
 		closeF.setStatusTip("Close current file in tab")
 		closeF.triggered.connect(self.close_tab)
+
+		closeW = QAction("Close Window", self)
+		closeW.setShortcut("Ctrl+Shift+W")
+		closeW.setShortcutContext(Qt.WidgetWithChildrenShortcut)
+		closeW.triggered.connect(self.close_window)
 
 		bolden = QAction("Bold", self)
 		bolden.setCheckable(True)
@@ -95,16 +105,34 @@ class PyCodeEditor(QMainWindow):
 		undoAct.setShortcut("Crtl+Z")
 		undoAct.triggered.connect(self.undo_last)
 
+		tabW2 = QAction("Tab Width: 2", self)
+		tabW2.triggered.connect(self.tab_width2)
+		
+		tabW4 = QAction("Tab Width: 4", self)
+		tabW4.triggered.connect(self.tab_width4)
+		
+		tabW6 = QAction("Tab Width: 6", self)
+		tabW6.triggered.connect(self.tab_width6)
+		
+		tabW8 = QAction("Tab Width: 8", self)
+		tabW8.triggered.connect(self.tab_width8)
+
+		reopenT = QAction("Re-Open last Tab", self)
+		reopenT.triggered.connect(self.reopen_last_tab)
+
 		# MENUBAR Specific ==================================================
 
 		mainbar = self.menuBar()
 		filemenu = mainbar.addMenu("&File")
 		filemenu.addAction(newF)
+		filemenu.addAction(newW)
+		filemenu.addAction(reopenT)
 		filemenu.addSeparator()
 		filemenu.addAction(openF)
 		filemenu.addAction(saveAct)
 		filemenu.addAction(saveasAct)
 		filemenu.addSeparator()
+		filemenu.addAction(closeW)
 		filemenu.addAction(closeF)
 		filemenu.addAction(exitAct)
 		
@@ -123,6 +151,11 @@ class PyCodeEditor(QMainWindow):
 		viewmenu = mainbar.addMenu("View")
 		
 		toolmenu = mainbar.addMenu("Tools")
+		tabwidth = toolmenu.addMenu("Tab Width")
+		tabwidth.addAction(tabW2)
+		tabwidth.addAction(tabW4)
+		tabwidth.addAction(tabW6)
+		tabwidth.addAction(tabW8)
 		
 		preferences = mainbar.addMenu("Preferences")
 		
@@ -144,23 +177,23 @@ class PyCodeEditor(QMainWindow):
 
 
 
-
-
 		# LAYOUT AND FINAL INITIAL SETUP======================================
 		self.mainlayout = QHBoxLayout()
-
 
 
 		self.tabinterface = QTabWidget(self)
 		self.tabinterface.setDocumentMode(True)
 		self.tabinterface.setMovable(True)
 		self.tabinterface.setTabsClosable(True)
-		self.tabinterface.addTab(QPlainTextEdit(self.tabinterface), "Untitled") # change to QPlain
+		self.tabinterface.addTab(QPlainTextEdit(self.tabinterface), "Untitled")
+		# self.workarea = CustomPlainTextEdit(self.tabinterface)
+		# self.tabinterface.addTab(self.workarea, "Untitled")
+		self.tabinterface.setElideMode(Qt.ElideRight)
 
 		self.setCentralWidget(self.tabinterface)
 		self.tabinterface.currentWidget().setFocus()
-		
-		
+
+
 		# self.mainlayout.addWidget(self.tabinterface)
 		# self.setLayout(self.mainlayout)
 
@@ -171,12 +204,26 @@ class PyCodeEditor(QMainWindow):
 		# may be able to move by setting parent to mainwindow.This way, i can place it
 		# as an ATTR of the main class.
 
-		move_right_between_tabs = QShortcut("Ctrl+pgup", self.tabinterface, self.tab_seek_right)
+		move_right_between_tabs = QShortcut("Ctrl+pgup", self.tabinterface, 
+									self.tab_seek_right)
 		move_right_between_tabs.setAutoRepeat(True)
-		
-		move_left_between_tabs = QShortcut("Ctrl+pgdn", self.tabinterface, self.tab_seek_left)
+
+
+		move_left_between_tabs = QShortcut("Ctrl+pgdn", self.tabinterface, 
+									self.tab_seek_left)
+		move_left_between_tabs.setAutoRepeat(True)
+
+		move_right_between_tabs = QShortcut("Ctrl+Tab", self.tabinterface, 
+									self.tab_seek_right)
+		move_right_between_tabs.setAutoRepeat(True)
+
+
+		move_left_between_tabs = QShortcut("Ctrl+Shift+Tab", self.tabinterface, 
+									self.tab_seek_left)
 		move_left_between_tabs.setAutoRepeat(True)
 		
+		close_active_window = QShortcut("Ctrl+Shift+W", self.tabinterface,
+									self.close_window, Qt.WidgetShortcut)
 
 	# TESTING Area for methods ================================================
 
@@ -229,7 +276,7 @@ class PyCodeEditor(QMainWindow):
 
 		new_workarea = QPlainTextEdit(self.tabinterface)
 		python_syntax(new_workarea.document())
-		
+		new_workarea.setFocus()
 		return self.tabinterface.addTab(new_workarea, "Untitled")
 
 	def save_event(self):
@@ -389,6 +436,30 @@ class PyCodeEditor(QMainWindow):
 		return self.tabinterface.setCurrentWidget(widget_at_index)
 
 
+	def new_window(self):
+		"""creates a complete new window."""
+		self.new_window_instance = NewWindow(self)
+		self.new_window_instance.setWindowTitle("PyCode Text EditorX")
+
+	def close_window(self):
+		"""Close active window"""
+		return self.close()
+
+	def tab_width2(self):
+		return self.tabinterface.currentWidget().setTabStopWidth(20)
+	
+	def tab_width4(self):
+		return self.tabinterface.currentWidget().setTabStopWidth(40)
+	
+	def tab_width6(self):
+		return self.tabinterface.currentWidget().setTabStopWidth(60)
+	
+	def tab_width8(self):
+		return self.tabinterface.currentWidget().setTabStopWidth(80)
+
+	def reopen_last_tab(self):
+		pass
+
 
 # SETTINGS/STATE SLOTS ========================================================
 
@@ -413,9 +484,41 @@ class PyCodeEditor(QMainWindow):
 		self.restoreState(self.settings.value("Window State"))
 		self.settings.endGroup()
 
-# KeyBoard Shortcuts ===============================================
+# QDialog Classes ===============================================
 
+class NewWindow(PyCodeEditor):
 
+	def __init__(self, parent=None):
+		super(NewWindow, self).__init__(parent)
+		self.initUI()
+		self.setGeometry(100, 100, 800, 500)
+		self.show()
+
+class CustomPlainTextEdit(QPlainTextEdit):
+	def __init__(self, parent=None):
+		super(CustomPlainTextEdit, self).__init__(parent)
+
+		# palette = QPalette(self.palette())
+		# palette.setColor(palette.Background, Qt.transparent)
+
+		# self.setPalette(palette)
+	
+	# # qp.begin(self)
+	# qp.setRenderHint(QPainter.Antialiasing)
+	# qp.setPen(QPen(Qt.NoPen))
+	# qp.end()
+	def update_test(self):
+		qp = QPainter(self)
+		self.update(qp.fillRect(self.rect(), QBrush(Qt.transparent)))
+	
+
+	# def paintEvent(self, e):
+	# 	qp = QPainter(self)
+	# 	qp.begin(self)
+	# 	qp.setRenderHint(QPainter.Antialiasing)
+	# 	qp.fillRect(self.rect(), QBrush(Qt.transparent))
+	# 	qp.setPen(QPen(Qt.NoPen))
+	# 	qp.end()
 
 # Syntax Highlighting CLASSES ================================================================
 

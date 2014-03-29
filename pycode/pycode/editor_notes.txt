@@ -10,10 +10,10 @@ KNOWN BUGS + ISSUES TO ADDRESS:
 General NOTES:
 ==============
 !IMPORTANT: I believe there is a major lack of foresight regarding my use of root to perform the tests. I know, quite glibly, the root user env may
-have limited access to resources as a preventative security measure. This may explain why i was having trouble importing the Qt. module from PySide.QtCore. Now, 
-for some "unknown" reason, python has been able to recognize Qt. as a legitimate module. i used: from PySide.QtCore import Qt
 
-! - I plan on making the whole editor customizable. I will get to the style and various layout options when the CORE functionality is set and stable.
+!- I plan on making the whole editor customizable. I will get to the style and various layout options when the CORE functionality is set and stable.
+
+- I need to be more aware of scope and referencing when it comes to coding in general.
 
 - I think i should develop a separate module for keyboard shortcuts and syntax highlighting classes. I'm also considering doing the same for class methods though
 that may not pan out correctly.
@@ -23,27 +23,36 @@ that may not pan out correctly.
 
 - Later on i can make the shortcuts customizable using the isEnabled() method of the QShortcut class.
 
+- need to find a way to condense the tab width actions... 
+
 - Ctrl+pgup/pgdn slot/func works, the application is simply not recognizing the pgdn key.
+
 
 TO-DO LIST:
 ==========
+- reopen last tab ctrl+shift+T
 
-get rid of frame for main textedit area
+- Rewrite the settings definition to NOT use setgeometry.
 
-use ESC key to close find bar DockWidget
+- fix ambigious shortcut overload. Most specify focused window to close
 
-need to set option for modifying the tab width
+- get rid of frame for main textedit area
 
-utilize a layout for the main window
+- use ESC key to close find bar DockWidget
+
+- add options for various layouts
+
+- utilize a layout for the main window
 
 - Make a command that copies the entire document and prompts the user for a new filename. Use the QFile object.
 
-- need to be able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
+!- need to be able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
 
 - make the tab text a bright color red (or some other color) to indicate the file has been modified yet not saved.
 
 - I will, Inshallah, use QtGui.QCompleter to implement the auto-complete function based upon pre-defined item models. This will automatically look for the commonly
 	known blocks of code and finish fill it in for the user.
+- fix the pgdn fail to recognize bug
 
 
 POSSIBLE SOLUTIONS & WORKAROUNDS:
@@ -56,6 +65,11 @@ UPDATES SINCE LAST GIT COMMIT:
 
 - added func tab_seek_right to move between tabs with ctrl+pgup; not yet working
 - syntax highlighter works for all new tabs.
+- add action new window, close window
+- set elide right, tab bar still brings up scroll bar if too many tabs are open.
+- set focus for shortcuts
+- set option for modifying the tab width
+- set tab options, 2 spaces, 4, 6, 8
 
 NOTED FIXES:
 ==============
@@ -72,3 +86,37 @@ NOTED FIXES:
 -syntax highlighter works for all newly constructed tabs
 
 - Ctrl+pgup cycles through all tabs now. Error was occuring due to the tab index being zero based. incorrect if statement.
+
+IDEAS FROM VARIOUS SOURCES:
+==========================
+
+- At this point, i'm not too sure as to what else i should add, so i will paste so ideas here for consideration
+
+Build Engine: add the ability to run code FROM the editor itself. i.e. run code from command-line. e.g. python <name of main>.py etc..
+
+WEB BROWSER: Add a tab that will have it's own process and allow full functional web browsing
+
+E-Mail Client: Provide fast and simple plugin for sending and receiving e-mail
+
+Text Statistics: Add text counting, cursor pos, word count etc.
+
+Thesaurus and Dictionary Spell-Check: Add spell-check engine along with comprehensive dictionary/thesaurus
+
+Side Bar: Add a side bar that will either contain the contents of a Dir, OR some other useful context.
+
+Code Snippets and Libraries: Add pre-defined commonly used snippets of code; Auto-Complete
+
+Utilities Library:
+
+Unit converters (lbs to kg, inches to cm, Fahrenheit to Celsius …)
+Password generator
+Data encryption and decryption
+Uuencoding and uudecoding
+Hash generator (using SHA1, MD5, or CRC32)
+URL extraction from a web page
+
+Comprehensive SEARCH & REPLACE: add a fast, versatile Find, search and replace.
+
+Custom_Layouts: Add custom layouts
+
+Encoding: Add functionality for all types of encoding
