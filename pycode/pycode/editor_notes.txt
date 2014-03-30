@@ -33,8 +33,12 @@ that may not pan out correctly.
 
 - i could leave off inializing a new document automatically and instead start the app with a no open tabs.
 
+- browse cxfreeze and github PySide repository. Consider getting into active PySide development and utlizing cxfreeze for PyCode's distribution.
+
 TO-DO LIST:
 ==========
+
+- add option for dynamic theme switching
 
 - Rewrite the settings definition to NOT use setgeometry.
 

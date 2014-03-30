@@ -1,6 +1,5 @@
 import sys, os
 
-from exceptions import IOError, AttributeError
 
 from PySide.QtGui import (QAction, QMainWindow, QTabWidget, QPlainTextEdit, 
 	QFileDialog, QMessageBox, QApplication, QHBoxLayout, QSyntaxHighlighter, 
@@ -10,11 +9,10 @@ from PySide.QtGui import (QAction, QMainWindow, QTabWidget, QPlainTextEdit,
 
 from PySide.QtCore import (QSettings, QFileInfo, QSize, QPoint, QFile, 
 	QDir, QIODevice, QRegExp)
-
 from PySide.QtCore import Qt
-# from PySide import QtGui
 
-# import Work_Bench
+from exceptions import IOError, AttributeError
+
 
 class PyCodeEditor(QMainWindow):
 
@@ -24,7 +22,7 @@ class PyCodeEditor(QMainWindow):
 		self.initUI()
 		self.settings = None
 		self.read_settings()
-		self.setWindowTitle("PyCode The Editor")
+		self.setWindowTitle("PyCode Text Editor")
 		self.show()
 
 	closed_tab_list = []
@@ -125,6 +123,12 @@ class PyCodeEditor(QMainWindow):
 		reopenT.setShortcut("Ctrl+Shift+T")
 		reopenT.triggered.connect(self.reopen_last_tab)
 
+		plainL = QAction("Single Layout", self)
+		
+		splitL = QAction("Two Windows", self)
+
+		gridL = QAction("Four windows", self)
+
 		# MENUBAR Specific ==================================================
 
 		mainbar = self.menuBar()
@@ -154,6 +158,11 @@ class PyCodeEditor(QMainWindow):
 
 
 		viewmenu = mainbar.addMenu("View")
+		layoutmenu = viewmenu.addMenu("Layouts")
+		layoutmenu.addAction(plainL)
+		layoutmenu.addAction(splitL)
+		layoutmenu.addAction(gridL)
+
 		
 		toolmenu = mainbar.addMenu("Tools")
 		tabwidth = toolmenu.addMenu("Tab Width")
@@ -194,15 +203,7 @@ class PyCodeEditor(QMainWindow):
 
 		self.setCentralWidget(self.tabinterface)
 		self.tabinterface.currentWidget().setFocus()
-		self.tabinterface.currentWidget().setStyleSheet("background:transparent;")
 
-		
-
-		# palette = QPalette(self.palette())
-		# palette.setColor(palette.Background, QColor(100, 100, 100, 40))
-		# self.setPalette(palette)
-		# self.tabinterface.setWindowOpacity(0.5)
-		# self.tabinterface.currentWidget().setWindowFlags(Qt.FramelessWindowHint)
 		# self.mainlayout.addWidget(self.tabinterface)
 		# self.setLayout(self.mainlayout)
 
@@ -210,7 +211,8 @@ class PyCodeEditor(QMainWindow):
 		python_syntax(current_workarea.document())
 
 
-		# Checks if document has been modified.
+		# Checks if document has been modified. Need to find a way to have this
+		# automatically run if True, or check consistently
 		self.tabinterface.currentWidget().document().contentsChanged.connect(self.changed_since_save)
 
 		# SHORTCUT ====================================================
@@ -228,9 +230,9 @@ class PyCodeEditor(QMainWindow):
 									self.tab_seek_left)
 		move_left_between_tabs.setAutoRepeat(True)
 
-		# move_right_between_tabs = QShortcut("Ctrl+Tab", self.tabinterface, 
-		# 							self.tab_seek_right)
-		# move_right_between_tabs.setAutoRepeat(True)
+		move_right_between_tabs = QShortcut("Ctrl+Tab", self.tabinterface, 
+									self.tab_seek_right)
+		move_right_between_tabs.setAutoRepeat(True)
 
 
 		move_left_between_tabs = QShortcut("Ctrl+Shift+Tab", self.tabinterface, 
@@ -262,6 +264,7 @@ class PyCodeEditor(QMainWindow):
 
 			f = open(filename, "r")
 			new_workarea = QPlainTextEdit(self.tabinterface)
+
 			python_syntax(new_workarea.document())
 
 			
@@ -301,7 +304,6 @@ class PyCodeEditor(QMainWindow):
 		new_workarea = QPlainTextEdit(self.tabinterface)
 		python_syntax(new_workarea.document())
 		new_workarea.setFocus()
-		new_workarea.setStyleSheet("background:transparent;")
 		return self.tabinterface.addTab(new_workarea, "Untitled")
 
 	def save_event(self):
@@ -499,6 +501,7 @@ class PyCodeEditor(QMainWindow):
 				# f = open(last_file, "r")
 					data = f.read()
 					new_workarea.setPlainText(data)
+		
 
 					self.tabinterface.addTab(new_workarea, last_file)
 		
@@ -683,7 +686,15 @@ class python_syntax(QSyntaxHighlighter):
 #===========================================================================================
 def main():
 	pycodeapp = QApplication(sys.argv)
-	# pycodeapp.setStyle("plastique")
+
+	try:
+		with open("PyCodeThemes/PyCodeDefaultStyle.qss") as f:
+			stylesheet = f.read()
+			pycodeapp.setStyleSheet(stylesheet)
+	
+	except IOError:
+		print "Stylesheet does not exist; falling back to native style"
+
 	editor = PyCodeEditor()
 	sys.exit(pycodeapp.exec_())
 
