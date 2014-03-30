@@ -9,6 +9,11 @@ KNOWN BUGS + ISSUES TO ADDRESS:
 
 General NOTES:
 ==============
+- I've been struggling with getting this text editor to do what i want it to due to the ignorance on my part of the built-in inherited functions from the QWidget
+class. EVERY widget inherits from this QWidget class and i've been only looking at the actually widget docs themselves, not seeing the connection between them. This has undoubtedly made the process harder for myself. At least now i know. I will keep it as a reference.
+
+- i think i may need to construct the findbox QDockWidget separately from the actual logic of the find operation.
+
 - PySide.QtCore.Qt.NavigationMode can be used to change the tab focus behavior
 
 !IMPORTANT: I believe there is a major lack of foresight regarding my use of root to perform the tests. I know, quite glibly, the root user env may affect 

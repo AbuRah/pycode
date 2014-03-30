@@ -186,6 +186,15 @@ class PyCodeEditor(QMainWindow):
 		status.showMessage("Ready", 4000)
 		# # status.addPermamentWidget() <--- add syntax indicator here using
 
+# DockWidget Area ==============================================================
+
+		
+		self.main_dock_widget = QDockWidget(self)
+		self.main_dock_widget.setAllowedAreas(Qt.BottomDockWidgetArea)
+		# self.main_dock_widget.setWidget(user_input)
+		self.main_dock_widget.setFloating(False)
+		self.addDockWidget(Qt.BottomDockWidgetArea, self.main_dock_widget)
+		self.main_dock_widget.hide()
 
 # TESTING Area ============================================
 
@@ -204,6 +213,7 @@ class PyCodeEditor(QMainWindow):
 		self.tabinterface.setTabsClosable(True)
 		self.tabinterface.addTab(QPlainTextEdit(self.tabinterface), "Untitled")
 		self.tabinterface.setElideMode(Qt.ElideRight)
+		self.tabinterface.setFocusPolicy(Qt.NoFocus)
 
 		self.setCentralWidget(self.tabinterface)
 		self.tabinterface.currentWidget().setFocus()
@@ -215,6 +225,7 @@ class PyCodeEditor(QMainWindow):
 		python_syntax(current_workarea.document())
 
 		# self.tabinterface.currentWidget().document().contentsChanged.connect(self.changed_since_save)
+		self.tabinterface.currentWidget().cursorPositionChanged.connect(self.changed_since_save)
 
 
 
@@ -229,7 +240,7 @@ class PyCodeEditor(QMainWindow):
 		move_right_between_tabs.setAutoRepeat(True)
 
 
-		move_left_between_tabs = QShortcut("Ctrl+pgdn", self.tabinterface, 
+		move_left_between_tabs = QShortcut(QKeySequence(Qt.Key_Control + Qt.Key_PageDown), self.tabinterface, 
 									self.tab_seek_left)
 		move_left_between_tabs.setAutoRepeat(True)
 
@@ -245,6 +256,7 @@ class PyCodeEditor(QMainWindow):
 		close_active_window = QShortcut("Ctrl+Shift+W", self.tabinterface,
 									self.close_window, Qt.WidgetShortcut)
 
+		close_dock = QShortcut(QKeySequence(Qt.Key_Escape), self, self.main_dock_widget.hide, Qt.WidgetShortcut)
 	# TESTING Area for methods ================================================
 
 
@@ -363,32 +375,32 @@ class PyCodeEditor(QMainWindow):
 		currentPage = self.tabinterface.currentWidget()
 	
 		currentPage.cut()
+
+
 	
 	def find_text(self):
 		"""Find the indicated text within the current tab page"""
 		###!!! INCOMPLETE
-		### need to add ESC shortcut to close, auto-complete, selection and find, replace, and return to textedit area on close
+		### need to add auto-complete, selection and find & replace
+		self.main_dock_widget.show()
 
 		user_input = QLineEdit(self)
-		main_dock_widget = QDockWidget(self)
-		main_dock_widget.setAllowedAreas(Qt.BottomDockWidgetArea)
-		main_dock_widget.setWidget(user_input)
-		main_dock_widget.setFloating(False)
-		self.addDockWidget(Qt.BottomDockWidgetArea, main_dock_widget)
+		self.main_dock_widget.setWidget(user_input)
+		user_input.setFocus()
+
+		current_tab_cursor = self.tabinterface.currentWidget().textCursor()
+		
+		# user_input.cursorPositionChanged.connect(user_input.selectAll())
+
+		# current_tab = self.tabinterface.currentWidget()
 
 		
-		user_input.setFocus()
-		
-		current_tab = self.tabinterface.currentWidget()
-		current_tab_cursor = current_tab.textCursor()
-		
-		data = user_input.selectAll()
 
 		# current_tab_cursor.setPosition()
 		# current_tab_cursor.setPosition(data, current_tab_cursor.KeepAnchor)
 		# current_tab.find(data, current_tab_cursor.position())
 
-		current_tab.setTextCursor(current_tab_cursor)
+		# current_tab.setTextCursor(current_tab_cursor)
 			
 
 	def paste_selection(self):
@@ -649,8 +661,6 @@ def main():
 		print "Stylesheet does not exist; falling back to native style"
 
 	editor = PyCodeEditor()
-	# editor.tabinterface.currentWidget().document().contentsChanged.connect(editor.changed_since_save)
-
 	sys.exit(pycodeapp.exec_())
 
 
