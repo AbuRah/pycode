@@ -11,11 +11,12 @@ General NOTES:
 ==============
 - PySide.QtCore.Qt.NavigationMode can be used to change the tab focus behavior
 
-!IMPORTANT: I believe there is a major lack of foresight regarding my use of root to perform the tests. I know, quite glibly, the root user env may
+!IMPORTANT: I believe there is a major lack of foresight regarding my use of root to perform the tests. I know, quite glibly, the root user env may affect 
+setup and use.
 
 !- I plan on making the whole editor customizable. I will get to the style and various layout options when the CORE functionality is set and stable.
 
-- I need to be more aware of scope and referencing when it comes to coding in general.
+personal note:- I need to be more aware of scope and referencing when it comes to coding in general.
 
 - I think i should develop a separate module for keyboard shortcuts and syntax highlighting classes. I'm also considering doing the same for class methods though
 that may not pan out correctly.
@@ -27,13 +28,18 @@ that may not pan out correctly.
 
 - need to find a way to condense the tab width actions... 
 
-- Ctrl+pgup/pgdn slot/func works, the application is simply not recognizing the pgdn key.
-
-- i believe i can switch between tabs using the .setFocus() func.
 
 - i could leave off inializing a new document automatically and instead start the app with a no open tabs.
 
 - browse cxfreeze and github PySide repository. Consider getting into active PySide development and utlizing cxfreeze for PyCode's distribution.
+
+- now that i have styling available, i must consider how to merge this harmoniously with syntax highlighting. Im thinking I can define a complete stylesheet theme that would include the syntax colors with it. i.e. the colors to be used in contrast to the background are defined WITHIN the style sheet.
+
+In order to implement the build system, i will have to use the os module and learn about the different system command line commands that would run the focused tab document.
+
+- use .Anchorat, .setposition, movepos to manipulate the cursor to select
+
+- i can set background to visible when i put line counting into the text editor.
 
 TO-DO LIST:
 ==========
@@ -44,6 +50,7 @@ TO-DO LIST:
 
 - allow focus change by using tab ??? <may be unnecessary>???
 
+- Fix settings; it's throwing QVariant errors in console.
 
 - use ESC key to close find bar DockWidget
 
@@ -53,21 +60,25 @@ TO-DO LIST:
 
 - Make a command that copies the entire document and prompts the user for a new filename. Use the QFile object.
 
-!- need to be able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
+- need to be able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
 
+- successfully fix and implement syntax highlighting
+
+- fix tab button not closing tab
 
 - I will, Inshallah, use QtGui.QCompleter to implement the auto-complete function based upon pre-defined item models. This will automatically look for the commonly
 	known blocks of code and finish fill it in for the user.
 
 - fix the pgdn fail to recognize bug
 
+- add build system and ability to run commands in console from app itself
+
+- add autosave feature
+
+- use QThread to check if document has been modified
+
 UPDATES SINCE LAST GIT COMMIT:
 ==============================
-
-- got rid of frame for main textedit area
-- reopen last tab ctrl+shift+T
-- made the tab text red when the current document has been modified but not saved.
-- tab focus text cursor after closing tab
 
 NOTED FIXES:
 ==============
@@ -85,6 +96,11 @@ NOTED FIXES:
 
 -syntax highlighter works for all newly constructed tabs
 
+- got rid of frame for main textedit area
+- reopen last tab ctrl+shift+T
+- made the tab text red when the current document has been modified but not saved.
+- tab focus text cursor after closing tab
+- added stylesheets
 - Ctrl+pgup cycles through all tabs now. Error was occuring due to the tab index being zero based. incorrect if statement.
 - added func tab_seek_right to move between tabs with ctrl+pgup; not yet working
 - syntax highlighter works for all new tabs.
@@ -127,3 +143,4 @@ Comprehensive SEARCH & REPLACE: add a fast, versatile Find, search and replace.
 Custom_Layouts: Add custom layouts
 
 Encoding: Add functionality for all types of encoding
+

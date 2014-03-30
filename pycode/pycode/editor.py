@@ -1,14 +1,14 @@
-import sys, os
+import sys, os, time
 
 
 from PySide.QtGui import (QAction, QMainWindow, QTabWidget, QPlainTextEdit, 
 	QFileDialog, QMessageBox, QApplication, QHBoxLayout, QSyntaxHighlighter, 
 	QFont, QTextCharFormat, QBrush, QColor, QTextEdit, QShortcut, QListView, 
 	QSplitter, QKeySequence, QLineEdit, QDockWidget, QPainter, QDialog, QPalette,
-	QPen)
+	QPen, QStatusBar)
 
 from PySide.QtCore import (QSettings, QFileInfo, QSize, QPoint, QFile, 
-	QDir, QIODevice, QRegExp)
+	QDir, QIODevice, QRegExp, QThread, SIGNAL)
 from PySide.QtCore import Qt
 
 from exceptions import IOError, AttributeError
@@ -26,7 +26,7 @@ class PyCodeEditor(QMainWindow):
 		self.show()
 
 	closed_tab_list = []
-
+	
 	def initUI(self):
 
 
@@ -89,6 +89,10 @@ class PyCodeEditor(QMainWindow):
 		findAct.setStatusTip("Find indicated text within current document")
 		findAct.triggered.connect(self.find_text)
 
+		findR = QAction("Find && Replace", self)
+		findR.setShortcut("Ctrl+F")
+		# findR.triggered.connect(self.find_and_replace)
+
 		cutAct = QAction("Cut selection", self)
 		cutAct.setShortcut("Ctrl+X")
 		cutAct.setStatusTip("Copy text to clipboard, then remove from tab page")
@@ -129,7 +133,7 @@ class PyCodeEditor(QMainWindow):
 
 		gridL = QAction("Four windows", self)
 
-		# MENUBAR Specific ==================================================
+# MENUBAR Specific ==================================================
 
 		mainbar = self.menuBar()
 		filemenu = mainbar.addMenu("&File")
@@ -177,20 +181,20 @@ class PyCodeEditor(QMainWindow):
 
 		
 
-		# STATUSBAR =====================================================
+# STATUSBAR =====================================================
 		status = self.statusBar()
 		status.showMessage("Ready", 4000)
-		# status.addPermamentWidget() <--- add syntax indicator here using
+		# # status.addPermamentWidget() <--- add syntax indicator here using
 
 
-		# TESTING Area ============================================
+# TESTING Area ============================================
 
 		
 
 
 
 
-		# LAYOUT AND FINAL INITIAL SETUP======================================
+# LAYOUT AND FINAL INITIAL SETUP======================================
 		self.mainlayout = QHBoxLayout()
 
 
@@ -210,12 +214,11 @@ class PyCodeEditor(QMainWindow):
 		current_workarea = self.tabinterface.currentWidget()
 		python_syntax(current_workarea.document())
 
+		# self.tabinterface.currentWidget().document().contentsChanged.connect(self.changed_since_save)
 
-		# Checks if document has been modified. Need to find a way to have this
-		# automatically run if True, or check consistently
-		self.tabinterface.currentWidget().document().contentsChanged.connect(self.changed_since_save)
 
-		# SHORTCUT ====================================================
+
+# SHORTCUT ==================================================================
 		# may be able to move by setting parent to mainwindow.This way, i can place it
 		# as an ATTR of the main class.
 		# I want to condense the following four codes:
@@ -310,20 +313,13 @@ class PyCodeEditor(QMainWindow):
 		"""Saves file with current tab title text, no prompting"""
 
 		filename = self.tabinterface.tabText(self.tabinterface.currentIndex())		
-		
-
 		save_file = QFile(filename)
-
-
 		save_file_name = QFile.fileName(save_file)
-
 
 		if save_file_name != "Untitled":
 			f = open(save_file_name, "w")
 
 			with f:
-
-
 				focusedPage = self.tabinterface.currentWidget()
 				changes = focusedPage.toPlainText()
 				f.write(changes)
@@ -371,20 +367,29 @@ class PyCodeEditor(QMainWindow):
 	def find_text(self):
 		"""Find the indicated text within the current tab page"""
 		###!!! INCOMPLETE
-		### need to add a dialog window OR a pop-up bar for user input
+		### need to add ESC shortcut to close, auto-complete, selection and find, replace, and return to textedit area on close
 
 		user_input = QLineEdit(self)
-		user_input.setFrame(False)
 		main_dock_widget = QDockWidget(self)
 		main_dock_widget.setAllowedAreas(Qt.BottomDockWidgetArea)
 		main_dock_widget.setWidget(user_input)
+		main_dock_widget.setFloating(False)
 		self.addDockWidget(Qt.BottomDockWidgetArea, main_dock_widget)
-		user_input.setFocus()
 
-		# user_input.textChanged(): # <- signal emitted when text field changes
+		
+		user_input.setFocus()
+		
 		current_tab = self.tabinterface.currentWidget()
-		# current_tab_doc = current_tab.document()
-		current_tab.find(user_input.text())
+		current_tab_cursor = current_tab.textCursor()
+		
+		data = user_input.selectAll()
+
+		# current_tab_cursor.setPosition()
+		# current_tab_cursor.setPosition(data, current_tab_cursor.KeepAnchor)
+		# current_tab.find(data, current_tab_cursor.position())
+
+		current_tab.setTextCursor(current_tab_cursor)
+			
 
 	def paste_selection(self):
 		"""paste text from clipboard to tab page"""
@@ -465,7 +470,7 @@ class PyCodeEditor(QMainWindow):
 
 
 	def new_window(self):
-		"""creates a complete new window."""
+		"""opens a completely new window."""
 		self.new_window_instance = NewWindow(self)
 		self.new_window_instance.setWindowTitle("PyCode Text EditorX")
 
@@ -518,7 +523,11 @@ class PyCodeEditor(QMainWindow):
 	def changed_since_save(self):
 		"""Makes the tab text turn red if document has been changed since last save"""
 		current_index = self.tabinterface.currentIndex()
-		return self.tabinterface.tabBar().setTabTextColor(current_index, QColor("#e52b50"))
+		return self.tabinterface.tabBar().setTabTextColor(current_index, QColor("#fff5ee"))
+		
+
+	# def find_and_replace(self):
+	# 	self.tabinterface.currentWidget().
 
 # SETTINGS/STATE SLOTS ========================================================
 
@@ -545,7 +554,7 @@ class PyCodeEditor(QMainWindow):
 
 
 
-# QDialog Classes ===============================================
+# Custom Classes ===============================================
 
 class NewWindow(PyCodeEditor):
 
@@ -555,33 +564,22 @@ class NewWindow(PyCodeEditor):
 		self.setGeometry(100, 100, 800, 500)
 		self.show()
 
-# class CustomPlainTextEdit(QPlainTextEdit):
-# 	def __init__(self, parent=None):
-# 		super(CustomPlainTextEdit, self).__init__(parent)
+class SaveThread(QThread):
+	def __init__(self):
+		super(SaveThread, self).__init__()
 
-# 		# palette = QPalette(self.palette())
-# 		# palette.setColor(palette.Background, Qt.transparent)
+	def run(self):
+		pass
 
-# 		# self.setPalette(palette)
-	
-# 	# # qp.begin(self)
-# 	# qp.setRenderHint(QPainter.Antialiasing)
-# 	# qp.setPen(QPen(Qt.NoPen))
-# 	# qp.end()
-# 	def update_test(self):
-# 		qp = QPainter(self)
-# 		self.update(qp.fillRect(self.rect(), QBrush(Qt.transparent)))
-	
-
-	# def paintEvent(self, e):
-	# 	qp = QPainter(self)
-	# 	qp.begin(self)
-	# 	qp.setRenderHint(QPainter.Antialiasing)
-	# 	qp.fillRect(self.rect(), QBrush(Qt.transparent))
-	# 	qp.setPen(QPen(Qt.NoPen))
-	# 	qp.end()
+		# Checks if document has been modified. Need to find a way to have this
+		# automatically run if True, or check consistently
+		
+		# while self.exiting == False:
+		# 	if self.tabinterface.currentWidget().document().contentsChanged():
+		# 		self.tabinterface.currentWidget().document().contentsChanged.connect(self.changed_since_save)
 
 # Syntax Highlighting CLASSES ================================================================
+
 
 class python_syntax(QSyntaxHighlighter):
 	""" Highlights regular python syntax"""
@@ -627,51 +625,6 @@ class python_syntax(QSyntaxHighlighter):
 				index = expression.indexIn(text, index + length)
 
 
-		# !!!! Same as Below with Comment code; this will Freeze the program
-		# need to fix.
-
-		# python_builtin_format = QTextCharFormat()
-		# python_builtin_format.setFontWeight(QFont.Bold)
-		# python_builtin_format.setForeground(self.amber_color)
-
-		# for i in self.python_builtin_function_keywords:
-		# 	expression = QRegExp("\\b" + i + "()\\b")
-		# 	index = expression.indexIn(text)
-
-		# 	while index >= 0:
-		# 		length = expression.matchedLength()
-		# 		self.setFormat(index, length, python_builtin_format)
-		# 		index = expression.indexIn(text)
-
-		# python long comment form;! CURRENTLY CAUSES AN INFINITE LOOP; Buggy
-
-
-		# python_commentL_format = QTextCharFormat()
-		# python_commentL_format.setFontWeight(QFont.Bold)
-		# python_commentL_format.setBackground(self.amber_color)
-		# start_pattern = QRegExp("\"\"\"")
-		# end_pattern = QRegExp("\"\"\"")
-		# commentLength = 0
-		
-		# self.setCurrentBlockState(0)
-
-		# startIndex= 0
-		# if self.previousBlockState() != 1:
-		# 	startIndex = start_pattern.indexIn(text)
-
-		# while startIndex >= 0:
-		# 	endIndex = end_pattern.indexIn(text, startIndex)
-		# 	if endIndex == -1:
-		# 		self.setCurrentBlockState(1)
-		# 		commentLength = text.length() - startIndex
-		# 	else:
-		# 		commentLength = (endIndex - startIndex
-		# 			+ end_pattern.matchedLength())
-
-		# self.setFormat(startIndex, commentLength, python_commentL_format)
-		# startIndex = start_pattern.indexIn(text,
-		# 	startIndex + commentLength)
-
 
 
 
@@ -688,7 +641,7 @@ def main():
 	pycodeapp = QApplication(sys.argv)
 
 	try:
-		with open("PyCodeThemes/PyCodeDefaultStyle.qss") as f:
+		with open("PyCodeThemes/PyCodeOlivia.qss") as f:
 			stylesheet = f.read()
 			pycodeapp.setStyleSheet(stylesheet)
 	
@@ -696,6 +649,8 @@ def main():
 		print "Stylesheet does not exist; falling back to native style"
 
 	editor = PyCodeEditor()
+	# editor.tabinterface.currentWidget().document().contentsChanged.connect(editor.changed_since_save)
+
 	sys.exit(pycodeapp.exec_())
 
 
