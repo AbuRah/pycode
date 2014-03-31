@@ -1,15 +1,19 @@
 import sys, os, time
 
 
-from PySide.QtGui import (QAction, QActionGroup, QMainWindow, QTabWidget, QPlainTextEdit, 
-	QFileDialog, QMessageBox, QApplication, QHBoxLayout, QSyntaxHighlighter, 
-	QFont, QTextCharFormat, QBrush, QColor, QTextEdit, QShortcut, QListView, 
-	QSplitter, QKeySequence, QLineEdit, QDockWidget, QPainter, QDialog, QPalette,
-	QPen, QStatusBar)
+# from PySide.QtGui import (QAction, QActionGroup, QMainWindow, QTabWidget, 
+# 	QPlainTextEdit, 
+# 	QFileDialog, QMessageBox, QApplication, QHBoxLayout, QSyntaxHighlighter, 
+# 	QFont, QTextCharFormat, QBrush, QColor, QTextEdit, QShortcut, QListView, 
+# 	QSplitter, QKeySequence, QLineEdit, QDockWidget, QPainter, QDialog, QPalette,
+# 	QPen, QStatusBar)
 
-from PySide.QtCore import (QSettings, QFileInfo, QSize, QPoint, QFile, 
-	QDir, QIODevice, QRegExp, QThread, SIGNAL)
-from PySide.QtCore import Qt
+# from PySide.QtCore import (QSettings, QFileInfo, QSize, QPoint, QFile, 
+# 	QDir, QIODevice, QRegExp, QThread, SIGNAL)
+
+from PySide.QtCore import *
+from PySide.QtGui import *
+# from PySide.QtCore import Qt
 
 from exceptions import IOError, AttributeError
 
@@ -28,7 +32,7 @@ class PyCodeEditor(QMainWindow):
 	def initUI(self):
 
 
-		# Here define the various actions the program should take e.g. exit, save, close etc.
+# Here define the various actions the program should take e.g. exit, save, close etc.
 
 		self.tabinterface = QTabWidget(self)
 		self.tabinterface.setDocumentMode(True)
@@ -40,6 +44,7 @@ class PyCodeEditor(QMainWindow):
 
 		self.setCentralWidget(self.tabinterface)
 		self.tabinterface.currentWidget().setFocus()
+		python_syntax(self.tabinterface.currentWidget().document())
 
 
 		current_workarea = self.tabinterface.currentWidget()
@@ -255,8 +260,8 @@ class PyCodeEditor(QMainWindow):
 		# I want to condense the following four codes:
 
 
-		move_right_between_tabs = QShortcut(QKeySequence("Ctrl+pgup"), self.tabinterface, 
-									self.tab_seek_right, Qt.WidgetShortcut)
+		move_right_between_tabs = QShortcut(QKeySequence("Ctrl+pgup"),
+		 				self.tabinterface, self.tab_seek_right, Qt.WidgetShortcut)
 		move_right_between_tabs.setAutoRepeat(True)
 
 
@@ -276,7 +281,8 @@ class PyCodeEditor(QMainWindow):
 		close_active_window = QShortcut("Ctrl+Shift+W", self.tabinterface,
 									self.close_window, Qt.WidgetShortcut)
 
-		close_dock = QShortcut(QKeySequence(Qt.Key_Escape), self, self.main_dock_widget.hide, Qt.WidgetShortcut)
+		close_dock = QShortcut(QKeySequence(Qt.Key_Escape), self, 
+							self.main_dock_widget.hide, Qt.WidgetShortcut)
 # TESTING Area for methods ================================================
 
 
@@ -287,7 +293,7 @@ class PyCodeEditor(QMainWindow):
 
 
 # SLOTS
-# ===================================================================================================		
+# =============================================================================	
 
 	def open_file_dialog(self):
 		"""opens file in new tab"""
@@ -542,9 +548,9 @@ class PyCodeEditor(QMainWindow):
 	def changed_since_save(self):
 		"""Makes the tab text turn red if document has been changed since last save"""
 		current_index = self.tabinterface.currentIndex()
-		return self.tabinterface.tabBar().setTabTextColor(current_index, QColor("#fff5ee"))
-		
 
+		return self.tabinterface.tabBar().setTabTextColor(current_index,
+												 QColor("#fff5ee"))
 # SETTINGS/STATE SLOTS ========================================================
 
 	def write_settings(self):
@@ -606,21 +612,69 @@ class NewWindow(PyCodeEditor):
 		self.setGeometry(100, 100, 800, 500)
 		self.show()
 
-# Syntax Highlighting CLASSES ================================================================
+# Syntax Highlighting CLASSES ==================================================
 
 
 class python_syntax(QSyntaxHighlighter):
 	""" Highlights regular python syntax"""
-	
-	#!!! going to need to create a custom search for class, def, etc. keywords.
-	bergundy_color = QColor("#800020")
-	amber_color = QColor("#ffbf00")
 
-	python_basic_keywords = ["for", "in", "while", "print"]
+	def __init__(self, parent=None):
+		super(python_syntax, self).__init__(parent)
+		
+		self.highlighting_rules = []
+
+		keyword = QTextCharFormat()
+		reserved_classes = QTextCharFormat()
+		assignment_operator = QTextCharFormat()
+		number = QTextCharFormat()
+		
+
+		keyword.setForeground(QColor("#ffa812"))
+		keyword.setFontWeight(QFont.Bold)
+		keywords = ["for", "in", "while", "print"]
+
+		for word in keywords:
+			pattern = QRegExp("\\b"+ word +"\\b")
+			rule = HighlightingRule(pattern,keyword)
+			self.highlighting_rules.append(rule)
+
+		reserved_classes.setForeground(QColor("#5d8aa8"))
+		reserved_classes.setFontWeight(QFont.Bold)
+		predefined = ["class", "def", "list", "dict", "tuple"]
+
+		for word in predefined:
+			pattern = QRegExp("\\b"+ word +"\\b")
+			rule = HighlightingRule(pattern,reserved_classes)
+			self.highlighting_rules.append(rule)
+		
+		# assignment operator
+		assignment_operator.setForeground(Qt.darkGreen)
+		assignment_operator.setFontWeight(QFont.Bold)
+		pattern = QRegExp("(<){1,2}-")
+		rule = HighlightingRule(pattern, assignment_operator)
+		self.highlighting_rules.append(rule)
+
+
+		number.setForeground(Qt.darkMagenta)
+		pattern = QRegExp("[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?")
+		pattern.setMinimal(True)
+		rule = HighlightingRule(pattern, number)
+		self.highlighting_rules.append(rule)
+
+	def highlightBlock( self, text ):
+		for rule in self.highlighting_rules:
+			expression = QRegExp( rule.pattern )
+			index = expression.indexIn( text )
+			while index >= 0:
+				length = expression.matchedLength()
+				self.setFormat( index, length, rule.format )
+				index = expression.indexIn( text, index + length )
+		self.setCurrentBlockState( 0 )
+
 
 	# This will hold all well builtin function keywords
 
-	python_builtin_function_keywords = ["abs",	"divmod", "input", "open"]
+	# python_builtin_function_keywords = ["abs",	"divmod", "input", "open"]
 						# "staticmethod",	"all", "enumerate", "int", "ord", 
 						# "str", "any", "eval", "isinstance", "pow", "sum", 
 						# "basestring", "execfile", "issubclass", "print", 
@@ -637,20 +691,12 @@ class python_syntax(QSyntaxHighlighter):
 						# "buffer", "dict", "hex", "object", "slice", "coerce",
 						# "dir", "id", "oct", "sorted", "intern"]
 
-	def highlightBlock(self, text):
-	
-		python_basic_format = QTextCharFormat()
-		python_basic_format.setFontWeight(QFont.Bold)
-		python_basic_format.setForeground(self.amber_color)
-		
-		for i in self.python_basic_keywords:
-			expression = QRegExp("\\b" + i +"\\b")
-			index = expression.indexIn(text)
-		
-			while index >= 0:
-				length = expression.matchedLength()
-				self.setFormat(index, length, python_basic_format)
-				index = expression.indexIn(text, index + length)
+
+class HighlightingRule():
+
+  def __init__( self, pattern, format ):
+    self.pattern = pattern
+    self.format = format
 
 
 
@@ -662,9 +708,7 @@ class python_syntax(QSyntaxHighlighter):
 
 
 
-
-
-#===========================================================================================
+#=============================================================================
 def main():
 	pycodeapp = QApplication(sys.argv)
 
