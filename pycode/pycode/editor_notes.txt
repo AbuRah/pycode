@@ -5,7 +5,6 @@ KNOWN BUGS + ISSUES TO ADDRESS:
 
 2- Syntax highlighter keeps freezing when new code is added. At the moment, Not sure as to why.
 
-3- save state error if pycode is closed with find QDockWidget open
 
 General NOTES:
 ==============
@@ -13,6 +12,8 @@ General NOTES:
 class. EVERY widget inherits from this QWidget class and i've been only looking at the actually widget docs themselves, not seeing the connection between them. This has undoubtedly made the process harder for myself. At least now i know. I will keep it as a reference.
 
 - i think i may need to construct the findbox QDockWidget separately from the actual logic of the find operation.
+
+- use self.settings.clear() during initial construction if settings begins to throw harmless errors
 
 - PySide.QtCore.Qt.NavigationMode can be used to change the tab focus behavior
 
@@ -23,8 +24,7 @@ setup and use.
 
 personal note:- I need to be more aware of scope and referencing when it comes to coding in general.
 
-- I think i should develop a separate module for keyboard shortcuts and syntax highlighting classes. I'm also considering doing the same for class methods though
-that may not pan out correctly.
+- I think i should develop a separate module for keyboard shortcuts and syntax highlighting classes.
 
 - I think i can modify the x button that appears on the tab by creating a custom widget and setting it with QTabBar.setTabButton()/
 	I should consider using a custom QTabBar instead of the built-in one. This should give me much more flexibility in designing & coding it.
@@ -42,22 +42,23 @@ that may not pan out correctly.
 
 In order to implement the build system, i will have to use the os module and learn about the different system command line commands that would run the focused tab document.
 
-- use .Anchorat, .setposition, movepos to manipulate the cursor to select
+- use .Anchor at, .setposition, movepos to manipulate the cursor to select
 
 - i can set background to visible when i put line counting into the text editor.
 
 TO-DO LIST:
 ==========
 
+- allow a untitled tab to appear ONLY when there is no tabs available from previous session. OR get rid of it completely.
+
+- add a cheat sheet for commonly used programs
+
 - add option for dynamic theme switching
 
-- Rewrite the settings definition to NOT use setgeometry.
 
 - allow focus change by using tab ??? <may be unnecessary>???
 
-- Fix settings; it's throwing QVariant errors in console.
-
-- use ESC key to close find bar DockWidget
+- fix find action to highlight found text IN document area
 
 - add options for various layouts
 
@@ -65,7 +66,7 @@ TO-DO LIST:
 
 - Make a command that copies the entire document and prompts the user for a new filename. Use the QFile object.
 
-- need to be able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
+- add line and column count to status bar
 
 - successfully fix and implement syntax highlighting
 
@@ -80,10 +81,13 @@ TO-DO LIST:
 
 - add autosave feature
 
-- use QThread to check if document has been modified
+- use QThread to check if document has been modified * may not be necessary
 
 UPDATES SINCE LAST GIT COMMIT:
 ==============================
+- able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
+- fix QShortcut throwing Ambiguously activated signal.
+- Rewrite the settings definition to NOT use setgeometry.
 
 NOTED FIXES:
 ==============
@@ -100,6 +104,8 @@ NOTED FIXES:
 - Figured out that Ctrl+W does in fact close the focused tab. I was deceived due to there being no clear difference between the newly opened tabs, and the current tab in focus.
 
 -syntax highlighter works for all newly constructed tabs
+- use ESC key to close find bar DockWidget
+- Fix settings; it's throwing QVariant errors in console.
 
 - got rid of frame for main textedit area
 - reopen last tab ctrl+shift+T
