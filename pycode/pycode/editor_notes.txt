@@ -5,6 +5,9 @@ KNOWN BUGS + ISSUES TO ADDRESS:
 
 2- Syntax highlighter keeps freezing when new code is added. At the moment, Not sure as to why.
 
+Considerations for Layout of Code:
+=================================
+- Pycode main area should ONLY construct the main interface.
 
 General NOTES:
 ==============
@@ -46,15 +49,29 @@ In order to implement the build system, i will have to use the os module and lea
 
 - i can set background to visible when i put line counting into the text editor.
 
+- use tabCloseRequested signal to make the close button on tabs functional
+
+- 
+
 TO-DO LIST:
 ==========
+- need to set uncheckable option which will return the current document back to plaintext a.k.a no syntax highlighting
+- need to have the text editor automatically recognize file types by extension and set the appropriate syntax highlighting
+- add line count using the textDocument.lineCount() method with a generator.
+- add code folding
 
 - allow a untitled tab to appear ONLY when there is no tabs available from previous session. OR get rid of it completely.
+
+- add more complex syntax highlighting code
+
+-get started on adding common shortcut and document abilities. Reasearch and write a list on the most coventional ones i.e. common functionality e.g.
+deleting a line, cutting out a line, moving blocks of text etc.
 
 - add a cheat sheet for commonly used programs
 
 - add option for dynamic theme switching
 
+- set font options and build more functionality
 
 - allow focus change by using tab ??? <may be unnecessary>???
 
@@ -155,3 +172,23 @@ Custom_Layouts: Add custom layouts
 
 Encoding: Add functionality for all types of encoding
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+Project ideas:
+
+embedded linux
+CMS
+A few different websites
+Web Browser
+write a program that writes ISO's to USB disks
