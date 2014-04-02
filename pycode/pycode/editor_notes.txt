@@ -1,31 +1,15 @@
-KNOWN BUGS + ISSUES TO ADDRESS:
-====================
-
-1- Close button on tab does NOT close the tab window.
-
-2- Syntax highlighter keeps freezing when new code is added. At the moment, Not sure as to why.
-
-Considerations for Layout of Code:
-=================================
-- Pycode main area should ONLY construct the main interface.
-
 General NOTES:
 ==============
-- I've been struggling with getting this text editor to do what i want it to due to the ignorance on my part of the built-in inherited functions from the QWidget
-class. EVERY widget inherits from this QWidget class and i've been only looking at the actually widget docs themselves, not seeing the connection between them. This has undoubtedly made the process harder for myself. At least now i know. I will keep it as a reference.
+=BASE CLASSES OTHERS INHERIT FROM
+QWIDGET,QOBJECT,QFRAME, and Qt module for misc functions, attrs, etc.
 
 - i think i may need to construct the findbox QDockWidget separately from the actual logic of the find operation.
 
-- use self.settings.clear() during initial construction if settings begins to throw harmless errors
+- use self.settings.clear() during initial construction if settings begins to throw bothersome errors
 
 - PySide.QtCore.Qt.NavigationMode can be used to change the tab focus behavior
 
-!IMPORTANT: I believe there is a major lack of foresight regarding my use of root to perform the tests. I know, quite glibly, the root user env may affect 
-setup and use.
-
 !- I plan on making the whole editor customizable. I will get to the style and various layout options when the CORE functionality is set and stable.
-
-personal note:- I need to be more aware of scope and referencing when it comes to coding in general.
 
 - I think i should develop a separate module for keyboard shortcuts and syntax highlighting classes.
 
@@ -35,7 +19,6 @@ personal note:- I need to be more aware of scope and referencing when it comes t
 - Later on i can make the shortcuts customizable using the isEnabled() method of the QShortcut class.
 
 - need to find a way to condense the tab width actions... 
-
 
 - i could leave off inializing a new document automatically and instead start the app with a no open tabs.
 
@@ -48,18 +31,20 @@ In order to implement the build system, i will have to use the os module and lea
 - use .Anchor at, .setposition, movepos to manipulate the cursor to select
 
 - i can set background to visible when i put line counting into the text editor.
+- i'm having an issue with making statusbar and file work specifically for ONE text document at a time. Instead, what is occurring is a menuBar, and StatusBar that
+is all-encompassing. So, as a result, whatever setting i put forth for one text document displays settings that are incorrect for the others. I believe this is due to it being the child of the MainWindow. This makes it a SHARED MENU. Exactly the problem i'm having at the moment. I think I'll have to make what seems like
+a new tab text document BUT, keep it within the same window and make a new MenuBar and StatusBar children for that specific text document.
 
-- use tabCloseRequested signal to make the close button on tabs functional
-
-- 
-
+- In order to have a file menu only represent one tab page at a time, i've decided to make the initial menu and status bars classes. They should be constructed and added to new tab pages, whether opened as previous files or new files. However, the tabinterface must remain constant. I want the transition to be seemless.The user musn't notice any flickering or change. Or, i could make One menubar shared and make the necessary menu's children of each tab page.
+- i should make this class inherit QPlainTextEdit instead of QWidget.
 TO-DO LIST:
 ==========
-- need to set uncheckable option which will return the current document back to plaintext a.k.a no syntax highlighting
+- need to make syntax toggle from menu specific to the current document.Currently, if it is checked it will appear checked even if the current textdocument is not using the specified syntax highlighting.
+- check for what selfSaveState method does. 
 - need to have the text editor automatically recognize file types by extension and set the appropriate syntax highlighting
 - add line count using the textDocument.lineCount() method with a generator.
 - add code folding
-
+- add action grouping for syntax highlighting
 - allow a untitled tab to appear ONLY when there is no tabs available from previous session. OR get rid of it completely.
 
 - add more complex syntax highlighting code
@@ -73,8 +58,6 @@ deleting a line, cutting out a line, moving blocks of text etc.
 
 - set font options and build more functionality
 
-- allow focus change by using tab ??? <may be unnecessary>???
-
 - fix find action to highlight found text IN document area
 
 - add options for various layouts
@@ -85,12 +68,8 @@ deleting a line, cutting out a line, moving blocks of text etc.
 
 - add line and column count to status bar
 
-- successfully fix and implement syntax highlighting
-
-- fix tab button not closing tab
-
 - I will, Inshallah, use QtGui.QCompleter to implement the auto-complete function based upon pre-defined item models. This will automatically look for the commonly
-	known blocks of code and finish fill it in for the user.
+	known blocks of code and fill it in for the user.
 
 - fix the pgdn fail to recognize bug
 
@@ -98,13 +77,8 @@ deleting a line, cutting out a line, moving blocks of text etc.
 
 - add autosave feature
 
-- use QThread to check if document has been modified * may not be necessary
-
 UPDATES SINCE LAST GIT COMMIT:
 ==============================
-- able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
-- fix QShortcut throwing Ambiguously activated signal.
-- Rewrite the settings definition to NOT use setgeometry.
 
 NOTED FIXES:
 ==============
@@ -120,6 +94,9 @@ NOTED FIXES:
 
 - Figured out that Ctrl+W does in fact close the focused tab. I was deceived due to there being no clear difference between the newly opened tabs, and the current tab in focus.
 
+- able to reopen a closed application with the previous work state automatically loaded. i.e. same number of tabs and settings
+- fix QShortcut throwing Ambiguously activated signal.
+- Rewrite the settings definition to NOT use setgeometry.
 -syntax highlighter works for all newly constructed tabs
 - use ESC key to close find bar DockWidget
 - Fix settings; it's throwing QVariant errors in console.

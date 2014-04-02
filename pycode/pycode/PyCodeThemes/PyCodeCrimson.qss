@@ -19,6 +19,10 @@ QTabWidget {
 
 }
 
+QLabel {
+  color: #faebd7;
+}
+
 QMainWindow {
   background-color: #0f0f0f;
   border-color: #414a4c;

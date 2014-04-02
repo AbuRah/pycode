@@ -42,6 +42,9 @@ class PyCodeActions():
 		self.splitL = QAction("Two Windows", parent)
 		self.gridL = QAction("Four windows", parent)
 
+		self.pythonSyn = QAction("Python", parent)
+		self.plainSyn = QAction("PlainText", parent)
+
 		# Set menu shortcuts
 		self.exitAct.setShortcut("Ctrl+Q")
 		self.saveAct.setShortcut("Ctrl+S")
@@ -80,17 +83,7 @@ class PyCodeActions():
 		self.cutAct.setStatusTip("Copy text to clipboardthen remove from tab page")
 		self.pasteAct.setStatusTip("Paste text in clipboard to paself.self.self.self.self.self.self.ge")
 
-
 		# set Action Checkable
 		self.bolden.setCheckable(True)
-
-		# Action Groups go here
-		self.syntaxG = QActionGroup(parent)
-		syntaxG = self.syntaxG
-		# Action Group Specific Actions
-		self.pythonSyn = QAction("Python", syntaxG)
-		self.plainSyn = QAction("PlainText", syntaxG)
-
-		# Action Group checkable
 		self.pythonSyn.setCheckable(True)
 		self.plainSyn.setCheckable(True)

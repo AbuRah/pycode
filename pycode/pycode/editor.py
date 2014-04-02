@@ -10,7 +10,7 @@ from PyCodeShortcuts import *
 
 
 
-class PyCodeEditor(QMainWindow):
+class PyCodeEditor(QWidget):
 	
 	_CLOSED_TAB_LIST = []
 
@@ -18,11 +18,11 @@ class PyCodeEditor(QMainWindow):
 		super(PyCodeEditor, self).__init__(parent)
 		
 		self.initUI()
+		self.setStyleSheet("""QStatusBar::item{border: none;}""")
+
 		self.settings = None
 		self.setWindowTitle("PyCode Text Editor")
 
-
-	
 	def initUI(self):
 
 		self.TAB_INTERFACE = QTabWidget()
@@ -33,11 +33,10 @@ class PyCodeEditor(QMainWindow):
 		self.TAB_INTERFACE.setElideMode(Qt.ElideRight)
 		self.TAB_INTERFACE.setFocusPolicy(Qt.NoFocus)
 		self.TAB_INTERFACE.currentWidget().setFocus()
+		# self.setCentralWidget(self.TAB_INTERFACE)
 
 
-		CURRENT_WORKAREA = self.TAB_INTERFACE.currentWidget()
-
-
+# QAction Signals and connections===============================================
 		ALL_ACTIONS = PyCodeActions(self)
 		ALL_ACTIONS.exitAct.triggered.connect(self.exit_event)
 		ALL_ACTIONS.saveAct.triggered.connect(self.save_event)
@@ -57,15 +56,11 @@ class PyCodeEditor(QMainWindow):
 		ALL_ACTIONS.closeF.triggered.connect(self.close_tab)
 		ALL_ACTIONS.closeW.triggered.connect(self.close_window)
 		ALL_ACTIONS.findAct.triggered.connect(self.find_text)
+		self.TAB_INTERFACE.tabCloseRequested.connect(self.close_tab)
+		self.TAB_INTERFACE.currentChanged.connect(self.modified_since_save)
 
-		ALL_ACTIONS.pythonSyn.toggled.connect(self.python_syntax)
-		ALL_ACTIONS.plainSyn.toggled.connect(self.no_syntax)
-
-
-
-		self.setCentralWidget(self.TAB_INTERFACE)
-
-
+		ALL_ACTIONS.pythonSyn.triggered.connect(self.python_syntax)
+		ALL_ACTIONS.plainSyn.triggered.connect(self.plain_text)
 		
 
 		
@@ -74,12 +69,12 @@ class PyCodeEditor(QMainWindow):
 
 # MENUBAR Specific ==================================================
 		# CREATE MENUS HERE
-		mainbar = self.menuBar()
-		filemenu = mainbar.addMenu("&File")
-		editmenu = mainbar.addMenu("Edit")
-		viewmenu = mainbar.addMenu("View")
-		toolmenu = mainbar.addMenu("Tools")
-		preferences = mainbar.addMenu("Preferences")
+		self.mainbar = QMenuBar()
+		filemenu = self.mainbar.addMenu("&File")
+		editmenu = self.mainbar.addMenu("Edit")
+		viewmenu = self.mainbar.addMenu("View")
+		toolmenu = self.mainbar.addMenu("Tools")
+		preferences = self.mainbar.addMenu("Preferences")
 		
 		# FILE MENU
 		filemenu.addAction(ALL_ACTIONS.newF)
@@ -131,35 +126,42 @@ class PyCodeEditor(QMainWindow):
 		
 
 # STATUSBAR =====================================================
-		status = self.statusBar()
-		status.showMessage("Ready", 4000)
-		# status.addPermamentWidget() <--- add syntax indicator here using
+		self.status = QStatusBar()
+		self.status.showMessage("Ready", 4000)
+		
+		self.line_count = QLabel()
+		self.current_syntax = QLabel("PlainText")
+		self.status.addPermanentWidget(self.current_syntax)
+
+
 
 # DockWidget Area ==============================================================
 
-		
+		# this is broken at the moment		
 		self.main_dock_widget = QDockWidget(self)
 		self.main_dock_widget.setAllowedAreas(Qt.BottomDockWidgetArea)
 		self.main_dock_widget.setFloating(False)
 		self.main_dock_widget.setObjectName('Main Dock')
-		self.addDockWidget(Qt.BottomDockWidgetArea, self.main_dock_widget)
+		# self.addDockWidget(Qt.BottomDockWidgetArea, self.main_dock_widget)
 		self.main_dock_widget.hide()
 
-# LAYOUT AND FINAL INITIAL SETUP======================================
-
-		# self.mainlayout = QHBoxLayout()
-		# self.mainlayout.addWidget(self.TAB_INTERFACE)
-		# self.setLayout(self.mainlayout)
 
 # SHORTCUT ==================================================================
 		ALL_SHORTCUTS = PyCodeShortcuts(self.TAB_INTERFACE)
-
 		ALL_SHORTCUTS.move_right_between_tabs.activated.connect(self.tab_seek_right)
 		ALL_SHORTCUTS.move_left_between_tabs.activated.connect(self.tab_seek_left)
 		ALL_SHORTCUTS.move_right_between_tabs2.activated.connect(self.tab_seek_right)
 		ALL_SHORTCUTS.close_active_window.activated.connect(self.close_window)
 		ALL_SHORTCUTS.close_dock.activated.connect(self.main_dock_widget.hide)
 		
+# LAYOUT AND FINAL INITIAL SETUP======================================
+		# Here i will set-up the newtab class as needed
+		self.mainlayout = QVBoxLayout()
+		self.mainlayout.addWidget(self.mainbar)
+		self.mainlayout.addWidget(self.TAB_INTERFACE)
+		self.mainlayout.addWidget(self.status)
+		self.setLayout(self.mainlayout)
+		# self.setCentralWidget(self.mainlayout)
 
 # SLOTS
 # =============================================================================	
@@ -205,9 +207,8 @@ class PyCodeEditor(QMainWindow):
 
 		new_workarea = QPlainTextEdit(self.TAB_INTERFACE)
 		PlainText(new_workarea.document())
-		new_workarea.setFocus()
 		return self.TAB_INTERFACE.addTab(new_workarea, "Untitled")
-	
+
 	def new_window(self):
 		"""opens a completely new window."""
 		self.new_window_instance = PyCodeEditor()
@@ -260,7 +261,6 @@ class PyCodeEditor(QMainWindow):
 		else:
 			return self.save_file_as()
 
-
 	def save_file_as(self):
 		"""Save current file as"""
 
@@ -293,7 +293,6 @@ class PyCodeEditor(QMainWindow):
 		"""Exits without prompting"""
 		self.write_settings()
 		sys.exit()
-		# self.close()
 
 	def exit_message(self):
 		"""Causes a message box specific to closing"""
@@ -336,7 +335,6 @@ class PyCodeEditor(QMainWindow):
 		currentTab = self.TAB_INTERFACE.currentWidget()
 		currentTab.paste()
 
-
 	def undo_last(self):
 		"""Steps back in operation history"""
 		currentTab = self.TAB_INTERFACE.currentWidget()
@@ -362,44 +360,26 @@ class PyCodeEditor(QMainWindow):
 		return self.TAB_INTERFACE.currentWidget().setTabStopWidth(80)
 
 	def python_syntax(self):
-		"""sets selected syntax by user for the current document in focus"""
-		
-		current_index = self.TAB_INTERFACE.currentIndex()
-		current_filename = self.TAB_INTERFACE.tabText(current_index)
+		"""sets python syntax highlighting for textdocument in focus"""
 		current_workarea = self.TAB_INTERFACE.currentWidget()
-		current_data = current_workarea.toPlainText()
+		PythonSyntax(current_workarea.document())
+		self.current_syntax.setText("Python")
 
-		
-		new_workarea = QPlainTextEdit(self.TAB_INTERFACE)
-		new_workarea.setPlainText(current_data)
-		PythonSyntax(new_workarea.document())
+	def plain_text(self):
+		"""Sets plain text syntax highlighting for textdocument in focus"""
+		current_workarea = self.TAB_INTERFACE.currentWidget()
+		PlainText(current_workarea.document())
+		self.current_syntax.setText("PlainText")
 
-		self.TAB_INTERFACE.removeTab(current_index)
-		self.TAB_INTERFACE.insertTab(current_index, new_workarea, current_filename)
-		self.TAB_INTERFACE.widget(current_index).setFocus()
-
-	def no_syntax(self):
-
-		current_index = self.TAB_INTERFACE.currentIndex()
-		current_filename = self.TAB_INTERFACE.tabText(current_index)
-		current_data = self.TAB_INTERFACE.currentWidget().toPlainText()
-		
-		new_workarea = QPlainTextEdit(self.TAB_INTERFACE)
-		new_workarea.setPlainText(current_data)
-
-		self.TAB_INTERFACE.removeTab(current_index)
-		self.TAB_INTERFACE.insertTab(current_index, new_workarea, current_filename)
-		self.TAB_INTERFACE.widget(current_index).setFocus()
 
 #INTERNAL SLOTS=================================================================
 	def tab_seek_right(self):
 		"""Moves focus one tab to the right, back to start if at the end"""
 
-		total_open_tabs = self.TAB_INTERFACE.count()
-
+		total_tabs = self.TAB_INTERFACE.count()
 		focused_tab_index = self.TAB_INTERFACE.currentIndex()
 
-		if focused_tab_index == total_open_tabs - 1:
+		if focused_tab_index == total_tabs - 1:
 			focused_tab_index = 0
 
 		else:
@@ -411,12 +391,11 @@ class PyCodeEditor(QMainWindow):
 	def tab_seek_left(self):
 		"""Moves focus one tab to the left, moves to end if at the start"""
 
-		total_open_tabs = self.TAB_INTERFACE.count()
-
+		total_tabs = self.TAB_INTERFACE.count()
 		focused_tab_index = self.TAB_INTERFACE.currentIndex()
 
 		if focused_tab_index == 0:
-			focused_tab_index = total_open_tabs - 1
+			focused_tab_index = total_tabs - 1
 
 		else:
 			focused_tab_index -= 1
@@ -448,7 +427,7 @@ class PyCodeEditor(QMainWindow):
 		self.settings.endArray()
 		self.settings.setValue("Position", self.pos())
 		self.settings.setValue("Size", self.size())
-		self.settings.setValue("Window State", self.saveState())
+		# self.settings.setValue("Window State", self.saveState())
 		self.settings.endGroup()
 
 
@@ -477,20 +456,16 @@ class PyCodeEditor(QMainWindow):
 		self.settings.endArray()
 		self.move(self.settings.value("Position"))
 		self.resize(self.settings.value("Size"))
-		self.restoreState(self.settings.value("Window State"))
+		# self.restoreState(self.settings.value("Window State"))
 		self.settings.endGroup()
 
 
 
 #Classes =====================================================================
-
-class NewWindow(PyCodeEditor):
-
+class NewTab(QWidget):
 	def __init__(self, parent=None):
-		super(NewWindow, self).__init__(parent)
-		self.initUI()
-		self.setGeometry(100, 100, 800, 500)
-		self.show()
+		super(NewTab, self).__init__(parent)
+
 
 #MAIN =========================================================================
 
@@ -506,6 +481,7 @@ def main():
 		print "Stylesheet does not exist; falling back to native style"
 
 	editor = PyCodeEditor()
+	# need to put a try/except statement here
 	editor.read_settings()
 	editor.show()
 	sys.exit(pycodeapp.exec_())
