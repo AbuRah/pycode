@@ -38,11 +38,14 @@ a new tab text document BUT, keep it within the same window and make a new MenuB
 TO-DO LIST:
 ==========
 - need to make syntax toggle from menu specific to the current document.Currently, if it is checked it will appear checked even if the current textdocument is not using the specified syntax highlighting.
+
+- save the _closed tab list in settings proper to use after close
+
 - check for what selfSaveState method does. 
 - need to have the text editor automatically recognize file types by extension and set the appropriate syntax highlighting
-- add line count using the textDocument.lineCount() method with a generator.
+- add line count using the textDocument.lineCount().
 - add code folding
-- add action grouping for syntax highlighting
+- create custom file dialog
 - allow a untitled tab to appear ONLY when there is no tabs available from previous session. OR get rid of it completely.
 
 - add more complex syntax highlighting code

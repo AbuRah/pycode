@@ -20,9 +20,9 @@ QTabWidget {
 }
 
 
-
 QLabel {
   color: #faebd7;
+  font-size: 11px;
 }
 
 QMainWindow {
@@ -55,6 +55,7 @@ QTabWidget * {
   color: #848482;
 }
 
+
 QPlainTextEdit { 
   border-style: None;
   background-color: #800020;
@@ -63,11 +64,14 @@ QPlainTextEdit {
 QStatusBar {
   background-color: #0f0f0f;
   color: white;
+  font-size: 11px;
 }
 
 QTabBar {
   background-color: #0f0f0f; 
   border-color: #000;
+  font-weight: 400;
+  font-family: "serif";
 
 }
 

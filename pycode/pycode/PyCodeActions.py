@@ -57,12 +57,12 @@ class PyCodeActions():
 		self.bolden.setShortcut("Ctrl+B")
 		self.copyAct.setShortcut("Ctrl+C")
 		self.findAct.setShortcut("Ctrl+F")
-		self.undoAct.setShortcut("Crtl+Z")
+		self.undoAct.setShortcut("Ctrl+Z")
 		self.reopenT.setShortcut("Ctrl+Shift+T")
 		self.findR.setShortcut("Ctrl+F")
 		self.redoAct.setShortcut("Ctrl+Shift+Z")
 		self.pasteAct.setShortcut("Ctrl+V")
-		self.cutAct.setShortcut("Ctrlself.self.self.self.self.self.+X")
+		self.cutAct.setShortcut("Ctrl+X")
 
 		# shorcut Contexts
 		self.closeW.setShortcutContext(Qt.WidgetShortcut)
@@ -81,7 +81,7 @@ class PyCodeActions():
 		self.copyAct.setStatusTip("copy current Selection")
 		self.findAct.setStatusTip("Find indicated text within current document")
 		self.cutAct.setStatusTip("Copy text to clipboardthen remove from tab page")
-		self.pasteAct.setStatusTip("Paste text in clipboard to paself.self.self.self.self.self.self.ge")
+		self.pasteAct.setStatusTip("Paste text in clipboard to page")
 
 		# set Action Checkable
 		self.bolden.setCheckable(True)

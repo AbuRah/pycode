@@ -2,6 +2,7 @@
 
 from PySide.QtGui import QShortcut, QKeySequence
 from PySide.QtCore import Qt
+
 class PyCodeShortcuts():
 
 	def __init__(self, parent=None):
@@ -17,11 +18,11 @@ class PyCodeShortcuts():
 		self.close_active_window = QShortcut("Ctrl+Shift+W", parent)
 		self.close_dock = QShortcut(QKeySequence(Qt.Key_Escape), parent)
 
-
-		
-
-
 		# i should probly set this in the main module
 		self.move_left_between_tabs.setAutoRepeat(True)
 		self.move_right_between_tabs.setAutoRepeat(True)
+
+
+		
+
 
