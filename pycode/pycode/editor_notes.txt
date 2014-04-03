@@ -37,6 +37,7 @@ a new tab text document BUT, keep it within the same window and make a new MenuB
 
 - In order to have a file menu only represent one tab page at a time, i've decided to make the initial menu and status bars classes. They should be constructed and added to new tab pages, whether opened as previous files or new files. However, the tabinterface must remain constant. I want the transition to be seemless.The user musn't notice any flickering or change. Or, i could make One menubar shared and make the necessary menu's children of each tab page.
 - i should make this class inherit QPlainTextEdit instead of QWidget.
+- i think I should use a stackedLayout instead. This way i can create a menu and status bar for a specific page while making it look like one.
 TO-DO LIST:
 ==========
 - need to make syntax toggle from menu specific to the current document.Currently, if it is checked it will appear checked even if the current textdocument is not using the specified syntax highlighting.

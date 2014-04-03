@@ -97,7 +97,7 @@ class PythonSyntax(QSyntaxHighlighter):
 		self.highlighting_rules.append(rule)
 
 		commentF = QTextCharFormat()
-		commentF.setForeground(QColor("#08457e"))
+		commentF.setForeground(QColor("#f0f8ff"))
 		pattern = QRegExp("#[^\n]*")
 		rule = HighlightingRule(pattern, commentF)
 		self.highlighting_rules.append(rule)
