@@ -87,3 +87,8 @@ class PyCodeActions():
 		self.bolden.setCheckable(True)
 		self.pythonSyn.setCheckable(True)
 		self.plainSyn.setCheckable(True)
+
+		self.syntax_group = QActionGroup(parent)
+		SYNTAX_GROUP = self.syntax_group
+		SYNTAX_GROUP.addAction(self.pythonSyn)
+		SYNTAX_GROUP.addAction(self.plainSyn)

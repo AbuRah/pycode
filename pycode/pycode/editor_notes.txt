@@ -35,9 +35,6 @@ In order to implement the build system, i will have to use the os module and lea
 is all-encompassing. So, as a result, whatever setting i put forth for one text document displays settings that are incorrect for the others. I believe this is due to it being the child of the MainWindow. This makes it a SHARED MENU. Exactly the problem i'm having at the moment. I think I'll have to make what seems like
 a new tab text document BUT, keep it within the same window and make a new MenuBar and StatusBar children for that specific text document.
 
-- In order to have a file menu only represent one tab page at a time, i've decided to make the initial menu and status bars classes. They should be constructed and added to new tab pages, whether opened as previous files or new files. However, the tabinterface must remain constant. I want the transition to be seemless.The user musn't notice any flickering or change. Or, i could make One menubar shared and make the necessary menu's children of each tab page.
-- i should make this class inherit QPlainTextEdit instead of QWidget.
-- i think I should use a stackedLayout instead. This way i can create a menu and status bar for a specific page while making it look like one.
 TO-DO LIST:
 ==========
 - need to make syntax toggle from menu specific to the current document.Currently, if it is checked it will appear checked even if the current textdocument is not using the specified syntax highlighting.
@@ -61,13 +58,11 @@ deleting a line, cutting out a line, moving blocks of text etc.
 
 - fix find action to highlight found text IN document area
 
-- add options for various layouts
-
 - utilize a layout for the main window
 
 - Make a command that copies the entire document and prompts the user for a new filename. Use the QFile object.
 
-- add line and column count to status bar
+- add column count to status bar
 
 - I will, Inshallah, use QtGui.QCompleter to implement the auto-complete function based upon pre-defined item models. This will automatically look for the commonly
 	known blocks of code and fill it in for the user.
@@ -80,11 +75,11 @@ deleting a line, cutting out a line, moving blocks of text etc.
 
 UPDATES SINCE LAST GIT COMMIT:
 ==============================
-
+- added current cursor line pos
 NOTED FIXES:
 ==============
 - fixed ambigious shortcut overload. Most specify focused window to close
-
+- I was finally able to get the status bar to reflect the current tab page instead of the just the last action done.
 - for now, QPlainTextEdit is fine.
 
 - I was able to set the focus to the text edit as soon as the app is opened.

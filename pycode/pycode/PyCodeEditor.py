@@ -13,6 +13,7 @@ from PyCodeShortcuts import *
 class PyCodeEditor(QMainWindow):
 	
 	_CLOSED_TAB_LIST = []
+	_SYNTAX_DICT = {}
 
 	def __init__(self, parent=None):
 		super(PyCodeEditor, self).__init__(parent)
@@ -36,8 +37,10 @@ class PyCodeEditor(QMainWindow):
 		self.setCentralWidget(self.TAB_INTERFACE)
 
 
+
 # QAction Signals and connections===============================================
-		ALL_ACTIONS = PyCodeActions(self)
+		self.ALL_ACTIONS = PyCodeActions(self)
+		ALL_ACTIONS = self.ALL_ACTIONS
 		ALL_ACTIONS.exitAct.triggered.connect(self.exit_event)
 		ALL_ACTIONS.saveAct.triggered.connect(self.save_event)
 		ALL_ACTIONS.saveasAct.triggered.connect(self.save_file_as)
@@ -59,15 +62,16 @@ class PyCodeEditor(QMainWindow):
 
 		ALL_ACTIONS.pythonSyn.triggered.connect(self.python_syntax)
 		ALL_ACTIONS.plainSyn.triggered.connect(self.plain_text)
-		
+
 		self.TAB_INTERFACE.tabCloseRequested.connect(self.close_tab)
+		
 		
 		self.CURRENT_TEXT_EDIT = self.TAB_INTERFACE.currentWidget()
 		self.CURRENT_TEXT_DOC = self.CURRENT_TEXT_EDIT.document()
 		self.CURRENT_TEXT_CURSOR = self.CURRENT_TEXT_EDIT.textCursor()
 		
-		self.TAB_INTERFACE.currentChanged.connect(self.set_file_and_status_bar)
 		self.CURRENT_TEXT_EDIT.cursorPositionChanged.connect(self.set_current_line)
+		self.TAB_INTERFACE.currentChanged.connect(self.set_file_and_status_bar)
 
 # MENUBAR Specific ==================================================
 		# CREATE MENUS HERE
@@ -104,12 +108,13 @@ class PyCodeEditor(QMainWindow):
 
 		# VIEW MENU
 		layoutmenu = viewmenu.addMenu("Layouts")
-		syntaxmenu = viewmenu.addMenu("syntax")
-		
+		self.syntaxmenu = viewmenu.addMenu("syntax")
+		syntaxmenu = self.syntaxmenu
+
 		layoutmenu.addAction(ALL_ACTIONS.plainL)
 		layoutmenu.addAction(ALL_ACTIONS.splitL)
 		layoutmenu.addAction(ALL_ACTIONS.gridL)
-		
+		viewmenu.addSeparator()
 		syntaxmenu.addAction(ALL_ACTIONS.pythonSyn)
 		syntaxmenu.addAction(ALL_ACTIONS.plainSyn)
 
@@ -132,7 +137,7 @@ class PyCodeEditor(QMainWindow):
 		self.status.showMessage("Ready", 4000)
 		
 		self.line_count = QLabel("Line: 1")
-		self.current_syntax = QLabel("PlainText")
+		self.current_syntax = QLabel("")
 		self.status.addPermanentWidget(self.line_count)
 		self.status.addPermanentWidget(self.current_syntax)
 
@@ -172,12 +177,21 @@ class PyCodeEditor(QMainWindow):
 	def set_file_and_status_bar(self):
 		"""Make all menu and statubs bar options reflect current document"""
 
+		ALL_ACTIONS = self.ALL_ACTIONS
+		self.CURRENT_INDEX = self.TAB_INTERFACE.currentIndex()
 		self.CURRENT_TEXT_EDIT = self.TAB_INTERFACE.currentWidget()
 		self.CURRENT_TEXT_DOC = self.CURRENT_TEXT_EDIT.document()
 		self.CURRENT_TEXT_CURSOR = self.CURRENT_TEXT_EDIT.textCursor()
 		
 		self.CURRENT_TEXT_DOC.contentsChanged.connect(self.modified_since_save)
 		self.CURRENT_TEXT_EDIT.cursorPositionChanged.connect(self.set_current_line)
+
+
+		try:
+			self.current_syntax.setText(self._SYNTAX_DICT.get(self.CURRENT_INDEX))
+
+		except AttributeError:
+			pass
 
 #INTERNAL SLOTS=================================================================
 	def tab_seek_right(self):
@@ -214,13 +228,16 @@ class PyCodeEditor(QMainWindow):
 	def modified_since_save(self):
 		"""Causes tab text to change if modified since last save"""
 		current_index = self.TAB_INTERFACE.currentIndex()
-		print "testing 123"
 		return self.TAB_INTERFACE.tabBar().setTabTextColor(current_index,
 												 QColor("#fff5ee"))
 
 	def set_current_line(self):
 		CURRENT_TEXT_CURSOR = self.TAB_INTERFACE.currentWidget().textCursor()
-		return self.line_count.setText("Line: %d" % CURRENT_TEXT_CURSOR.blockNumber())
+		return self.line_count.setText("Line: %d" % (CURRENT_TEXT_CURSOR.blockNumber()+1))
+
+	def set_current_syntax(self):
+		ALL_ACTIONS = self.ALL_ACTIONS
+		return self.current_syntax.setText(ALL_ACTIONS.syntax_group.checkedAction().text())
 
 # FILEMENU SLOTS===============================================================
 	def open_file_dialog(self):
@@ -423,12 +440,14 @@ class PyCodeEditor(QMainWindow):
 		"""sets python syntax highlighting for textdocument in focus"""
 		current_workarea = self.TAB_INTERFACE.currentWidget()
 		PythonSyntax(current_workarea.document())
+		self._SYNTAX_DICT.setdefault(self.TAB_INTERFACE.currentIndex(), "Python")
 		self.current_syntax.setText("Python")
 
 	def plain_text(self):
 		"""Sets plain text syntax highlighting for textdocument in focus"""
 		current_workarea = self.TAB_INTERFACE.currentWidget()
 		PlainText(current_workarea.document())
+		self._SYNTAX_DICT.setdefault(self.TAB_INTERFACE.currentIndex(), "PlainText")
 		self.current_syntax.setText("PlainText")
 
 
