@@ -19,6 +19,10 @@ QTabWidget {
 
 }
 
+QTextCursor::charFormat {
+  background-color: #f4c2c2;
+}
+
 
 QLabel {
   color: #faebd7;

@@ -8,12 +8,14 @@ from SyntaxClasses import *
 from PyCodeActions import *
 from PyCodeShortcuts import *
 from functools import partial
+import re
 
 
 class PyCodeEditor(QMainWindow):
 	
 	_CLOSED_TAB_LIST = []
 	_SYNTAX_DICT = {}
+	# _EXTENSIONS = {".py": "PythonSyntax"}
 
 	def __init__(self, parent=None):
 		super(PyCodeEditor, self).__init__(parent)
@@ -25,8 +27,10 @@ class PyCodeEditor(QMainWindow):
 
 	def initUI(self):
 
-		self.ALL_ACTIONS = PyCodeActions(self)
 
+		self.ALL_ACTIONS = PyCodeActions(self)
+		self.EXT = Extensions()
+		self.EXTENSIONS_LIST = self.EXT.EXT_LIST
 		self.TAB_INTERFACE = QTabWidget(self)
 		self.TAB_INTERFACE.setDocumentMode(True)
 		self.TAB_INTERFACE.setMovable(True)
@@ -41,7 +45,7 @@ class PyCodeEditor(QMainWindow):
 		self.CURRENT_TEXT_CURSOR = self.CURRENT_TEXT_EDIT.textCursor()
 		self.CURRENT_INDEX = self.TAB_INTERFACE.currentIndex()
 
-		# self.CURRENT_TEXT_EDIT.extraSelections.format.setBackground(QColor("#f4c2c2"))
+
 		self.setCentralWidget(self.TAB_INTERFACE)
 
 # QAction Signals and connections===============================================
@@ -67,10 +71,11 @@ class PyCodeEditor(QMainWindow):
 
 		ALL_ACTIONS.pythonSyn.triggered.connect(self.python_syntax)
 		ALL_ACTIONS.plainSyn.triggered.connect(self.plain_text)
+		ALL_ACTIONS.htmlSyn.triggered.connect(self.html_syntax)
 
+		
+		
 		self.TAB_INTERFACE.tabCloseRequested.connect(self.close_tab)
-		
-		
 		self.CURRENT_TEXT_EDIT.cursorPositionChanged.connect(self.column_line_update)
 		self.TAB_INTERFACE.currentChanged.connect(self.set_file_and_status_bar)
 
@@ -119,6 +124,7 @@ class PyCodeEditor(QMainWindow):
 		viewmenu.addSeparator()
 		syntaxmenu.addAction(ALL_ACTIONS.pythonSyn)
 		syntaxmenu.addAction(ALL_ACTIONS.plainSyn)
+		syntaxmenu.addAction(ALL_ACTIONS.htmlSyn)
 
 		# TOOL MENU
 		tabwidth = toolmenu.addMenu("Tab Width")
@@ -160,8 +166,8 @@ class PyCodeEditor(QMainWindow):
 		ALL_SHORTCUTS.close_active_window.activated.connect(self.close_window)
 		ALL_SHORTCUTS.close_dock.activated.connect(self.main_dock_widget.hide)
 		
-# SLOTS
-# MAIN ========================================================================
+# SLOTS ========================================================================
+	
 	def set_file_and_status_bar(self):
 		"""Make all menu and statubs bar options reflect current document"""
 		ALL_ACTIONS = self.ALL_ACTIONS
@@ -173,13 +179,14 @@ class PyCodeEditor(QMainWindow):
 			self.CURRENT_TEXT_DOC = self.CURRENT_TEXT_EDIT.document()
 			self.CURRENT_TEXT_DOC.contentsChanged.connect(self.modified_since_save)
 			self.CURRENT_TEXT_EDIT.cursorPositionChanged.connect(self.column_line_update)
-			self.CURRENT_TEXT_DOC.setDocumentMargin(10)
 		except AttributeError:
-			print "testing..."
+			print "no tab_page available"
 
+		# to be removed after testings
+		self.get_extension()
 		try:
 			self.current_syntax.setText(self._SYNTAX_DICT.get(self.CURRENT_INDEX))
-		
+			
 		except ValueError, KeyError:
 			print "Key or Value missing from Syntax Dict"
 
@@ -229,6 +236,19 @@ class PyCodeEditor(QMainWindow):
 		"""Selects text in find bar when enter is pressed"""
 		self.user_input.setSelection(0, len(self.user_input.text()))
 
+	def get_extension(self):
+		"""Looks for the file file extension and sets appropriate syntax"""
+		file_name = self.TAB_INTERFACE.tabBar().tabText(self.CURRENT_INDEX)
+		if "." in file_name:
+			point = file_name.index(".")
+			extension = file_name[point:]
+
+			if self.EXTENSIONS_LIST.get(extension):
+				self.EXTENSIONS_LIST.get(extension)(self.CURRENT_TEXT_DOC)
+			else:
+				pass
+		else:
+			self.plain_text()
 
 # FILEMENU SLOTS===============================================================
 	def open_file_dialog(self):
@@ -418,17 +438,21 @@ class PyCodeEditor(QMainWindow):
 
 	def python_syntax(self):
 		"""sets python syntax highlighting for textdocument in focus"""
-		current_workarea = self.TAB_INTERFACE.currentWidget()
-		PythonSyntax(current_workarea.document())
-		self._SYNTAX_DICT.setdefault(self.TAB_INTERFACE.currentIndex(), "Python")
+		PythonSyntax(self.CURRENT_TEXT_DOC)
+		self._SYNTAX_DICT[self.CURRENT_INDEX] = "Python"
 		self.current_syntax.setText("Python")
 
 	def plain_text(self):
 		"""Sets plain text syntax highlighting for textdocument in focus"""
-		current_workarea = self.TAB_INTERFACE.currentWidget()
-		PlainText(current_workarea.document())
-		self._SYNTAX_DICT.setdefault(self.TAB_INTERFACE.currentIndex(), "PlainText")
+		PlainText(self.CURRENT_TEXT_DOC)
+		self._SYNTAX_DICT[self.CURRENT_INDEX] = "PlainText"
 		self.current_syntax.setText("PlainText")
+
+	def html_syntax(self):
+		"""sets syntax highlighting to HTML"""
+		HtmlSyntax(self.CURRENT_TEXT_DOC)
+		self._SYNTAX_DICT[self.CURRENT_INDEX] = "HTML"
+		self.current_syntax.setText("HTML") 
 
 # SETTINGS/STATE SLOTS ========================================================
 
@@ -447,6 +471,7 @@ class PyCodeEditor(QMainWindow):
 		self.settings.endArray()
 		self.settings.setValue("Position", self.pos())
 		self.settings.setValue("Size", self.size())
+		# self.settings.setValue("")
 		# self.settings.setValue("Window State", self.saveState())
 		self.settings.endGroup()
 

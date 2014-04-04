@@ -1,7 +1,7 @@
 *.pyc
 .pycode
-editor_notes.txt
 *Bench.py
 *.txt
 test_editor.py
-
+*test*.py
+*.html

@@ -44,6 +44,7 @@ class PyCodeActions():
 
 		self.pythonSyn = QAction("Python", parent)
 		self.plainSyn = QAction("PlainText", parent)
+		self.htmlSyn = QAction("HTML", parent)
 
 		# Set menu shortcuts
 		self.exitAct.setShortcut("Ctrl+Q")
@@ -85,10 +86,3 @@ class PyCodeActions():
 
 		# set Action Checkable
 		self.bolden.setCheckable(True)
-		self.pythonSyn.setCheckable(True)
-		self.plainSyn.setCheckable(True)
-
-		self.syntax_group = QActionGroup(parent)
-		SYNTAX_GROUP = self.syntax_group
-		SYNTAX_GROUP.addAction(self.pythonSyn)
-		SYNTAX_GROUP.addAction(self.plainSyn)

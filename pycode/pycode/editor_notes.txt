@@ -14,11 +14,8 @@ QWIDGET,QOBJECT,QFRAME, and Qt module for misc functions, attrs, etc.
 - I think i should develop a separate module for keyboard shortcuts and syntax highlighting classes.
 
 - I think i can modify the x button that appears on the tab by creating a custom widget and setting it with QTabBar.setTabButton()/
-	I should consider using a custom QTabBar instead of the built-in one. This should give me much more flexibility in designing & coding it.
 
 - Later on i can make the shortcuts customizable using the isEnabled() method of the QShortcut class.
-
-- need to find a way to condense the tab width actions... 
 
 - i could leave off inializing a new document automatically and instead start the app with a no open tabs.
 
@@ -28,22 +25,15 @@ QWIDGET,QOBJECT,QFRAME, and Qt module for misc functions, attrs, etc.
 
 In order to implement the build system, i will have to use the os module and learn about the different system command line commands that would run the focused tab document.
 
-- use .Anchor at, .setposition, movepos to manipulate the cursor to select
-
-- i can set background to visible when i put line counting into the text editor.
-- i'm having an issue with making statusbar and file work specifically for ONE text document at a time. Instead, what is occurring is a menuBar, and StatusBar that
-is all-encompassing. So, as a result, whatever setting i put forth for one text document displays settings that are incorrect for the others. I believe this is due to it being the child of the MainWindow. This makes it a SHARED MENU. Exactly the problem i'm having at the moment. I think I'll have to make what seems like
-a new tab text document BUT, keep it within the same window and make a new MenuBar and StatusBar children for that specific text document.
-
 TO-DO LIST:
 ==========
-- need to make syntax toggle from menu specific to the current document.Currently, if it is checked it will appear checked even if the current textdocument is not using the specified syntax highlighting.
-
+- make a setting that will hold the current stylesheet and set it on every reload
+- make a function that adds an check icon to the relevant syntax in the view syntax menu
 - save the _closed tab list in settings proper to use after close
-
+- change char selection color from blue to pink
 - check for what selfSaveState method does. 
-- need to have the text editor automatically recognize file types by extension and set the appropriate syntax highlighting
-- add line count using the textDocument.lineCount().
+- need to have the text editor automatically recognize file types by extension and set the appropriate syntax highlighting. This should be done with a functiion
+that will RegExp through all available syntax highlighting classes and add it as needed.
 - add code folding
 - create custom file dialog
 - allow a untitled tab to appear ONLY when there is no tabs available from previous session. OR get rid of it completely.
@@ -59,13 +49,11 @@ deleting a line, cutting out a line, moving blocks of text etc.
 
 - set font options and build more functionality
 
-- fix find action to highlight found text IN document area
-
 - utilize a layout for the main window
+- make the line/column count update to current tab page as soon as user switches tab page. currently remains the same until user input on new page registers.
 
 - Make a command that copies the entire document and prompts the user for a new filename. Use the QFile object.
-
-- add column count to status bar
+- set focus to newly opened files and tabs.
 
 - I will, Inshallah, use QtGui.QCompleter to implement the auto-complete function based upon pre-defined item models. This will automatically look for the commonly
 	known blocks of code and fill it in for the user.
@@ -78,9 +66,11 @@ deleting a line, cutting out a line, moving blocks of text etc.
 
 UPDATES SINCE LAST GIT COMMIT:
 ==============================
-- added current cursor line pos
 NOTED FIXES:
 ==============
+- added current cursor line pos
+- add column count to status bar
+- fix find action to highlight found text IN document area
 - fixed ambigious shortcut overload. Most specify focused window to close
 - I was finally able to get the status bar to reflect the current tab page instead of the just the last action done.
 - for now, QPlainTextEdit is fine.
