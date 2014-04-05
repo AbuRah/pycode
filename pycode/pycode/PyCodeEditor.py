@@ -14,6 +14,7 @@ import re
 class PyCodeEditor(QMainWindow):
 	
 	_CLOSED_TAB_LIST = []
+	_RECENTLY_OPENED = []
 	_SYNTAX_DICT = {}
 	# _EXTENSIONS = {".py": "PythonSyntax"}
 
@@ -29,8 +30,10 @@ class PyCodeEditor(QMainWindow):
 
 
 		self.ALL_ACTIONS = PyCodeActions(self)
+		
 		self.EXT = Extensions()
 		self.EXTENSIONS_LIST = self.EXT.EXT_LIST
+		
 		self.TAB_INTERFACE = QTabWidget(self)
 		self.TAB_INTERFACE.setDocumentMode(True)
 		self.TAB_INTERFACE.setMovable(True)
@@ -68,6 +71,9 @@ class PyCodeEditor(QMainWindow):
 		ALL_ACTIONS.closeF.triggered.connect(self.close_tab)
 		ALL_ACTIONS.closeW.triggered.connect(self.close_window)
 		ALL_ACTIONS.findAct.triggered.connect(self.find_text)
+		ALL_ACTIONS.status_hideAct.triggered.connect(self.hide_statusbar)
+		ALL_ACTIONS.saveallAct.triggered.connect(self.save_all)
+		ALL_ACTIONS.closeallAct.triggered.connect(self.close_all)
 
 		ALL_ACTIONS.pythonSyn.triggered.connect(self.python_syntax)
 		ALL_ACTIONS.plainSyn.triggered.connect(self.plain_text)
@@ -78,6 +84,7 @@ class PyCodeEditor(QMainWindow):
 		self.TAB_INTERFACE.tabCloseRequested.connect(self.close_tab)
 		self.CURRENT_TEXT_EDIT.cursorPositionChanged.connect(self.column_line_update)
 		self.TAB_INTERFACE.currentChanged.connect(self.set_file_and_status_bar)
+		self.CURRENT_TEXT_EDIT.cursorPositionChanged.connect(self.modified_since_save)
 
 
 
@@ -91,6 +98,7 @@ class PyCodeEditor(QMainWindow):
 		preferences = self.mainbar.addMenu("Preferences")
 		
 		# FILE MENU
+
 		filemenu.addAction(ALL_ACTIONS.newF)
 		filemenu.addAction(ALL_ACTIONS.newW)
 		filemenu.addAction(ALL_ACTIONS.reopenT)
@@ -98,30 +106,41 @@ class PyCodeEditor(QMainWindow):
 		filemenu.addAction(ALL_ACTIONS.openF)
 		filemenu.addAction(ALL_ACTIONS.saveAct)
 		filemenu.addAction(ALL_ACTIONS.saveasAct)
+		filemenu.addAction(ALL_ACTIONS.saveallAct)
+		recent_files = filemenu.addMenu("Open Recent")
+
+		# needs more work
+		for i in self._RECENTLY_OPENED:
+			recent_files.addAction(ALL_ACTIONS.openrecentAct)
+			ALL_ACTIONS.openrecentAct.setText(i)
+
 		filemenu.addSeparator()
 		filemenu.addAction(ALL_ACTIONS.closeW)
 		filemenu.addAction(ALL_ACTIONS.closeF)
+		filemenu.addAction(ALL_ACTIONS.closeallAct)
 		filemenu.addAction(ALL_ACTIONS.exitAct)
 		
 		#EDIT MENU
 		editmenu.addAction(ALL_ACTIONS.findAct)
 		editmenu.addSeparator()
+		editmenu.addAction(ALL_ACTIONS.undoAct)
+		editmenu.addAction(ALL_ACTIONS.redoAct)
+		editmenu.addSeparator()
 		editmenu.addAction(ALL_ACTIONS.copyAct)
 		editmenu.addAction(ALL_ACTIONS.cutAct)
 		editmenu.addAction(ALL_ACTIONS.pasteAct)
-		editmenu.addAction(ALL_ACTIONS.redoAct)
-		editmenu.addAction(ALL_ACTIONS.undoAct)
 		editmenu.addSeparator()
 		editmenu.addAction(ALL_ACTIONS.bolden)
 
 		# VIEW MENU
+		viewmenu.addAction(ALL_ACTIONS.status_hideAct)
+		viewmenu.addSeparator()
 		layoutmenu = viewmenu.addMenu("Layouts")
-		syntaxmenu = viewmenu.addMenu("syntax")
-
 		layoutmenu.addAction(ALL_ACTIONS.plainL)
 		layoutmenu.addAction(ALL_ACTIONS.splitL)
 		layoutmenu.addAction(ALL_ACTIONS.gridL)
 		viewmenu.addSeparator()
+		syntaxmenu = viewmenu.addMenu("syntax")
 		syntaxmenu.addAction(ALL_ACTIONS.pythonSyn)
 		syntaxmenu.addAction(ALL_ACTIONS.plainSyn)
 		syntaxmenu.addAction(ALL_ACTIONS.htmlSyn)
@@ -133,6 +152,11 @@ class PyCodeEditor(QMainWindow):
 		tabwidth.addAction(ALL_ACTIONS.tabW4)
 		tabwidth.addAction(ALL_ACTIONS.tabW6)
 		tabwidth.addAction(ALL_ACTIONS.tabW8)
+
+		#Preferences Menu
+		preferences.addMenu("User Settings")
+		preferences.addMenu("Font")
+		preferences.addMenu("PyCodeThemes")
 		
 # STATUSBAR =====================================================
 		self.status = self.statusBar()
@@ -158,7 +182,7 @@ class PyCodeEditor(QMainWindow):
 		self.user_input.returnPressed.connect(self.select_current_text)
 		self.user_input.textChanged.connect(self.find_text)
 
-# SHORTCUT ==================================================================
+# SHORTCUTS ==================================================================
 		ALL_SHORTCUTS = PyCodeShortcuts(self.TAB_INTERFACE)
 		ALL_SHORTCUTS.move_right_between_tabs.activated.connect(self.tab_seek_right)
 		ALL_SHORTCUTS.move_left_between_tabs.activated.connect(self.tab_seek_left)
@@ -169,7 +193,7 @@ class PyCodeEditor(QMainWindow):
 # SLOTS ========================================================================
 	
 	def set_file_and_status_bar(self):
-		"""Make all menu and statubs bar options reflect current document"""
+		"""Make all menu and statubs bar options reflect current/active page"""
 		ALL_ACTIONS = self.ALL_ACTIONS
 		self.CURRENT_INDEX = self.TAB_INTERFACE.currentIndex()
 		self.CURRENT_TEXT_EDIT = self.TAB_INTERFACE.currentWidget()
@@ -177,13 +201,12 @@ class PyCodeEditor(QMainWindow):
 		try:
 			self.CURRENT_TEXT_CURSOR = self.CURRENT_TEXT_EDIT.textCursor()
 			self.CURRENT_TEXT_DOC = self.CURRENT_TEXT_EDIT.document()
-			self.CURRENT_TEXT_DOC.contentsChanged.connect(self.modified_since_save)
 			self.CURRENT_TEXT_EDIT.cursorPositionChanged.connect(self.column_line_update)
 		except AttributeError:
 			print "no tab_page available"
 
-		# to be removed after testings
-		self.get_extension()
+		# to be removed after testing
+		# self.get_extension()
 		try:
 			self.current_syntax.setText(self._SYNTAX_DICT.get(self.CURRENT_INDEX))
 			
@@ -220,11 +243,15 @@ class PyCodeEditor(QMainWindow):
 		widget_at_index = self.TAB_INTERFACE.widget(self.CURRENT_INDEX)
 		return self.TAB_INTERFACE.setCurrentWidget(widget_at_index)
 
+	# NOTE: make color changes Theme dependent. i.e. theme page should specify
+	# these colors
 	def modified_since_save(self):
 		"""Causes tab text to change if modified since last save"""
-		current_index = self.TAB_INTERFACE.currentIndex()
-		return self.TAB_INTERFACE.tabBar().setTabTextColor(current_index,
-												 QColor("#fff5ee"))
+		if self.CURRENT_TEXT_DOC.contentsChanged:
+			return self.TAB_INTERFACE.tabBar().setTabTextColor(
+									self.CURRENT_INDEX, QColor("#fff5ee"))
+		else:
+			print "testing"
 
 	def column_line_update(self):
 		"""updates current cursor position in document"""
@@ -267,6 +294,7 @@ class PyCodeEditor(QMainWindow):
 
 				nameHolder = QFileInfo(filename)
 				nameOfFile = nameHolder.fileName()
+				self._RECENTLY_OPENED.append(nameOfFile)
 
 				self.TAB_INTERFACE.addTab(new_page, nameOfFile)
 				f.close()
@@ -287,6 +315,10 @@ class PyCodeEditor(QMainWindow):
 		except AttributeError:
 			pass
 	
+	def close_all(self):
+		for i in xrange(self.TAB_INTERFACE.count()):
+			self.close_tab()
+
 	def new_file(self):
 		"""Opens a plain rich-text document"""
 
@@ -331,51 +363,66 @@ class PyCodeEditor(QMainWindow):
 			pass
 
 	def save_event(self):
-		"""Saves file with current tab title text, no prompting"""
+		"""Saves file with current tab title text, no prompting. Does Not
+		save ANY file with default "Untitled" file_name without prompting first. 
+		"""
+			
+		file_name = self.TAB_INTERFACE.tabText(self.CURRENT_INDEX)		
+		save_file = QFile(file_name)
 
-		filename = self.TAB_INTERFACE.tabText(self.TAB_INTERFACE.currentIndex())		
-		save_file = QFile(filename)
-		save_file_name = QFile.fileName(save_file)
-
-		if save_file_name != "Untitled":
-			f = open(save_file_name, "w")
+		if file_name != "Untitled":
+			f = open(file_name, "w")
 
 			with f:
-				# focusedPage = self.TAB_INTERFACE.currentWidget()
-				changes = self.CURRENT_TEXT_EDIT.toPlainText()
-				f.write(changes)
+				data = self.CURRENT_TEXT_EDIT.toPlainText()
+				f.write(data)
 				f.close()
-				current_index = self.CURRENT_INDEX
-				return self.TAB_INTERFACE.tabBar().setTabTextColor(current_index,
-												 QColor("#848482"))
+				self.status.showMessage("Saved %s" % file_name, 4000)
+				return self.modified_since_save()
 
 		else:
 			return self.save_file_as()
+	
+	def save_all(self):
+		"""Save all opened files, prompt if "Untitled" page exists"""
+		for i in xrange(self.TAB_INTERFACE.count()):
+			
+			file_name = self.TAB_INTERFACE.tabText(i)
+			if file_name != "Untitled":
+			
+				save_file = QFile(file_name)
+
+				with open(file_name, "w") as f:
+					data = self.TAB_INTERFACE.widget(i).toPlainText()
+					f.write(data)
+					f.close()
+					self.modified_since_save()
+			else:
+				self.save_file_as()
+
+		return self.status.showMessage("Saved All Opened Files", 4000)
 
 	def save_file_as(self):
 		"""Save current file as"""
 
-		filename, _ = QFileDialog.getSaveFileName(self,
+		file_name, _ = QFileDialog.getSaveFileName(self,
 			"Save File", os.getcwd())
 
+		# could use RegExp search to catch more complicated errors here
+		if file_name != '':
 
-		if filename != '':
-
-			f = open(filename, "w")
+			f = open(file_name, "w")
 
 			with f:
 
-				focusedPage = self.TAB_INTERFACE.currentWidget()
-				changes = focusedPage.toPlainText()
+				data = self.CURRENT_TEXT_EDIT.toPlainText()
 				
-				nameHolder = QFileInfo(filename)
+				# condense the following code				
+				nameHolder = QFileInfo(file_name)
 				nameOfFile = nameHolder.fileName()
 
-				self.TAB_INTERFACE.setTabText(self.TAB_INTERFACE.currentIndex(),
-											 nameOfFile)
-
-
-				updated_data = f.write(changes)
+				self.TAB_INTERFACE.setTabText(self.CURRENT_INDEX, nameOfFile)
+				f.write(data)
 				f.close()
 		
 		else:
@@ -387,7 +434,7 @@ class PyCodeEditor(QMainWindow):
 
 	def exit_message(self):
 		"""Causes a message box specific to closing"""
-
+		# may not need this.
 		ask = QMessageBox.question(self, "WARNING!",
 			"Are You Sure You Want To Quit?",
 			QMessageBox.Yes | QMessageBox.No, 
@@ -454,6 +501,14 @@ class PyCodeEditor(QMainWindow):
 		self._SYNTAX_DICT[self.CURRENT_INDEX] = "HTML"
 		self.current_syntax.setText("HTML") 
 
+	def hide_statusbar(self):
+		if self.ALL_ACTIONS.status_hideAct.isChecked():
+			self.status.hide()
+		else:
+			self.status.show()
+
+	def open_recent(self):
+		pass
 # SETTINGS/STATE SLOTS ========================================================
 
 	def write_settings(self):
@@ -464,14 +519,21 @@ class PyCodeEditor(QMainWindow):
 		files = [self.TAB_INTERFACE.tabText(i) for i in xrange(self.TAB_INTERFACE.count())]
 		
 		self.settings.beginGroup("Main Window")
+		# save opened tabs
 		self.settings.beginWriteArray("files")
 		for i in xrange(len(files)):
 			self.settings.setArrayIndex(i)
 			self.settings.setValue("filename", files[i] )
 		self.settings.endArray()
+		# save recently opened tabs
+		self.settings.beginWriteArray("Recently Opened")
+		for i in xrange(len(self._RECENTLY_OPENED)):
+			self.settings.setArrayIndex(i)
+			self.settings.setValue("RecentlyOpenedFile", self._RECENTLY_OPENED[i])
+		self.settings.endArray()
+		# self.settings.setValue("")
 		self.settings.setValue("Position", self.pos())
 		self.settings.setValue("Size", self.size())
-		# self.settings.setValue("")
 		# self.settings.setValue("Window State", self.saveState())
 		self.settings.endGroup()
 
@@ -483,8 +545,8 @@ class PyCodeEditor(QMainWindow):
 
 		self.settings.beginGroup("Main Window")
 		
+		# get and set files from last session
 		size = self.settings.beginReadArray("files")
-		
 		for i in xrange(size):
 			self.settings.setArrayIndex(i)
 			tabname = self.settings.value("filename")
@@ -499,6 +561,15 @@ class PyCodeEditor(QMainWindow):
 				pass
 
 		self.settings.endArray()
+
+		# get and set recently opened files. I think there is a better way to do this
+		size = self.settings.beginReadArray("Recently Opened")
+		for i in xrange(size):
+			self.settings.setArrayIndex(i)
+			recently_opened = self.settings.value("RecentlyOpenedFile")
+			self._RECENTLY_OPENED.append(recently_opened)
+		self.settings.endArray()
+
 		self.move(self.settings.value("Position"))
 		self.resize(self.settings.value("Size"))
 		# self.restoreState(self.settings.value("Window State"))

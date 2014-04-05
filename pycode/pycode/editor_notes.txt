@@ -27,6 +27,7 @@ In order to implement the build system, i will have to use the os module and lea
 
 TO-DO LIST:
 ==========
+- need to be able to check if current opened file's location changed, if so, inform the user. OR if the filename has been changed elsewhere.
 - make a setting that will hold the current stylesheet and set it on every reload
 - make a function that adds an check icon to the relevant syntax in the view syntax menu
 - save the _closed tab list in settings proper to use after close

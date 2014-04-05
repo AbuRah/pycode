@@ -191,10 +191,11 @@ class HtmlSyntax(QSyntaxHighlighter):
 			self.highlighting_rules.append(rule)
 
 		# highlight words between brackets
-		between_bracket_patternF.setForeground(QColor("#fe6f5e"))
-		pattern = QRegExp("(?<=[<?</?]).>")
-		rule = HighlightingRule(pattern, between_bracket_patternF)
-		self.highlighting_rules.append(rule)
+		# currently broken
+		# between_bracket_patternF.setForeground(QColor("#fe6f5e"))
+		# pattern = QRegExp("(?<=<)[\w]*(?=>)")
+		# rule = HighlightingRule(pattern, between_bracket_patternF)
+		# self.highlighting_rules.append(rule)
 
 	def highlightBlock(self, text):
 		for rule in self.highlighting_rules:

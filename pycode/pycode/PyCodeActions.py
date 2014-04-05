@@ -20,9 +20,12 @@ class PyCodeActions():
 		self.closeW = QAction("Close Window", parent)
 		self.openF = QAction("Open", parent)
 		self.reopenT = QAction("Re-Open last Tab", parent)
+		self.openrecentAct = QAction("testing", parent)
+		self.saveallAct = QAction("Save All Files", parent)
+		self.closeallAct = QAction("Close All Files", parent)
 
 		#for edit menu
-		self.pasteAct = QAction("Paste from clipboard", parent)
+		self.pasteAct = QAction("Paste", parent)
 		self.redoAct = QAction("Redo", parent)
 		self.cutAct = QAction("Cut selection", parent)
 		self.undoAct = QAction("Undo", parent)
@@ -45,6 +48,7 @@ class PyCodeActions():
 		self.pythonSyn = QAction("Python", parent)
 		self.plainSyn = QAction("PlainText", parent)
 		self.htmlSyn = QAction("HTML", parent)
+		self.status_hideAct = QAction("Hide StatusBar", parent)
 
 		# Set menu shortcuts
 		self.exitAct.setShortcut("Ctrl+Q")
@@ -83,6 +87,11 @@ class PyCodeActions():
 		self.findAct.setStatusTip("Find indicated text within current document")
 		self.cutAct.setStatusTip("Copy text to clipboardthen remove from tab page")
 		self.pasteAct.setStatusTip("Paste text in clipboard to page")
+		self.status_hideAct.setStatusTip("Hide the statusbar from view")
+		self.openrecentAct.setStatusTip("Open ")
+		self.saveallAct.setStatusTip("Save all open files")
+		self.closeallAct.setStatusTip("Closes all open files")
 
 		# set Action Checkable
 		self.bolden.setCheckable(True)
+		self.status_hideAct.setCheckable(True)
