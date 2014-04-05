@@ -1,4 +1,8 @@
-/* Here define syntax common highlighter colors
+/* Here define Theme specific settings. i.e font family, style, size etc.
+
+
+set Theme Specific Syntax highlighting here
+
 common keywords 
 common functions
 numbers
@@ -9,6 +13,9 @@ etc.
 */
 
 /*QTabWidget QPlainTextEdit { background: transparent }*/
+QTextCursor::selection {
+  background-color: #f42c2c;
+}
 
 QTabWidget {
   
@@ -55,6 +62,7 @@ QTabWidget * {
 QPlainTextEdit { 
   border-style: None;
   background-color: #800020;
+  font-family: "monospace";
 }
 
 QStatusBar {
@@ -156,7 +164,7 @@ QMenuBar::item
 
 QWidget:item:hover
 {
-    background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #ca0619);
+    background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #800020, stop: 1 #fff5ee);
     color: #000000;
 }
 

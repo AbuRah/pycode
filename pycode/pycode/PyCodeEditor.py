@@ -23,8 +23,7 @@ class PyCodeEditor(QMainWindow):
 		super(PyCodeEditor, self).__init__(parent)
 		
 		self.initUI()
-
-		self.settings = None
+		# self.settings = None
 		self.setStyleSheet("""QStatusBar::item{border: none;}""")
 		self.setWindowTitle("PyCode Text Editor")
 
@@ -69,6 +68,7 @@ class PyCodeEditor(QMainWindow):
 		ALL_ACTIONS.closeW.triggered.connect(self.close_window)
 
 		ALL_ACTIONS.findAct.triggered.connect(self.find_text)
+		# ALL_ACTIONS.findRegExp.triggered.connect(self.find_regexp)
 		ALL_ACTIONS.redoAct.triggered.connect(self.redo_last)
 		ALL_ACTIONS.undoAct.triggered.connect(self.undo_last)
 		ALL_ACTIONS.cutAct.triggered.connect(self.cut_selection)
@@ -90,6 +90,9 @@ class PyCodeEditor(QMainWindow):
 
 		ALL_ACTIONS.setfontI.triggered.connect(self.increase_font_size)
 		ALL_ACTIONS.setfontD.triggered.connect(self.decrease_font_size)
+		ALL_ACTIONS.setfontS.triggered.connect(self.set_serif)
+		ALL_ACTIONS.setfontM.triggered.connect(self.set_monospace)
+		ALL_ACTIONS.setfontSS.triggered.connect(self.set_sansserif)
 
 		self.TAB_INTERFACE.tabCloseRequested.connect(self.close_tab)
 		self.CURRENT_TEXT_EDIT.cursorPositionChanged.connect(self.column_line_update)
@@ -134,6 +137,7 @@ class PyCodeEditor(QMainWindow):
 		
 		#EDIT MENU
 		editmenu.addAction(ALL_ACTIONS.findAct)
+		editmenu.addAction(ALL_ACTIONS.findRegExp)
 		editmenu.addSeparator()
 		editmenu.addAction(ALL_ACTIONS.undoAct)
 		editmenu.addAction(ALL_ACTIONS.redoAct)
@@ -167,13 +171,17 @@ class PyCodeEditor(QMainWindow):
 		tabwidth.addAction(ALL_ACTIONS.tabW8)
 
 		#Preferences Menu
-		preferences.addMenu("User Settings")
+		usermenu = preferences.addMenu("User Settings")
 		preferences.addSeparator()
-		fontmenu = preferences.addMenu("Font")
+		fontmenu = preferences.addMenu("Font Size")
 		fontmenu.addAction(ALL_ACTIONS.setfontI)
 		fontmenu.addAction(ALL_ACTIONS.setfontD)
+		fontstylemenu = preferences.addMenu("Font Style")
+		fontstylemenu.addAction(ALL_ACTIONS.setfontS)
+		fontstylemenu.addAction(ALL_ACTIONS.setfontM)
+		fontstylemenu.addAction(ALL_ACTIONS.setfontSS)
 		preferences.addSeparator()
-		preferences.addMenu("PyCodeThemes")
+		themesmenu = preferences.addMenu("PyCodeThemes")
 		
 # STATUSBAR =====================================================
 		self.status = self.statusBar()
@@ -506,6 +514,10 @@ class PyCodeEditor(QMainWindow):
 		new_page.setDocument(cloned_doc)
 		return self.TAB_INTERFACE.addTab(new_page, "Untitled")
 
+	def find_regexp(self):
+		"""finds text in doc using regexp"""
+		pass
+
 # VIEW MENU SLOTS ==============================================================
 	def set_tab_width(self, num):
 		return self.CURRENT_TEXT_EDIT.setTabStopWidth(num)
@@ -550,15 +562,42 @@ class PyCodeEditor(QMainWindow):
 # Perfrences Menu Slots =======================================================
 	def increase_font_size(self):
 		"""Incrementally increases font point size"""
+		self.CURRENT_TEXT_EDIT.selectAll()
 		currentF = self.CURRENT_TEXT_EDIT.currentCharFormat()
-		currentF.setFontPointSize(currentF.fontPointSize()+ 3)
+		currentF.setFontPointSize(currentF.fontPointSize()+ 5)
 		self.CURRENT_TEXT_EDIT.setCurrentCharFormat(currentF)
 
 	def decrease_font_size(self):
 		"""Incrementally decreases font point size"""
+		self.CURRENT_TEXT_EDIT.selectAll()
 		currentF = self.CURRENT_TEXT_EDIT.currentCharFormat()
-		currentF.setFontPointSize(currentF.fontPointSize()- 3)
+		currentF.setFontPointSize(currentF.fontPointSize()- 5)
+		if currentF.fontPointSize() > 0:
+			return self.CURRENT_TEXT_EDIT.setCurrentCharFormat(currentF)
+		else:
+			pass
+
+	def set_serif(self):
+		"""Set all text to serif font family"""
+		self.CURRENT_TEXT_EDIT.selectAll()
+		currentF = self.CURRENT_TEXT_EDIT.currentCharFormat()
+		currentF.setFontFamily("serif")
 		self.CURRENT_TEXT_EDIT.setCurrentCharFormat(currentF)
+
+	def set_monospace(self):
+		"""Set all text to monospace font family"""
+		self.CURRENT_TEXT_EDIT.selectAll()
+		currentF = self.CURRENT_TEXT_EDIT.currentCharFormat()
+		currentF.setFontFamily("monospace")
+		self.CURRENT_TEXT_EDIT.setCurrentCharFormat(currentF)
+
+	def set_sansserif(self):
+		"""Set all text to sans-serif font family"""
+		self.CURRENT_TEXT_EDIT.selectAll()
+		currentF = self.CURRENT_TEXT_EDIT.currentCharFormat()
+		currentF.setFontFamily("sans-serif")
+		self.CURRENT_TEXT_EDIT.setCurrentCharFormat(currentF)
+
 # SETTINGS/STATE SLOTS ========================================================
 
 	def write_settings(self):
@@ -582,7 +621,6 @@ class PyCodeEditor(QMainWindow):
 			self.settings.setArrayIndex(i)
 			self.settings.setValue("ROFile", self._RECENTLY_OPENED[i])
 		self.settings.endArray()
-
 		self.settings.setValue("Position", self.pos())
 		self.settings.setValue("Size", self.size())
 		self.settings.endGroup()
@@ -623,7 +661,6 @@ class PyCodeEditor(QMainWindow):
 		for i in self._RECENTLY_OPENED:
 			i_action = QAction(i, self)
 			self.recent_files_menu.addAction(i_action)
-
 		self.move(self.settings.value("Position"))
 		self.resize(self.settings.value("Size"))
 		self.settings.endGroup()

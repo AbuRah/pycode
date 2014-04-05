@@ -28,12 +28,15 @@ In order to implement the build system, i will have to use the os module and lea
 currently, the mainwindow does not support changing it's layout. This will prove to impede any layout features planned for the future. May have to change main
 class to inherit from QWidget instead of QMainWindow
 
+
+
 TO-DO LIST:
 ==========
+- add regexp search
 - need to be able to check if current opened file's location changed, if so, inform the user. OR if the filename has been changed elsewhere.
 - make a setting that will hold the current stylesheet and set it on every reload
 - make a function that adds an check icon to the relevant syntax in the view syntax menu
-
+- create an option to inverse the currently selected theme. i.e. if background is red and text black, background would change to black and font to red. NOTE: syntax highlighting needs to be taken into consideration.
 - need to be able to open a file from open-recent menu without prompting
 - save the _closed tab list in settings proper to use after close
 

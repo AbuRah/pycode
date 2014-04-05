@@ -27,13 +27,14 @@ class PyCodeActions():
 		#for edit menu
 		self.pasteAct = QAction("Paste", parent)
 		self.redoAct = QAction("Redo", parent)
-		self.cutAct = QAction("Cut selection", parent)
+		self.cutAct = QAction("Cut", parent)
 		self.undoAct = QAction("Undo", parent)
 		self.bolden = QAction("Bold", parent)
 		self.copyAct = QAction("Copy", parent)
 		self.findAct = QAction("Find", parent)
+		self.findRegExp = QAction("RegExp Find", parent)
 		self.findR = QAction("Find && Replace", parent)
-		self.cloneAct = QAction("Clone File", parent)
+		self.cloneAct = QAction("Clone", parent)
 
 		# for tool menu
 		self.tabW2 = QAction("Tab Width: 2", parent)
@@ -54,6 +55,9 @@ class PyCodeActions():
 		# for perferences Menu
 		self.setfontI = QAction("Font Size Increase", parent)
 		self.setfontD = QAction("Font Size Decrease", parent)
+		self.setfontS = QAction("Serif", parent)
+		self.setfontM = QAction("monospace", parent)
+		self.setfontSS = QAction("Sans-Serif", parent)
 
 
 		# Set menu shortcuts
@@ -95,7 +99,7 @@ class PyCodeActions():
 		self.bolden.setStatusTip("bold selected text")
 		self.copyAct.setStatusTip("copy current Selection")
 		self.findAct.setStatusTip("Find indicated text within current document")
-		self.cutAct.setStatusTip("Copy text to clipboardthen remove from tab page")
+		self.cutAct.setStatusTip("Remove && Copy text to clipboard")
 		self.pasteAct.setStatusTip("Paste text in clipboard to page")
 		self.status_hideAct.setStatusTip("Hide the statusbar from view")
 		self.saveallAct.setStatusTip("Save all open files")
@@ -105,9 +109,19 @@ class PyCodeActions():
 		# set Action Checkable
 		self.bolden.setCheckable(True)
 		self.status_hideAct.setCheckable(True)
+		self.tabW2.setCheckable(True)
+		self.tabW4.setCheckable(True)
+		self.tabW6.setCheckable(True)
+		self.tabW8.setCheckable(True)
 
 		#action Groups
 		self.layout_group = QActionGroup(parent)
 		self.layout_group.addAction(self.plainL)
 		self.layout_group.addAction(self.splitL)
 		self.layout_group.addAction(self.gridL)
+
+		self.tab_group = QActionGroup(parent)
+		self.tab_group.addAction(self.tabW2)
+		self.tab_group.addAction(self.tabW4)
+		self.tab_group.addAction(self.tabW6)
+		self.tab_group.addAction(self.tabW8)
