@@ -6,9 +6,6 @@ assignment operators
 text strings
 etc.
 
-
-
-
 */
 
 /*QTabWidget QPlainTextEdit { background: transparent }*/
@@ -18,11 +15,6 @@ QTabWidget {
   background-color: #800020;
 
 }
-
-QTextCursor::charFormat {
-  background-color: #f4c2c2;
-}
-
 
 QLabel {
   color: #faebd7;
@@ -69,6 +61,8 @@ QStatusBar {
   background-color: #0f0f0f;
   color: white;
   font-size: 11px;
+  font-family: "serif";
+
 }
 
 QTabBar {
@@ -138,6 +132,8 @@ QMenuBar {
   color: white;
   background-color: #414a4c;
   padding: 3px;
+  font-family: "serif";
+  
 }
 
 QMenuBar::item:selected

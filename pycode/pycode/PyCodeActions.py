@@ -19,8 +19,8 @@ class PyCodeActions():
 		self.closeF = QAction("Close File", parent)
 		self.closeW = QAction("Close Window", parent)
 		self.openF = QAction("Open", parent)
+		self.openrecentAct = QAction("Open Recent File", parent)
 		self.reopenT = QAction("Re-Open last Tab", parent)
-		self.openrecentAct = QAction("testing", parent)
 		self.saveallAct = QAction("Save All Files", parent)
 		self.closeallAct = QAction("Close All Files", parent)
 
@@ -33,6 +33,7 @@ class PyCodeActions():
 		self.copyAct = QAction("Copy", parent)
 		self.findAct = QAction("Find", parent)
 		self.findR = QAction("Find && Replace", parent)
+		self.cloneAct = QAction("Clone File", parent)
 
 		# for tool menu
 		self.tabW2 = QAction("Tab Width: 2", parent)
@@ -49,6 +50,11 @@ class PyCodeActions():
 		self.plainSyn = QAction("PlainText", parent)
 		self.htmlSyn = QAction("HTML", parent)
 		self.status_hideAct = QAction("Hide StatusBar", parent)
+
+		# for perferences Menu
+		self.setfontI = QAction("Font Size Increase", parent)
+		self.setfontD = QAction("Font Size Decrease", parent)
+
 
 		# Set menu shortcuts
 		self.exitAct.setShortcut("Ctrl+Q")
@@ -68,6 +74,9 @@ class PyCodeActions():
 		self.redoAct.setShortcut("Ctrl+Shift+Z")
 		self.pasteAct.setShortcut("Ctrl+V")
 		self.cutAct.setShortcut("Ctrl+X")
+		self.setfontI.setShortcut("Ctrl+=")
+		self.setfontD.setShortcut("Ctrl+-")
+
 
 		# shorcut Contexts
 		self.closeW.setShortcutContext(Qt.WidgetShortcut)
@@ -81,6 +90,7 @@ class PyCodeActions():
 		self.saveasAct.setStatusTip("Save file as...")
 		self.newF.setStatusTip("Create New document")
 		self.openF.setStatusTip("Open a file on the file system")
+		self.openrecentAct.setStatusTip("Open Recent File")
 		self.closeF.setStatusTip("Close current file in tab")
 		self.bolden.setStatusTip("bold selected text")
 		self.copyAct.setStatusTip("copy current Selection")
@@ -88,10 +98,16 @@ class PyCodeActions():
 		self.cutAct.setStatusTip("Copy text to clipboardthen remove from tab page")
 		self.pasteAct.setStatusTip("Paste text in clipboard to page")
 		self.status_hideAct.setStatusTip("Hide the statusbar from view")
-		self.openrecentAct.setStatusTip("Open ")
 		self.saveallAct.setStatusTip("Save all open files")
 		self.closeallAct.setStatusTip("Closes all open files")
+		self.cloneAct.setStatusTip("Clones Current Document")
 
 		# set Action Checkable
 		self.bolden.setCheckable(True)
 		self.status_hideAct.setCheckable(True)
+
+		#action Groups
+		self.layout_group = QActionGroup(parent)
+		self.layout_group.addAction(self.plainL)
+		self.layout_group.addAction(self.splitL)
+		self.layout_group.addAction(self.gridL)

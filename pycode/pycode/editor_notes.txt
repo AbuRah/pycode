@@ -25,14 +25,19 @@ QWIDGET,QOBJECT,QFRAME, and Qt module for misc functions, attrs, etc.
 
 In order to implement the build system, i will have to use the os module and learn about the different system command line commands that would run the focused tab document.
 
+currently, the mainwindow does not support changing it's layout. This will prove to impede any layout features planned for the future. May have to change main
+class to inherit from QWidget instead of QMainWindow
+
 TO-DO LIST:
 ==========
 - need to be able to check if current opened file's location changed, if so, inform the user. OR if the filename has been changed elsewhere.
 - make a setting that will hold the current stylesheet and set it on every reload
 - make a function that adds an check icon to the relevant syntax in the view syntax menu
+
+- need to be able to open a file from open-recent menu without prompting
 - save the _closed tab list in settings proper to use after close
+
 - change char selection color from blue to pink
-- check for what selfSaveState method does. 
 - need to have the text editor automatically recognize file types by extension and set the appropriate syntax highlighting. This should be done with a functiion
 that will RegExp through all available syntax highlighting classes and add it as needed.
 - add code folding
@@ -45,8 +50,6 @@ that will RegExp through all available syntax highlighting classes and add it as
 deleting a line, cutting out a line, moving blocks of text etc.
 
 - add a cheat sheet for commonly used programs
-
-- add option for dynamic theme switching
 
 - set font options and build more functionality
 
