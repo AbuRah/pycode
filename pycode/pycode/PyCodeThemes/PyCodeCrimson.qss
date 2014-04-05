@@ -1,4 +1,11 @@
 /* Here define Theme specific settings. i.e font family, style, size etc.
+Main Theme Colors: ( not all need to be specified ) 
+
+#800020 -> Bergundy
+#0f0f0f -> Onyx;
+#f4c2c2 -> BabyPink;
+#faebd7 -> Moccasin;
+#414a4c -> Outer Space;
 
 
 set Theme Specific Syntax highlighting here
@@ -13,8 +20,8 @@ etc.
 */
 
 /*QTabWidget QPlainTextEdit { background: transparent }*/
-QTextCursor::selection {
-  background-color: #f42c2c;
+QWidget.Selection {
+  background-color: #f4c2c2;
 }
 
 QTabWidget {

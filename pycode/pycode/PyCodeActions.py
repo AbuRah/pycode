@@ -37,6 +37,8 @@ class PyCodeActions():
 		self.cloneAct = QAction("Clone", parent)
 
 		# for tool menu
+		self.snippets = QAction("Code Snippets", parent)
+		self.buildAct = QAction("Commence Build", parent)
 		self.tabW2 = QAction("Tab Width: 2", parent)
 		self.tabW4 = QAction("Tab Width: 4", parent)
 		self.tabW6 = QAction("Tab Width: 6", parent)
@@ -58,7 +60,7 @@ class PyCodeActions():
 		self.setfontS = QAction("Serif", parent)
 		self.setfontM = QAction("monospace", parent)
 		self.setfontSS = QAction("Sans-Serif", parent)
-
+		self.setinverse = QAction("Inverse Theme", parent)
 
 		# Set menu shortcuts
 		self.exitAct.setShortcut("Ctrl+Q")
@@ -105,6 +107,9 @@ class PyCodeActions():
 		self.saveallAct.setStatusTip("Save all open files")
 		self.closeallAct.setStatusTip("Closes all open files")
 		self.cloneAct.setStatusTip("Clones Current Document")
+		self.setinverse.setStatusTip("Inverses current Theme colors")
+		self.buildAct.setStatusTip("Build from specified engine")
+		self.snippets.setStatusTip("search code snippets")
 
 		# set Action Checkable
 		self.bolden.setCheckable(True)

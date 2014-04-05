@@ -42,10 +42,9 @@ TO-DO LIST:
 
 - change char selection color from blue to pink
 - need to have the text editor automatically recognize file types by extension and set the appropriate syntax highlighting. This should be done with a functiion
-that will RegExp through all available syntax highlighting classes and add it as needed.
+	that will RegExp through all available syntax highlighting classes and add it as needed.
 - add code folding
 - create custom file dialog
-- allow a untitled tab to appear ONLY when there is no tabs available from previous session. OR get rid of it completely.
 
 - add more complex syntax highlighting code
 
@@ -76,6 +75,7 @@ UPDATES SINCE LAST GIT COMMIT:
 NOTED FIXES:
 ==============
 - added current cursor line pos
+- allow a untitled tab to appear ONLY when there is no tabs available from previous session. OR get rid of it completely.
 - add column count to status bar
 - fix find action to highlight found text IN document area
 - fixed ambigious shortcut overload. Most specify focused window to close
