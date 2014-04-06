@@ -34,8 +34,6 @@ f_menu = FileMenu(self)
 f_menu.create_action("exit_Act")
 f_menu.ALL_FILE_ACTIONS.get("exit_Act")
 
-need to find a way to encapsulate all slots while connecting them to their appropriate QAction.trigger
-
 
 
 
