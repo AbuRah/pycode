@@ -101,7 +101,7 @@ class PyCodeActions():
 		self.bolden.setStatusTip("bold selected text")
 		self.copyAct.setStatusTip("copy current Selection")
 		self.findAct.setStatusTip("Find indicated text within current document")
-		self.cutAct.setStatusTip("Remove && Copy text to clipboard")
+		self.cutAct.setStatusTip("Remove & Copy text to clipboard")
 		self.pasteAct.setStatusTip("Paste text in clipboard to page")
 		self.status_hideAct.setStatusTip("Hide the statusbar from view")
 		self.saveallAct.setStatusTip("Save all open files")

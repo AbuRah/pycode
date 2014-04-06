@@ -28,10 +28,22 @@ In order to implement the build system, i will have to use the os module and lea
 currently, the mainwindow does not support changing it's layout. This will prove to impede any layout features planned for the future. May have to change main
 class to inherit from QWidget instead of QMainWindow
 
+I'm going to attempt to reorganize the editor using more classes. The way it's set up now is too procederual and prone to break.
+
+f_menu = FileMenu(self)
+f_menu.create_action("exit_Act")
+f_menu.ALL_FILE_ACTIONS.get("exit_Act")
+
+need to find a way to encapsulate all slots while connecting them to their appropriate QAction.trigger
+
+
+
+
 
 
 TO-DO LIST:
 ==========
+- when run direcly from the command line, PyCode does not recognize the stylesheet. Fix.
 - add regexp search
 - need to be able to check if current opened file's location changed, if so, inform the user. OR if the filename has been changed elsewhere.
 - make a setting that will hold the current stylesheet and set it on every reload

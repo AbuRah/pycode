@@ -1,5 +1,5 @@
 import sys, os, time
-from exceptions import IOError, AttributeError
+import re
 
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -8,7 +8,6 @@ from SyntaxClasses import *
 from PyCodeActions import *
 from PyCodeShortcuts import *
 from functools import partial
-import re
 
 
 class PyCodeEditor(QMainWindow):
@@ -662,7 +661,7 @@ def main():
 	editor = PyCodeEditor()
 
 	try:
-		with open("PyCodeThemes/PyCodeCrimson.qss") as f:
+		with open("../PyCodeThemes/PyCodeCrimson.qss") as f:
 			stylesheet = f.read()
 			pycodeapp.setStyleSheet(stylesheet)
 	except IOError:
