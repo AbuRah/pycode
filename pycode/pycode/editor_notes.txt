@@ -34,7 +34,9 @@ f_menu = FileMenu(self)
 f_menu.create_action("exit_Act")
 f_menu.ALL_FILE_ACTIONS.get("exit_Act")
 
-
+i need to be able to display a QMainWindow as a tab page; this way i will be able to have connections only relate to it's current textedit, instead of hacking
+and attempting to find workarounds.
+i need to think of how to order them.
 
 
 

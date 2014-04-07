@@ -19,10 +19,10 @@ etc.
 
 */
 
-/*QTabWidget QPlainTextEdit { background: transparent }*/
-QWidget.Selection {
+/*QTabWidget QTextEdit { background: transparent }*/
+/*QWidget.Selection {
   background-color: #f4c2c2;
-}
+}*/
 
 QTabWidget {
   
@@ -61,12 +61,7 @@ QMainWindow::separator:hover
 }
 
 
-QTabWidget * {
-  color: #848482;
-}
-
-
-QPlainTextEdit { 
+QTextEdit { 
   border-style: None;
   background-color: #800020;
   font-family: "monospace";
@@ -89,8 +84,8 @@ QTabBar {
 }
 
 QTabBar::tab {
-    border: 1px outset #000;
-    border-bottom-style: none;
+    /*border: 1px outset #000;*/
+    /*border-bottom-style: none;*/
     background-color: #800020;
     padding-left: 10px;
     padding-right: 10px;
@@ -100,8 +95,10 @@ QTabBar::tab {
     margin-bottom: 3px;
     margin-right: -1px;
 }
+
+
 QTabWidget::pane {
-    border-top: 1px outset #0f0f0f;
+    /*border-top: 1px outset #0f0f0f;*/
     /*top: 1px;*/
 }
 
@@ -336,7 +333,7 @@ QLineEdit
 
 
 /*
-QPlainTextEdit:focus
+QTextEdit:focus
 {
     border: 2px solid QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);
     margin: 2em;
@@ -463,7 +460,7 @@ QTextEdit
     background-color: #242424;
 }
 
-QPlainTextEdit
+QTextEdit
 {
     background-color: #242424;
 }
