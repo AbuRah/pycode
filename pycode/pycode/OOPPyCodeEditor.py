@@ -11,6 +11,9 @@ from functools import partial
 
 
 class PyCodeAction(QAction):
+	"""Reimplemented in order to override __repr__ special method. Besides that,
+		there is no difference between this and the original QAction.
+	"""
 	def __init__(self, name=None, text="default", parent=None):
 		super(PyCodeAction, self).__init__(text, parent)
 		self.name = name
@@ -20,25 +23,35 @@ class PyCodeAction(QAction):
 
 
 class PyCodeMenuBar(QMenuBar):
-	"""Responsible for holding all menus and respective trigger connections"""
+	"""Responsible for holding all menus and menu actions.
+		PyCodeMenuBar's parent is PyCodePage, **NOT** the main
+		window.
+	"""
 	def __init__(self, parent=None):
 		super(PyCodeMenuBar, self).__init__(parent)
+		self.parent = parent
 
-		self.file_menu = FileMenu("&File")
-		self.edit_menu = EditMenu("Edit")
-		self.view_menu = ViewMenu("View")
-		self.tool_menu = ToolMenu("&Tool")
-		self.pref_menu = PrefMenu("Preferences")
-		self.child = self.findChild(PyCodeTabInterface)
-
-		self.addMenu(self.file_menu)
-		self.addMenu(self.edit_menu)
-		self.addMenu(self.view_menu)
-		self.addMenu(self.tool_menu)
-		self.addMenu(self.pref_menu)
+		self.FILE = FileMenuTriggers("&File", parent)
+		self.EDIT = EditMenuTriggers("Edit", parent)
+		self.VIEW = ViewMenuTriggers("View", parent)
+		self.TOOL = ToolMenuTriggers("&Tool", parent)
+		self.PREF = PrefMenuTriggers("&Preferences", parent)
+		self.addMenu(self.FILE)
+		self.addMenu(self.EDIT)
+		self.addMenu(self.VIEW)
+		self.addMenu(self.TOOL)
+		self.addMenu(self.PREF)
 
 
 class PyCodeTabInterface(QTabWidget):
+	"""This class and the PyCodePage class are where most of the relevant slots and
+		modifications will be. i.e. if you want to find where cursor manipulation takes
+		place, it would be in one of these classes.
+		Whenever the actor changes tabs, the menubar and statusbar will both be automatically
+		updated to reflect the pycodepage instance's menubar and statusbar. It will then
+		set PyCodeTop to hold these updated status/menubars.
+
+	"""
 
 
 	CLOSED_TABS = []
@@ -53,10 +66,10 @@ class PyCodeTabInterface(QTabWidget):
 		self.STATUS = self.currentWidget().STATUS
 		self.MENU = self.currentWidget().MENU
 		self.set_SMBar()
-		self.test_triggers = FileMenuTriggers(self)
+		self.TAB_PAGE = self.currentWidget()
 		
 
-		# some signals and slots
+		# some signals and slots.
 		self.currentChanged.connect(self.set_current_SMBar)
 		self.currentChanged.connect(self.set_SMBar)
 		self.tabCloseRequested.connect(self.close_tab)
@@ -246,13 +259,22 @@ class PyCodeTabInterface(QTabWidget):
 
 class PyCodePage(QTextEdit):
 	"""Responsible for all signals and method-functions related ONLY to QTextEdit.
-	Use the PyCodePage.Doc in order to access the current QTextDocument
+		I may make a class specifically for all QTextEdit related signal connections.
+		Use the PyCodePage.Doc in order to access the current QTextDocument.
+		The _SYNTAX_DICT constant holds the syntax highlighting class applied to it's
+		respective document. e.g. if PythonSyntax is set for the first tab page, it's 
+		entry will look like this::
+	
+		>> self._SYNTAX_DICT[0]
+
+		"Python"
+
 
 	"""
 	def __init__(self, parent=None):
 		super(PyCodePage, self).__init__(parent)
-		# self._SYNTAX_DICT = {}
-
+		self._SYNTAX_DICT = {}
+		self.tmp_counter = 0
 		self.MENU = PyCodeMenuBar(self)
 		self.STATUS = PyCodeStatusBar(self)
 		self.TAB_INTERFACE = self.parent()
@@ -260,10 +282,6 @@ class PyCodePage(QTextEdit):
 
 		self.textChanged.connect(self.modified_since_save)
 		self.cursorPositionChanged.connect(self.column_line_update)
-
-		
-
-
 
 	def modified_since_save(self):
 		"""Causes tab text to change if modified since last save"""
@@ -296,7 +314,6 @@ class PyCodePage(QTextEdit):
 		HtmlSyntax(self.DOC)
 		self._SYNTAX_DICT[self.parent().currentIndex()] = "HTML"
 		self.STATUS.current_syntax.setText("HTML") 
-
 
 	def paste_selection(self):
 		"""paste text from clipboard to tab page"""
@@ -363,11 +380,14 @@ class PyCodePage(QTextEdit):
 		"""copy/cut selected text"""
 		return self.cut()
 
-	# def hide_statusbar(self):
-	# 	if self.parent().status_hideAct.isChecked():
-	# 		self.tab_status_bar.hide()
-	# 	else:
-	# 		self.tab_status_bar.show()
+	def hide_statusbar(self):
+		"""Hides status bar"""
+		if self.tmp_counter == 0:
+			self.tab_status_bar.hide()
+			self.tmp_counter += 1
+		else:
+			self.tab_status_bar.show()
+			self.tmp_counter -= 1
 
 
 class PyCodeStatusBar(QStatusBar):
@@ -461,7 +481,10 @@ class EditMenu(PyCodeMenu):
 
 
 class ViewMenu(PyCodeMenu):
-	"""Defines and Holds all view menu specific actions"""
+	"""Defines and Holds all view menu specific actions
+		If there are any sub-menus for the view menu, be sure to update
+		the main self.VIEW_ACTIONS dictionary appropriately.
+	"""
 	def __init__(self, name="Default", parent=None):
 		super(ViewMenu, self).__init__(name, parent)
 		self.VIEW_ACTIONS = self.ALL_ACTIONS
@@ -469,23 +492,46 @@ class ViewMenu(PyCodeMenu):
 		self.create_action("split_lay_act", "Split Screen")
 		self.create_action("grid_lay_act", "Grid Screen")
 		self.addSeparator()
-		syntax_menu = SyntaxMenu("Syntax")
+		syntax_menu = SyntaxMenu("Syntax", self)
+		self.VIEW_ACTIONS.update(syntax_menu.SYN_ACTIONS)
 		self.addMenu(syntax_menu)
 		self.create_action("hide_status_act", "Hide Status Bar")
 		self.VIEW_ACTIONS.get("hide_status_act").setCheckable(True)
 
 
 class ToolMenu(PyCodeMenu):
-	"""Holds and Defines all ToolMenu specific actions"""
+	"""Holds and Defines all ToolMenu specific actions
+		if ANY sub-menus are added, be sure to update the TOOL_ACTIONS
+		dictionary.
+	"""
 	def __init__(self, name="Default", parent=None):
 		super(ToolMenu, self).__init__(name, parent)
 		self.TOOL_ACTIONS = self.ALL_ACTIONS
-		tab_width_menu = TabWidthMenu("Tab Width")
+		tab_width_menu = TabWidthMenu("Tab Width", self)
+		self.TOOL_ACTIONS.update(tab_width_menu.TABW_ACTIONS)
 		self.addMenu(tab_width_menu)
 		self.addSeparator()
+		# not yet implemented
 		self.create_action("snippet_act", "Code Snippets", status="Browse Snippet lib")
 		self.create_action("build_act", "Build", status="builds current code")
 		self.addSeparator()
+
+
+class PrefMenu(PyCodeMenu):
+	"""Holds and defines all Preference Menu actions
+		If **Any** sub-menus are added, be sure to update the main
+		PREF_ACTIONS dictionary.
+	"""
+	def __init__(self, name=None, parent=None):
+		super(PrefMenu, self).__init__(name, parent)
+		self.PREF_ACTIONS = self.ALL_ACTIONS
+		font_menu = PrefFontMenu("Font", self)
+		theme_menu = ThemesMenu("Themes", self)
+		self.PREF_ACTIONS.update(font_menu.PREF_FONT_ACTIONS)
+		self.PREF_ACTIONS.update(theme_menu.THEMES_ACTIONS)
+		self.addMenu(font_menu)
+		self.addMenu(theme_menu)
+		# usermenu = preferences.addMenu("User Settings")
 
 
 class TabWidthMenu(PyCodeMenu):
@@ -521,41 +567,31 @@ class ThemesMenu(PyCodeMenu):
 		self.create_action("invert_act", "Inverse Theme Colors")
 
 
-class PrefMenu(PyCodeMenu):
-	"""Holds and defines all Preference Menu actions"""
-	def __init__(self, parent=None):
-		super(PrefMenu, self).__init__(parent)
-		self.PREF_ACTIONS = self.ALL_ACTIONS
-		font_menu = PrefFontMenu("Font")
-		theme_menu = ThemesMenu("Themes")
-		self.addMenu(font_menu)
-		self.addMenu(theme_menu)
-		# usermenu = preferences.addMenu("User Settings")
-
-
 class FileMenuTriggers(FileMenu):
 	""" This class holds all file menu action signals and slots.
 		P_C holds the Pycode tab interface.
-
+		NOTE: For any of the trigger menu classes, if the parent isn't explicitly 
+		set, it will return None as parent.
 	"""
-	def __init__(self, parent=None):
-		super(FileMenuTriggers, self).__init__(parent)
+	def __init__(self, name=None, parent=None):
+		super(FileMenuTriggers, self).__init__(name, parent)
 
 		self.F_DICT = self.FILE_ACTIONS.get
-		self.P_C = self.parent().CHILD
+		self.P_P2 = parent.parent()
+		self.TOP = self.P_P2.parent()
 
 		self.F_DICT("exit_act").triggered.connect(self.exit_event)
 		self.F_DICT("newW_act").triggered.connect(self.new_window)
 		self.F_DICT("closeW_act").triggered.connect(self.close_window)
 
-		self.F_DICT("save_act").triggered.connect(self.P_C.save_event)
-		self.F_DICT("openF_act").triggered.connect(self.P_C.open_file_dialog)
-		self.F_DICT("save_as_act").triggered.connect(self.P_C.save_file_as)
-		self.F_DICT("newF_act").triggered.connect(self.P_C.new_file)
-		self.F_DICT("save_all_act").triggered.connect(self.P_C.save_all)
-		self.F_DICT("close_all_act").triggered.connect(self.P_C.close_all)
-		self.F_DICT("reopenF_act").triggered.connect(self.P_C.reopen_last_tab)
-		self.F_DICT("closeF_act").triggered.connect(self.P_C.close_tab)
+		self.F_DICT("save_act").triggered.connect(self.P_P2.save_event)
+		self.F_DICT("openF_act").triggered.connect(self.P_P2.open_file_dialog)
+		self.F_DICT("save_as_act").triggered.connect(self.P_P2.save_file_as)
+		self.F_DICT("newF_act").triggered.connect(self.P_P2.new_file)
+		self.F_DICT("save_all_act").triggered.connect(self.P_P2.save_all)
+		self.F_DICT("close_all_act").triggered.connect(self.P_P2.close_all)
+		self.F_DICT("reopenF_act").triggered.connect(self.P_P2.reopen_last_tab)
+		self.F_DICT("closeF_act").triggered.connect(self.P_P2.close_tab)
 
 
 	def new_window(self):
@@ -569,42 +605,44 @@ class FileMenuTriggers(FileMenu):
 	
 	def exit_event(self):
 		"""Exits without prompting"""
-		self.P._SETTINGS.write_settings()
+		self.TOP.SETTINGS.write_settings()
 		sys.exit()
 
 
-
 class EditMenuTriggers(EditMenu):
-	def __init__(self, parent=None):
-		super(EditMenuTriggers, self).__init__(parent)
+	"""Responsible for all edit menu specific triggers.
 
-		# edit menu triggers
-		self.E_DICT = self.ALL_EDIT_ACTIONS.get
-		self.P_C = self.parent().CHILD
+	"""
+	def __init__(self, name=None, parent=None):
+		super(EditMenuTriggers, self).__init__(name, parent)
+		self.parent = parent
+		self.E_DICT = self.EDIT_ACTIONS.get
+		self.P = parent
 
-		self.E_DICT("find_act").triggered.connect(self.P_C.find_text)
-		self.E_DICT("redo_act").triggered.connect(self.P_C.redo_last)
-		self.E_DICT("undo_act").triggered.connect(self.P_C.undo_last)
-		self.E_DICT("cut_act").triggered.connect(self.P_C.cut_selection)
-		self.E_DICT("paste_act").triggered.connect(self.P_C.paste_selection)
-		self.E_DICT("clone_act").triggered.connect(self.P_C.clone_doc)
+		# Not yet implemented
+		# self.E_DICT("find_act").triggered.connect(self.P.find_text)
+		self.E_DICT("redo_act").triggered.connect(self.P.redo_last)
+		self.E_DICT("undo_act").triggered.connect(self.P.undo_last)
+		self.E_DICT("cut_act").triggered.connect(self.P.cut_selection)
+		self.E_DICT("paste_act").triggered.connect(self.P.paste_selection)
+		self.E_DICT("clone_act").triggered.connect(self.P.clone_doc)
 
 
 class ViewMenuTriggers(ViewMenu):
 	"""This class holds all view action connections. i.e. signals and slots 
 		for the view menu
 	"""
-	def __init__(self, parent=None):
-		super(ViewMenuTriggers, self).__init__(parent)
-		self.P = self.parent()
+	def __init__(self, name=None, parent=None):
+		super(ViewMenuTriggers, self).__init__(name, parent)
+		self.P = parent
 
-		# view menu triggers
-		self.V_DICT = self.ALL_VIEW_ACTIONS.get
+		self.V_DICT = self.VIEW_ACTIONS.get
 
-		self.V_DICT("hide_status_act").triggered.connect(self.P.tab_page.hide_statusbar)
-		self.V_DICT("python_syn").triggered.connect(self.P.tab_page.python_syntax)
-		self.V_DICT("plain_syn").triggered.connect(self.P.tab_page.plain_text)
-		self.V_DICT("html_syn").triggered.connect(self.P.tab_page.html_syntax)
+		self.V_DICT("hide_status_act").triggered.connect(self.P.hide_statusbar)
+		self.V_DICT("python_syn").triggered.connect(self.P.python_syntax)
+		self.V_DICT("plain_syn").triggered.connect(self.P.plain_text)
+		self.V_DICT("html_syn").triggered.connect(self.P.html_syntax)
+		# not yet implemented
 		# self.V_DICT(plainL).triggered.connect(self.plain_layout)
 		# self.V_DICT(splitL).triggered.connect(self.split_screen_layout)
 		# self.V_DICT(gridL).triggered.connect(self.grid_layout)
@@ -612,46 +650,54 @@ class ViewMenuTriggers(ViewMenu):
 
 class ToolMenuTriggers(ToolMenu):
 	"""This class holds all tool action connections. i.e. signals and slots 
-		for the tool menu
+		for the tool menu.
+		The functools; partial import is used here.
 	"""
-	def __init__(self, parent=None):
-		super(ToolMenuTriggers, self).__init__(parent)
-		self.P = self.parent()
-		self.T_DICT = self.ALL_TOOL_ACTIONS.get
+	def __init__(self, name=None, parent=None):
+		super(ToolMenuTriggers, self).__init__(name, parent)
+		self.P = parent
+		self.T_DICT = self.TOOL_ACTIONS.get
 
-		self.T_DICT("tab_act_1").triggered.connect(partial(self.tab_page.set_tab_width, 10))
-		self.T_DICT("tab_act_2").triggered.connect(partial(self.tab_page.set_tab_width, 20))
-		self.T_DICT("tab_act_3").triggered.connect(partial(self.tab_page.set_tab_width, 30))
-		self.T_DICT("tab_act_4").triggered.connect(partial(self.tab_page.set_tab_width, 40))
-		self.T_DICT("tab_act_5").triggered.connect(partial(self.tab_page.set_tab_width, 50))
-		self.T_DICT("tab_act_6").triggered.connect(partial(self.tab_page.set_tab_width, 60))
-		self.T_DICT("tab_act_7").triggered.connect(partial(self.tab_page.set_tab_width, 70))
-		self.T_DICT('tab_act_8').triggered.connect(partial(self.tab_page.set_tab_width, 80))
+		self.T_DICT("tab_act_1").triggered.connect(partial(self.P.set_tab_width, 10))
+		self.T_DICT("tab_act_2").triggered.connect(partial(self.P.set_tab_width, 20))
+		self.T_DICT("tab_act_3").triggered.connect(partial(self.P.set_tab_width, 30))
+		self.T_DICT("tab_act_4").triggered.connect(partial(self.P.set_tab_width, 40))
+		self.T_DICT("tab_act_5").triggered.connect(partial(self.P.set_tab_width, 50))
+		self.T_DICT("tab_act_6").triggered.connect(partial(self.P.set_tab_width, 60))
+		self.T_DICT("tab_act_7").triggered.connect(partial(self.P.set_tab_width, 70))
+		self.T_DICT('tab_act_8').triggered.connect(partial(self.P.set_tab_width, 80))
 
 
 class PrefMenuTriggers(PrefMenu):
-	def __init__(self, parent=None):
-		super(PrefMenuTriggers, self).__init__(parent)
-		self.P_C = self.parent().CHILD
-		self.P_DICT = self.ALL_PREF_ACTIONS.get
+	"""This class is responsible for all preference specific action triggers."""
+	def __init__(self, name=None, parent=None):
+		super(PrefMenuTriggers, self).__init__(name, parent)
+		self.P_DICT = self.PREF_ACTIONS.get
+		self.P = parent
 
-		self.P_DICT("font_inc_act").triggered.connect(self.P_C.increase_font_size)
-		self.P_DICT("font_dec_act").triggered.connect(self.P_C.decrease_font_size)
-		self.P_DICT("serif_font_act").triggered.connect(self.P_C.set_serif)
-		self.P_DICT("monospace_font_act").triggered.connect(self.P_C.set_monospace)
-		self.P_DICT("sans_serif_font_act").triggered.connect(self.P_C.set_sansserif)
+		self.P_DICT("font_inc_act").triggered.connect(self.P.increase_font_size)
+		self.P_DICT("font_dec_act").triggered.connect(self.P.decrease_font_size)
+		self.P_DICT("serif_font_act").triggered.connect(self.P.set_serif)
+		self.P_DICT("monospace_font_act").triggered.connect(self.P.set_monospace)
+		self.P_DICT("sans_serif_font_act").triggered.connect(self.P.set_sansserif)
 
 
 class SyntaxMenu(PyCodeMenu):
-	def __init__(self, parent=None, name="Default"):
-		super(SyntaxMenu, self).__init__(parent, name)
+	"""The Syntax sub-menu is defined here. If any additions need to be made,
+		make them here.
+	"""
+	def __init__(self, name=None, parent=None):
+		super(SyntaxMenu, self).__init__(name, parent)
+		self.SYN_ACTIONS = self.ALL_ACTIONS
 		self.create_action("python_syn", "Python")
 		self.create_action("plain_syn", "PlainText")
 		self.create_action("html_syn", "HTML")
-		self.SYN_ACTIONS = self.ALL_ACTIONS
 
-
+# broken
 class PyCodeDockWidget(QDockWidget):
+	"""This class holds the main window dock widget for pop-ups, i.e. search & replace, find
+		etc.
+	"""
 	
 	def __init__(self, parent=None):
 		super(PyCodeDockWidget, self).__init__(parent)
@@ -681,7 +727,8 @@ class PyCodeSettings(QSettings):
 		super(PyCodeSettings, self).__init__(parent)
 		self.settings = QSettings(QSettings.UserScope, 
 						"AD Engineering", "PyCode Text Editor")
-		self.P_C = self.parent()
+		self.P = parent
+		self.P_C = self.P.CHILD
 
 	def write_settings(self):
 		"""Writes the current user settings"""
@@ -697,8 +744,8 @@ class PyCodeSettings(QSettings):
 			self.settings.setValue("filename", files[i] )
 		self.settings.endArray()
 
-		self.settings.setValue("Position", self.parent().pos())
-		self.settings.setValue("Size", self.parent().size())
+		self.settings.setValue("Position", self.P.pos())
+		self.settings.setValue("Size", self.P.size())
 		self.settings.endGroup()
 
 
@@ -732,7 +779,7 @@ class PyCodeSettings(QSettings):
 
 
 class PyCodeShortcuts(QObject):
-	"""Responsible for creating/holding all active Shortcuts
+	"""Responsible for creating/holding all pycode Shortcuts
 		Shortcut context needs to be set for instantiated objects.
 
 	"""
@@ -757,18 +804,20 @@ class PyCodeShortcuts(QObject):
 
 class PyCodeShortcutTriggers(PyCodeShortcuts):
 	"""This class is Responsible for holding all shortcut signals and their respective
-		slots.
+		slots. P_C is a naming convention. Wherever this appears, it refers to parent.child.
 
 	"""
 
 	def __init__(self, parent=None):
 		super(PyCodeShortcutTriggers, self).__init__(parent)
 		self.SHORT_DICT = self._ALL_SHORTCUTS.get
+		self.parent = parent
+		self.P_C = self.parent.CHILD
 
-		self.SHORT_DICT("move_right").activated.connect(self.parent().CHILD.tab_seek_right)
-		self.SHORT_DICT("move_right2").activated.connect(self.parent().CHILD.tab_seek_right)
-		self.SHORT_DICT("move_left").activated.connect(self.parent().CHILD.tab_seek_left)
-		self.SHORT_DICT("move_left2").activated.connect(self.parent().CHILD.tab_seek_left)
+		self.SHORT_DICT("move_right").activated.connect(self.P_C.tab_seek_right)
+		self.SHORT_DICT("move_right2").activated.connect(self.P_C.tab_seek_right)
+		self.SHORT_DICT("move_left").activated.connect(self.P_C.tab_seek_left)
+		self.SHORT_DICT("move_left2").activated.connect(self.P_C.tab_seek_left)
 		self.SHORT_DICT("close_focused_win").activated.connect
 		self.SHORT_DICT("close_dock").activated.connect
 
@@ -776,22 +825,18 @@ class PyCodeShortcutTriggers(PyCodeShortcuts):
 class PyCodeTop(QMainWindow):
 	"""This will bring all classes together to make up the final application.
 		although the PyCodeMenuBar and PyCodeStatusBar are instantiated
-		in PCPage, they will be 
+		in PCPage, they will be set as the main menu/status bar for this window.
+		NOTE: that means the instantiated PyCodePage will be the parent.
 	"""
 	def __init__(self, parent=None):
 		super(PyCodeTop, self).__init__(parent)
 		self.setStyleSheet("""QStatusBar::item{border: none;}""")
 		self.setWindowTitle("PyCode Text Editor")
-		self._SETTINGS = PyCodeSettings(self)
 		main = PyCodeTabInterface(self)
-		self._CHILD = self.findChild(PyCodeTabInterface)
-		self._SHORT = PyCodeShortcutTriggers(self)
-		self._FILE = FileMenuTriggers(self)
-		self._EDIT = EditMenuTriggers(self)
-		self._VIEW = ViewMenuTriggers(self)
-		self._TOOL = ToolMenuTriggers(self)
-		self._PREF = PrefMenuTriggers(self)
-		
+		self.CHILD = self.findChild(PyCodeTabInterface)
+
+		self.SETTINGS = PyCodeSettings(self)
+		self.SHORT = PyCodeShortcutTriggers(self)
 		
 		self.setCentralWidget(main)
 
