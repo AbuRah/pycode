@@ -38,6 +38,11 @@ i need to be able to display a QMainWindow as a tab page; this way i will be abl
 and attempting to find workarounds.
 i need to think of how to order them.
 
+Important note here:
+i realized why the menubar wasn't reflecting the current tab page; I was setting the triggers to staticallly, meaning, i would make them CONSTANTS. So whenever
+they were defined, they would apply ONLY to the tab page at time of definition, NOT the current one in view. I was able to resolve this prematurly, maybe there's
+another bug I've failed to catch.
+
 
 
 

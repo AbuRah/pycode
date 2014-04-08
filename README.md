@@ -1,8 +1,29 @@
 #
 Welcome!
 
-There isn't any info to post save a simple mission statement to begin with.
+This is a simple text editor thus far written in python, utlizing PySide for 
+the GUI. At the moment, it still is in it's infancy and will require much more work before
+it becomes a viable text editor worth given any attention to.
 
-This will be a small, simple (and if possible), lightweight text editor written python.
-I would like to add more complex functionality as time passes but for now, just getting the bare
-bone editor together with some unimpressive GUI is the goal.
+I have some basic functionality, namely thus:
+
+- File saving/opening
+- basic text editing shortcuts (i.e. cut, paste etc.)
+- tabbed interface
+- lastly, some incomplete syntax highlighting
+
+A LOT is still missing.
+
+TO DO:
+
+Just to name of the missing functionality:
+
+- lots of shortcuts still missing.
+- severly lacking common text edit commands e.g. ctrl+K to clear current line
+- syntax highlighting is broken and needs a complete overhaul
+
+This is by no means an exhaustive list, there are major gaps at the moment. A lot of work still needs to be done but, Inshallah,
+will come together over time.
+
+As i continue to implement more functionality I will update accordingly.
+
