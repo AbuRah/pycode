@@ -17,15 +17,16 @@
     Copyright 2014, Abu Rah 82013248a@gmail.com
 
 """
+#--coding:utf-8---
+
 # IMPORTANT! This is under active development. The code is being restructured to OOP
-import sys, os
+import sys, os, codecs, re
 
 from PySide.QtCore import *
 from PySide.QtGui import *
 
 from SyntaxClasses import *
 from functools import partial
-# OOP Restructuring============================================================
 
 
 class PyCodeAction(QAction):
@@ -64,6 +65,28 @@ class PyCodeMenuBar(QMenuBar):
 		return "PyCodeMenuBar Instance"
 
 
+class PyCodeIdentifier(QObject):
+	"""Responsible for holding all supported extension types for syntax highlighting.
+		If extension type is not supported, syntax setting defaults to plainText.
+	"""
+	def __init__(self, parent=None):
+		super(PyCodeIdentifier, self).__init__(parent)
+
+		self.EXT = {"py": PythonSyntax,
+				"html": HtmlSyntax,
+				"css": CSSSyntax,
+				"txt": PlainText}
+
+	def find_type(self, ext):
+		"""Checks for extension in dictionary of supported syntaxs"""
+
+		lst = [i for i in self.EXT.keys()]
+		if ext in lst:
+			return self.EXT[ext]
+		else:
+			return PlainText
+
+
 class PyCodeTabInterface(QTabWidget):
 	"""This class and the PyCodePage class are where most of the relevant slots and
 		modifications will be. i.e. if you want to find where cursor manipulation takes
@@ -71,6 +94,18 @@ class PyCodeTabInterface(QTabWidget):
 		Whenever the actor changes tabs, the menubar and statusbar will both be automatically
 		updated to reflect the pycodepage instance's menubar and statusbar. It will then
 		set PyCodeTop to hold these updated status/menubars.
+		The _SYNTAX_DICT constant holds the syntax highlighting class applied to it's
+		respective document. e.g. if PythonSyntax is set for the first tab page, 
+		HTML for the second, their respective entries will look like this::
+	
+		>> self._SYNTAX_DICT[0]
+		"Python"
+
+		>> self._SYNTAX_DICT[1]
+		"HTML"
+
+		etc....
+
 
 	"""
 
@@ -81,6 +116,7 @@ class PyCodeTabInterface(QTabWidget):
 	def __init__(self, parent=None):
 		super(PyCodeTabInterface, self).__init__(parent)
 		self.init_setup()
+		self.IDENTIFIER = PyCodeIdentifier(self)
 		self.P = parent
 		self.grab_sm_bars()
 		self.new_file()
@@ -116,6 +152,7 @@ class PyCodeTabInterface(QTabWidget):
 	def new_file(self):
 		"""Creates a new file"""
 		page = PyCodePage(self)
+		PlainText(page.document())
 		return self.addTab(page, "Untitled")
 
 	def open_file_dialog(self):
@@ -130,16 +167,37 @@ class PyCodeTabInterface(QTabWidget):
 				
 				data = f.read()
 				new_page = PyCodePage(self)
-				new_page.setText(data)
+				new_page.setPlainText(data)
 				f.close()
 				
 				# codense the following two lines of code
 				nameHolder = QFileInfo(file_name)
 				nameOfFile = nameHolder.fileName()
 
+				syntax = self.get_syntax_highlighter(nameOfFile)
+				syntax(new_page.document())
+				
 				self.addTab(new_page, nameOfFile)
 		else:
 			pass
+
+	def get_syntax_highlighter(self, file_name):
+		"""Sets the new file's syntax highlighting,
+			Defaulting to PlainText if not supported.
+			"""
+		ext = self.get_extension(file_name)
+		set_syntax = self.IDENTIFIER.find_type(ext)
+		return set_syntax
+
+	def get_extension(self, file_name):
+		"""retrieves file object extension"""
+		pattern = re.compile("(?<=\.).*\.?.*$")
+		result = re.search(pattern, file_name)
+		if result:
+			return result.group()
+		else:
+			return "txt"
+
 
 	def save_event(self):
 		"""Saves current file, except if "Untitled"; it will prompt user
@@ -219,7 +277,10 @@ class PyCodeTabInterface(QTabWidget):
 
 				with open(last_file, "r") as f:
 					data = f.read()
-					new_page.setText(data)
+					new_page.setPlainText(data)
+
+					syntax = self.get_syntax_highlighter(last_file)
+					syntax(new_page.document())
 		
 					self.addTab(new_page, last_file)
 					self.currentWidget().setFocus()
@@ -298,14 +359,7 @@ class PyCodePage(QTextEdit):
 	"""Responsible for all signals and method-functions related ONLY to QTextEdit.
 		I may make a class specifically for all QTextEdit related signal connections.
 		Use the PyCodePage.Doc in order to access the current QTextDocument.
-		The _SYNTAX_DICT constant holds the syntax highlighting class applied to it's
-		respective document. e.g. if PythonSyntax is set for the first tab page, it's 
-		entry will look like this::
-	
-		>> self._SYNTAX_DICT[0]
-
-		"Python"
-
+		
 
 	"""
 	def __init__(self, parent=None):
@@ -344,8 +398,8 @@ class PyCodePage(QTextEdit):
 		"""Clones current line cursor is found in"""
 		cursor = self.textCursor()
 		cursor.beginEditBlock()
-		cursor.movePosition(QTextCursor.StartOfBlock)
-		cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+		cursor.movePosition(QTextCursor.StartOfLine)
+		cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
 		self.setTextCursor(cursor)
 		self.copy()
 		cursor.clearSelection()
@@ -382,18 +436,19 @@ class PyCodePage(QTextEdit):
 		if cursor.hasSelection():
 			cursor.removeSelectedText()
 		else:
-			cursor.movePosition(QTextCursor.StartOfBlock)
-			cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+			cursor.movePosition(QTextCursor.StartOfLine)
+			cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
 			cursor.removeSelectedText()
 		cursor.endEditBlock()
 
 	def paste_and_indent(self):
 		"""Paste from clipboard with indent"""
-		cursor = self.textCursor()
-		oldpos = self.textCursor().position()
+		# cursor = self.textCursor()
+		# oldpos = self.textCursor().position()
 		indent = self.document().indentWidth()
-		cursor.setPosition(oldpos + indent)
-		self.setTextCursor(cursor)
+		self.insertPlainText(indent)
+		# cursor.setPosition(oldpos + indent)
+		# self.setTextCursor(cursor)
 		self.paste()
 
 
@@ -451,6 +506,9 @@ class PyCodePage(QTextEdit):
 		currentF = self.currentCharFormat()
 		currentF.setFontPointSize(currentF.fontPointSize()+ 1)
 		self.setCurrentCharFormat(currentF)
+		# cursor = self.textCursor()
+		# cursor.clearSelection()
+		# self.setTextCursor(cursor)
 
 	def decrease_font_size(self):
 		"""Incrementally decreases font point size"""
@@ -461,6 +519,25 @@ class PyCodePage(QTextEdit):
 			return self.setCurrentCharFormat(currentF)
 		else:
 			pass
+
+	def set_word_wrap(self):
+
+		off = QTextOption.NoWrap
+
+		if self.wordWrapMode() != off:
+			print "shuting off"
+			self.setWordWrapMode(QTextOption.NoWrap)
+		else:
+			print "turning on"
+			self.setWordWrapMode(QTextOption.WordWrap)
+
+
+	#testing zoom functions
+	def zoom_in(self):
+		return self.zoomIn()
+
+	def zoom_out(self):
+		return self.zoomOut()
 
 	def set_serif(self):
 		"""Set all text to serif font family"""
@@ -565,6 +642,9 @@ class PyCodeStatusBar(QStatusBar):
 	def __repr__(self):
 		return "PyCodeStatusBar Instance"
 
+
+# MENU CLASSES=================
+
 	
 class PyCodeMenu(QMenu):
 	""" This Menu will hold all of the common functionality between 
@@ -598,7 +678,8 @@ class PyCodeMenu(QMenu):
 
 
 class FileMenu(PyCodeMenu):
-	"""Responsible for all FileMenu specific actions
+	"""Responsible for all FileMenu specific actions, signal/slot connections 
+		are NOT to be made here.
 		The most common selections in a file menu will be added by default,
 		however, all defined by user. Can be
 		extended with the create_action method-function.
@@ -611,11 +692,15 @@ class FileMenu(PyCodeMenu):
 		self.create_action("newF_act", "New File", "Ctrl+N", "Create New document")
 		self.create_action("newW_act", "New Window", "Ctrl+Shift+N", "Create New Window")
 		self.create_action("openF_act", "Open File", "Ctrl+O", "Open File")
+		enc_open = EncodingOpenMenu("Open With Encoding", self)
+		self.addMenu(enc_open)
 		self.create_action("reopenF_act", "Reopen Last Tab", "Ctrl+Shift+T", "Re-open last tab")
 		self.addSeparator()
 		self.create_action("save_act", "Save", "Ctrl+S", "Save Current Document")
 		self.create_action("save_as_act", "Save as...", "Ctrl+Shift+S", "Save file as...")
 		self.create_action("save_all_act", "Save All Files")
+		enc_save = EncodingSaveMenu("Save With Encoding", self)
+		self.addMenu(enc_save)
 		self.addSeparator()
 		self.create_action("closeF_act", "Close Tab", "Ctrl+W", "Close current Tab Page")
 		self.create_action("closeW_act", "Close Window", "Ctrl+Shift+W", "Close Active Window")
@@ -659,6 +744,9 @@ class ViewMenu(PyCodeMenu):
 	def __init__(self, name="Default", parent=None):
 		super(ViewMenu, self).__init__(name, parent)
 		self.VIEW_ACTIONS = self.ALL_ACTIONS
+		self.create_action("zoom_in", "Zoom In")
+		self.create_action("zoom_out", "Zoom Out")
+		self.addSeparator()
 		self.create_action("plain_lay_act", "Single Screen")
 		self.create_action("split_lay_act", "Split Screen")
 		self.create_action("grid_lay_act", "Grid Screen")
@@ -668,6 +756,10 @@ class ViewMenu(PyCodeMenu):
 		self.addMenu(syntax_menu)
 		self.create_action("hide_status_act", "Hide Status Bar")
 		self.VIEW_ACTIONS.get("hide_status_act").setCheckable(True)
+		self.addSeparator()
+		self.create_action("word_wrap_act", "Word Wrapping")
+		self.VIEW_ACTIONS.get("word_wrap_act").setCheckable(True)
+		self.VIEW_ACTIONS.get("word_wrap_act").setChecked(True)
 
 
 class ToolMenu(PyCodeMenu):
@@ -750,7 +842,90 @@ class SyntaxMenu(PyCodeMenu):
 		self.create_action("html_syn", "HTML")
 		self.create_action("css_syn", "CSS")
 
+# may make a single encoding class that 
+# all encoding menus inherit
+class WindowsEncodingMenu(PyCodeMenu):
+	"""Responsible for holding all Windows specific charset encodings"""
+	def __init__(self, name=None, parent=None):
+		super(WindowsEncodingMenu, self).__init__(name, parent)
+		self.WIN_ENC = self.ALL_ACTIONS
+		self.create_action("windows1250_act", "Central European", status="Windows1250")
+		self.create_action("windows1251_act", "Cyrillic", status="Windows1251")
+		self.create_action("windows1252_act", "Western", status="Windows1252")
+		self.create_action("windows1253_act", "Greek", status="Windows1253")
+		self.create_action("windows1254_act", "Turkish", status="Windows1254")
+		self.create_action("windows1255_act", "Hebrew", status="Windows1255")
+		self.create_action("windows1256_act", "Arabic", status="Windows1256")
+		self.create_action("windows1257_act", "Baltic", status="Windows1257")
+		self.create_action("windows1258_act", "Vietnamese", status="Windows1258")
 
+
+class EuropeanEncodingMenu(PyCodeMenu):
+	"""Responsible for carrying all Eastern European charset Encodings."""
+	def __init__(self, name=None, parent=None):
+		super(EuropeanEncodingMenu, self).__init__(name, parent)
+		self.ISO_ENC = self.ALL_ACTIONS
+		# need to check these out, some may be redundant
+		self.create_action("iso8859_1_act", "Western", status="ISO8859-1")
+		self.create_action("iso8859_2_act", "Western && Central Europe", status="ISO8859-2")
+		self.create_action("iso8859_3_act", "Western/Southern European", status="ISO8859-3")
+		self.create_action("iso8859_4_act", "W Europe && Baltic", status="ISO8859-4")
+		self.create_action("iso8859_5_act", "Cyrillic", status="ISO8859-5")
+		self.create_action("iso8859_6_act", "Arabic", status="ISO8859-6")
+		self.create_action("iso8859_7_act", "Greek", status="ISO8859-7")
+		self.create_action("iso8859_8_act", "Hebrew", status="ISO8859-8")
+		self.create_action("iso8859_9_act", "W Europe w/Turkish set", status="ISO8859-9")
+		self.create_action("iso8859_10_act", "W Europe w/Nordic Icelandic set", status="ISO8859-10")
+		self.create_action("iso8859_11_act", "Thai", status="ISO8859-11")
+		self.create_action("iso8859_13_act", "Baltic w/Polish set", status="ISO8859-13")
+		self.create_action("iso8859_14_act", "Celtic", status="ISO8859-14")
+		self.create_action("iso8859_15_act", "unknown", status="ISO8859-15")
+		self.create_action("iso8859_16_act", "Central/Eastern/Southern European", status="ISO8859-16")
+
+
+class EncodingSaveMenu(PyCodeMenu):
+	"""Displays the more commonly used char set encodings."""
+	def __init__(self, name=None, parent=None):
+		super(EncodingSaveMenu, self).__init__(name, parent)
+		self.ENC_SM = self.ALL_ACTIONS
+		self.make_menus()
+		self.create_action("uft8_act", "UTF-8", status="UTF-8")
+		self.create_action("uft16_act", "UTF-16", status="UTF-16")
+		self.create_action("uft32_act", "UTF-32", status="UTF-32")
+		self.create_action("macos_roman_act", "Mac Roman", status="Mac OS Roman")
+		self.create_action("k018_u_act", "Russian", status="K018-U")
+		self.create_action("k018_r_act", "Russian", status="K018-R")
+		self.create_action("k017_act", "Russian 7-bit", status="K017")
+		self.create_action("mik_act", "DOS Cyrillic", status="MIK")
+		self.addSeparator()
+		self.addMenu(self.win_menu)
+		self.addMenu(self.iso_menu)
+		self.create_action("shift_jis_act", "Japenese", status="Shift_JIS")
+		self.create_action("iscii_act", "Indian", status="ISCII")
+		self.create_action("gbk_act", "Chinese", status="GBK")
+		self.create_action("gb18030_act", "Chinese", status="GB18030")
+		self.create_action("big5_act", "Traditional Chinese", status="Big-5")
+		
+		# may remove later
+		# self.create_action("gb2312_act", "Chinese", "GB2312") may not use
+		# self.create_action("ksx1001_act", "UTF-8") may not use
+		# self.create_action("euc-kr_act", "UTF-8") may not use
+		# self.create_action("jis_x_0208_act", "Japenese", ) may not use
+		# self.create_action("euc_jis_act", "UTF-8") may not use
+		# self.create_action("iso_2022_jp_act", "UTF-8") may not use
+		# self.create_action("iso-2022_act", "UTF-8") may not use
+
+	def make_menus(self):
+		self.win_menu = WindowsEncodingMenu("Windows", self)
+		self.iso_menu = EuropeanEncodingMenu("European", self)
+
+
+class EncodingOpenMenu(EncodingSaveMenu):
+	def __init__(self, name=None, parent=None):
+		super(EncodingOpenMenu, self).__init__(name, parent)
+
+
+# TRIGGER CLASSES ============
 class FileMenuTriggers(FileMenu):
 	""" This class holds all file menu action signals and slots.
 		P_C holds the Pycode tab interface.
@@ -841,6 +1016,7 @@ class ViewMenuTriggers(ViewMenu):
 		self.V_GET = self.VIEW_ACTIONS.get
 		self.P_C = parent.CHILD
 		self.make_triggers_current()
+		self.hovered.connect(self.reset_all)
 		self.hovered.connect(self.make_triggers_current)
 
 	def reset_all(self):
@@ -860,6 +1036,9 @@ class ViewMenuTriggers(ViewMenu):
 		self.V_GET("plain_syn").triggered.connect(self.P_C.currentWidget().plain_text)
 		self.V_GET("html_syn").triggered.connect(self.P_C.currentWidget().html_syntax)
 		self.V_GET("css_syn").triggered.connect(self.P_C.currentWidget().css_syntax)
+		self.V_GET("zoom_in").triggered.connect(self.P_C.currentWidget().zoom_in)
+		self.V_GET("zoom_out").triggered.connect(self.P_C.currentWidget().zoom_out)
+		self.V_GET("word_wrap_act").triggered.connect(self.P_C.currentWidget().set_word_wrap)
 
 		# not yet implemented
 		# self.V_GET(plainL).triggered.connect(self.plain_layout)
@@ -877,7 +1056,8 @@ class ToolMenuTriggers(ToolMenu):
 		self.T_GET = self.TOOL_ACTIONS.get
 		self.P_C = parent.CHILD
 		self.make_triggers_current()
-		self.triggered.connect(self.make_triggers_current)
+		self.hovered.connect(self.reset_all)
+		self.hovered.connect(self.make_triggers_current)
 
 	def reset_all(self):
 		"""Here we reset all available connections, then call 
@@ -906,6 +1086,7 @@ class PrefMenuTriggers(PrefMenu):
 		self.P_GET = self.PREF_ACTIONS.get
 		self.P_C = parent.CHILD
 		self.make_triggers_current()
+		self.hovered.connect(self.reset_all)
 		self.hovered.connect(self.make_triggers_current)
 
 	def reset_all(self):
@@ -924,6 +1105,8 @@ class PrefMenuTriggers(PrefMenu):
 		self.P_GET("monospace_font_act").triggered.connect(self.P_C.currentWidget().set_monospace)
 		self.P_GET("sans_serif_font_act").triggered.connect(self.P_C.currentWidget().set_sansserif)
 
+
+# MISC CLASSES================
 
 # broken
 class PyCodeDockWidget(QDockWidget):
@@ -996,10 +1179,13 @@ class PyCodeSettings(QSettings):
 			try:
 				with open(tabname, "r") as f:
 					data = f.read()
-					new_page = PyCodePage(self.P_C)
-					new_page.setText(data)
-					self.P_C.addTab(new_page, tabname)
 					f.close()
+					new_page = PyCodePage(self.P_C)
+					new_page.setPlainText(data)
+					syntax = self.P_C.get_syntax_highlighter(tabname)
+					syntax(new_page.document())
+					self.P_C.addTab(new_page, tabname)
+					
 			except IOError:
 				pass
 
