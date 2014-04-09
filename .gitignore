@@ -1,8 +1,8 @@
 *.pyc
 .pycode
-*Bench.py
 *.txt
 test_editor.py
 *test*.py
 *.html
 _docs
+.archive
