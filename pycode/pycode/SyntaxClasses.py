@@ -17,27 +17,20 @@
     Copyright 2014, Abu Rah 82013248a@gmail.com
 
 """
-
-# I will clean this up later
-
 from PySide.QtGui import (QSyntaxHighlighter, QTextCharFormat, QColor, 
 			QFont)
 
 from PySide.QtCore import QRegExp, Qt
+from pygments import highlight
+from pygments.lexers import PythonLexer
+from pygments.formatters import HtmlFormatter
 
-class Extensions(object):
-	def __init__(self):
-		super(Extensions, self).__init__()
 
-		self.EXT_LIST = {".py": PythonSyntax,
-				".html": HtmlSyntax,
-				".txt": PlainText}
-
-class PlainText(QSyntaxHighlighter):
+class PythonHighlight(QSyntaxHighlighter):
 	def __init__(self, parent=None):
-		super(PlainText, self).__init__(parent)
+		super(PythonHighlight, self).__init__(parent)
 
-	def highlightBlock(self, text):
+	def highlightBlock(self):
 		pass
 
 
@@ -57,6 +50,7 @@ class PythonSyntax(QSyntaxHighlighter):
 		stringF = QTextCharFormat()
 		special_methodF = QTextCharFormat()
 		between_parensF = QTextCharFormat()
+		after_constructF = QTextCharFormat()
 		
 		# common statement words
 		common_wordF.setForeground(QColor("#ffa812"))
@@ -71,7 +65,7 @@ class PythonSyntax(QSyntaxHighlighter):
 			self.highlighting_rules.append(rule)
 
 		# special methods
-		special_methodF.setForeground(QColor("#0f0f0f"))
+		special_methodF.setForeground(QColor("#cc4e5c"))
 		special_methodF.setFontWeight(QFont.Bold)
 		special_methods = ["__init__", 
 				"__getitem__","__new__", "__del__", "__repr__",
@@ -105,8 +99,8 @@ class PythonSyntax(QSyntaxHighlighter):
 			self.highlighting_rules.append(rule)
 
 		# constructors
-		reserved_classesF.setForeground(QColor("#5d8aa8"))
-		reserved_classesF.setFontWeight(QFont.Bold)
+		reserved_classesF.setForeground(QColor("#b06500"))
+		# reserved_classesF.setFontWeight(QFont.Bold)
 		predefined = ["class", "def"]
 
 		for word in predefined:
@@ -114,10 +108,18 @@ class PythonSyntax(QSyntaxHighlighter):
 			rule = HighlightingRule(pattern,reserved_classesF)
 			self.highlighting_rules.append(rule)
 		
+		# func/class names
+		after_constructF.setForeground(QColor("#cf1020"))
+		after_constructF.setFontWeight(QFont.Bold)
+		for word in predefined:
+			pattern = QRegExp("([^"+ word +"\\s])+.*(")
+			rule = HighlightingRule(pattern, after_constructF)
+			self.highlighting_rules.append(rule)
+
 		# any text between parens
 		between_parensF.setFontItalic(True)
 		for word in predefined:
-			pattern = QRegExp("\([.*]\)")
+			pattern = QRegExp("\(.*(?=\))\\b")
 			rule = HighlightingRule(pattern, between_parensF)
 			self.highlighting_rules.append(rule)
 
@@ -129,14 +131,14 @@ class PythonSyntax(QSyntaxHighlighter):
 		# self.highlighting_rules.append(rule)
 
 		# digits
-		numberF.setForeground(Qt.magenta)
+		numberF.setForeground(QColor("#dc143c"))
 		pattern = QRegExp("[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?")
 		pattern.setMinimal(True)
 		rule = HighlightingRule(pattern, numberF)
 		self.highlighting_rules.append(rule)
 
 		# python builtin functions
-		builtin_functionsF.setForeground(QColor("#de5d83"))
+		builtin_functionsF.setForeground(QColor("#ff4f00"))
 		python_builtin_functionsF = ["abs",	"divmod", "input", "open",
 							"staticmethod",	"all", "enumerate", "int", "ord", 
 							"str", "any", "eval", "isinstance", "pow", "sum", 
@@ -160,20 +162,20 @@ class PythonSyntax(QSyntaxHighlighter):
 			self.highlighting_rules.append(rule)
 
 		# double quotes string
-		stringF.setBackground(QColor("#e3dac9"))
+		stringF.setBackground(QColor("#e25822"))
 		pattern = QRegExp("\".*\"")
 		rule = HighlightingRule(pattern, stringF)
 		self.highlighting_rules.append(rule)
 
 		# single quotes string
-		stringF.setBackground(QColor("#e3dac9"))
+		stringF.setBackground(QColor("#e25822"))
 		pattern = QRegExp("\'.*\'")
 		rule = HighlightingRule(pattern, stringF)
 		self.highlighting_rules.append(rule)
 
 		# comments
 		commentF = QTextCharFormat()
-		commentF.setForeground(QColor("#f0f8ff"))
+		commentF.setForeground(QColor("#986960"))
 		pattern = QRegExp("#[^\n]*")
 		rule = HighlightingRule(pattern, commentF)
 		self.highlighting_rules.append(rule)
@@ -190,7 +192,9 @@ class PythonSyntax(QSyntaxHighlighter):
 				index = expression.indexIn( text, index + length )
 		self.setCurrentBlockState( 0 )
 
+
 class HtmlSyntax(QSyntaxHighlighter):
+	"""Finds and Highlights all HTML related keywords"""
 	
 	def __init__(self, parent=None):
 		super(HtmlSyntax, self).__init__(parent)
@@ -227,6 +231,124 @@ class HtmlSyntax(QSyntaxHighlighter):
 		self.setCurrentBlockState(0)
 
 
+class CSSSyntax(QSyntaxHighlighter):
+	"""Highlights all CSS keywords
+		CSS2 and CSS3 will inherit from this.
+	"""
+	def __init__(self, parent=None):
+		super(CSSSyntax, self).__init__(parent)
+		self.highlighting_rules = []
+
+		# init all textformats here
+		pseudo_classes_F = QTextCharFormat()
+		pseudo_attributes_F = QTextCharFormat()
+		commentsF = QTextCharFormat()
+		keywordF = QTextCharFormat()
+		id_keywordF = QTextCharFormat()
+		valueF = QTextCharFormat()
+		stringF = QTextCharFormat()
+		url_keywordF = QTextCharFormat()
+
+		# value color
+		valueF.setForeground(QColor("#cc4e5c"))
+		pattern = QRegExp(":.*(?=;)")
+		rule = HighlightingRule(pattern, valueF)
+		self.highlighting_rules.append(rule)
+
+		# double quotes string
+		stringF.setBackground(QColor("#e25822"))
+		pattern = QRegExp("\".*\"")
+		rule = HighlightingRule(pattern, stringF)
+		self.highlighting_rules.append(rule)
+
+		# single quotes string
+		stringF.setBackground(QColor("#e25822"))
+		pattern = QRegExp("\'.*\'")
+		rule = HighlightingRule(pattern, stringF)
+		self.highlighting_rules.append(rule)
+
+		# id selector color
+		id_keywordF.setForeground(QColor("#e25822"))
+		pattern = QRegExp("[\.]\w+\\s+")
+		rule = HighlightingRule(pattern, id_keywordF)
+		self.highlighting_rules.append(rule)
+
+		# comments multi/single
+		commentsF.setBackground(QColor("#986960"))
+		pattern = QRegExp("/\*.*\*/")
+		rule = HighlightingRule(pattern, commentsF)
+		self.highlighting_rules.append(rule)
+
+		url_keywordF.setForeground(QColor("#e25822"))
+		url_keywordF.setFontWeight(QFont.Bold)
+		pattern = QRegExp("url(?=\()")
+		rule = HighlightingRule(pattern, url_keywordF)
+		self.highlighting_rules.append(rule)
+
+		# pseudo classes
+		pseudo_classes_F.setForeground(QColor("#dc143c"))
+		pseudo_classes_F.setFontItalic(True)
+		pattern_list = [":+\w*\(?\)?\\s", ":+\w*\(?\)?\\s", ":+\w*-*\w*\(?\)?\\s",
+						":+\w*-*\w*-*\w*\(?\)?\\s", ":+\w*-*\w*-*\w*-*\w*\(?\)?\\s",
+						":+\w*\(?\)?\.?", ":+\w*\(?\)?\.?", ":+\w*-*\w*\(?\)?\.?",
+						":+\w*-*\w*-*\w*\(?\)?\.?", ":+\w*-*\w*-*\w*-*\w*\(?\)?\.?"]
+		for pat in pattern_list:
+			pattern = QRegExp(pat)
+			rule = HighlightingRule(pattern, pseudo_classes_F)
+			self.highlighting_rules.append(rule)
+
+		# keywords
+		keywordF.setForeground(QColor("#ffa812"))
+		keywordF.setFontWeight(QFont.Bold)
+		pattern_list = ["\\s\w+:", "\\s\w*-*\w+:", "\\s\w*-*\w*-*\w+:",
+						"\\s\w*-*\w*-*\w*-*\w*-*\w+:"]
+		for word in pattern_list:
+			pattern = QRegExp(word)
+			rule = HighlightingRule(pattern, keywordF)
+			self.highlighting_rules.append(rule)
+
+	def highlightBlock(self, text):
+		for rule in self.highlighting_rules:
+			expression = QRegExp(rule.pattern)
+			index = expression.indexIn(text)
+			while index >= 0:
+				length = expression.matchedLength()
+				self.setFormat(index, length, rule.format)
+				index = expression.indexIn(text, index+length)
+		self.setCurrentBlockState(0)
+
+
+class PlainText(QSyntaxHighlighter):
+	"""Sets Syntax to PlainText"""
+	def __init__(self, parent=None):
+		super(PlainText, self).__init__(parent)
+
+	def highlightBlock(self, text):
+		pass
+
+
+#common keywords:
+# #ffa812: Dark Tangerine;
+
+# special methods/functions:
+# #cc4e5c: DarkTerraCotta;
+
+# common functions:
+# #ffbcd9: cotton candy;
+
+# single/multi comments :
+# #986960: Dark Chestnut;
+
+# numbers:=========
+# #dc143c Crimson;
+
+# assignment operators
+
+# text strings:
+# #e25822 Flame;
+
+# class prefixes:
+# #e48400 Ginger
 
 class HighlightingRule():
 

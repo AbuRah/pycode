@@ -25,7 +25,6 @@ from PySide.QtGui import *
 
 from SyntaxClasses import *
 from functools import partial
-
 # OOP Restructuring============================================================
 
 
@@ -81,33 +80,33 @@ class PyCodeTabInterface(QTabWidget):
 
 	def __init__(self, parent=None):
 		super(PyCodeTabInterface, self).__init__(parent)
-		self.inital_setup()
+		self.init_setup()
 		self.P = parent
 		self.grab_sm_bars()
 		self.new_file()
-		self.TP = self.currentWidget()
 		
 
 		# some signals and slots.
 		self.currentChanged.connect(self.grab_sm_bars)
 		self.currentChanged.connect(self.set_syntax)
-		self.currentChanged.connect(self.get_current_TP)
 		self.tabCloseRequested.connect(self.close_tab)
 
-	def inital_setup(self):
+	def init_setup(self):
 		"""Sets up all options pertinent to QTabWidget"""
 		self.setFocusPolicy(Qt.NoFocus)
 		self.setTabsClosable(True)
 		self.setMovable(True)
 		self.setElideMode(Qt.ElideRight)
 
-	def get_current_TP(self):
-		self.TP = self.currentWidget()
-
 	def set_syntax(self):
 		"""sets appropriate syntax highlighting"""
-		syn = self.SYNTAX_DICT.get(self.currentIndex())
-		self.STATUS.current_syntax.setText(syn)
+
+		if self.count() > 0:
+			set_syn = self.SYNTAX_DICT.get(self.currentIndex())
+			try:
+				set_syn()
+			except TypeError:
+				print "working anyway...."
 
 	def grab_sm_bars(self):
 		"""grabs menus from mainwindow"""
@@ -313,6 +312,7 @@ class PyCodePage(QTextEdit):
 		super(PyCodePage, self).__init__(parent)
 		self.tmp_counter = 0
 		self.TI = parent
+		self.setTabStopWidth(40)
 		# don't like this here
 		self.grab_sm_bars()
 
@@ -340,22 +340,86 @@ class PyCodePage(QTextEdit):
 			self.textCursor().blockNumber()+1, 
 			self.textCursor().columnNumber()+1))
 
+	def clone_line(self):
+		"""Clones current line cursor is found in"""
+		cursor = self.textCursor()
+		cursor.beginEditBlock()
+		cursor.movePosition(QTextCursor.StartOfBlock)
+		cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+		self.setTextCursor(cursor)
+		self.copy()
+		cursor.clearSelection()
+		cursor.movePosition(QTextCursor.Down)
+		cursor.insertBlock()
+		self.setTextCursor(cursor)
+		self.paste()
+		cursor.movePosition(QTextCursor.StartOfBlock)
+		cursor.endEditBlock()
+
+	def line_up(self):
+		"""Moves current line block up one block level"""
+		cursor = self.textCursor()
+		cursor.beginEditBlock()
+
+		cursor.endEditBlock()
+	
+	def line_down(self):
+		"""Moves current line block down one level"""
+		cursor = self.textCursor()
+
+	def current_line_select(self):
+		"""Selects current line cursor is found in"""
+		cursor = self.textCursor()
+		cursor.movePosition(QTextCursor.StartOfLine)
+		cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+		self.setTextCursor(cursor)
+
+	def delete_line(self):
+		"""Deletes current line cursor is found in"""
+		cursor = self.textCursor()
+		cursor.beginEditBlock()
+		
+		if cursor.hasSelection():
+			cursor.removeSelectedText()
+		else:
+			cursor.movePosition(QTextCursor.StartOfBlock)
+			cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+			cursor.removeSelectedText()
+		cursor.endEditBlock()
+
+	def paste_and_indent(self):
+		"""Paste from clipboard with indent"""
+		cursor = self.textCursor()
+		oldpos = self.textCursor().position()
+		indent = self.document().indentWidth()
+		cursor.setPosition(oldpos + indent)
+		self.setTextCursor(cursor)
+		self.paste()
+
+
+	# i may need to create a class to hold all syntax slots
+	def css_syntax(self):
+		"""sets CSS syntax highlighting"""
+		CSSSyntax(self.document())
+		self.TI.SYNTAX_DICT[self.TI.currentIndex()] = self.css_syntax
+		self.STATUS.current_syntax.setText("CSS")
+
 	def python_syntax(self):
 		"""sets python syntax highlighting for textdocument in focus"""
 		PythonSyntax(self.document())
-		self.TI.SYNTAX_DICT[self.TI.currentIndex()] = "Python"
+		self.TI.SYNTAX_DICT[self.TI.currentIndex()] = self.python_syntax
 		self.STATUS.current_syntax.setText("Python")
 
 	def plain_text(self):
 		"""Sets plain text syntax highlighting for textdocument in focus"""
 		PlainText(self.document())
-		self.TI.SYNTAX_DICT[self.TI.currentIndex()] = "PlainText"
+		self.TI.SYNTAX_DICT[self.TI.currentIndex()] = self.plain_text
 		self.STATUS.current_syntax.setText("PlainText")
 
 	def html_syntax(self):
 		"""sets syntax highlighting to HTML"""
 		HtmlSyntax(self.document())
-		self.TI.SYNTAX_DICT[self.TI.currentIndex()] = "HTML"
+		self.TI.SYNTAX_DICT[self.TI.currentIndex()] = self.html_syntax
 		self.STATUS.current_syntax.setText("HTML") 
 
 	def paste_selection(self):
@@ -419,9 +483,29 @@ class PyCodePage(QTextEdit):
 		currentF.setFontFamily("sans-serif")
 		self.setCurrentCharFormat(currentF)
 
+	def copy_selection(self):
+		"""Copies current text selection"""
+		if self.textCursor().hasSelection():
+			return self.copy()
+		else:
+			cursor = self.textCursor()
+			cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.MoveAnchor)
+			cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+			self.setTextCursor(cursor)
+			self.copy()
+			cursor.clearSelection()
+			self.setTextCursor(cursor)
+
 	def cut_selection(self):
 		"""copy/cut selected text"""
-		return self.cut()
+		if self.textCursor().hasSelection():
+			return self.cut()
+		else:
+			cursor = self.textCursor()
+			cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.MoveAnchor)
+			cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+			self.setTextCursor(cursor)
+			self.cut()
 
 	def hide_statusbar(self):
 		"""Hides status bar"""
@@ -431,6 +515,40 @@ class PyCodePage(QTextEdit):
 		else:
 			self.STATUS.show()
 			self.tmp_counter -= 1
+
+
+# testing remove afterwards
+class PyCodeSyntaxSlots(QObject):
+	"""Responsible for holding all syntax slots
+		In experimental
+	"""
+	def __init__(self, parent=None):
+		super(PyCodeSyntaxSlots, self).__init__(parent)
+		self.P = parent
+
+	def css_syntax(self):
+		"""sets CSS syntax highlighting"""
+		CSSSyntax(self.P.document())
+		self.P.TI.SYNTAX_DICT[self.P.TI.currentIndex()] = self.css_syntax
+		self.P.STATUS.current_syntax.setText("CSS")
+
+	def python_syntax(self):
+		"""sets python syntax highlighting for textdocument in focus"""
+		PythonSyntax(self.P.document())
+		self.P.TI.SYNTAX_DICT[self.P.TI.currentIndex()] = self.python_syntax
+		self.P.STATUS.current_syntax.setText("Python")
+
+	def plain_text(self):
+		"""Sets plain text syntax highlighting for textdocument in focus"""
+		PlainText(self.P.document())
+		self.P.TI.SYNTAX_DICT[self.P.TI.currentIndex()] = self.plain_text
+		self.P.STATUS.current_syntax.setText("PlainText")
+
+	def html_syntax(self):
+		"""sets syntax highlighting to HTML"""
+		HtmlSyntax(self.P.document())
+		self.P.TI.SYNTAX_DICT[self.P.TI.currentIndex()] = self.html_syntax
+		self.P.STATUS.current_syntax.setText("HTML") 
 
 
 class PyCodeStatusBar(QStatusBar):
@@ -524,6 +642,13 @@ class EditMenu(PyCodeMenu):
 		self.create_action("find_act", "Find", "Ctrl+F")
 		self.create_action("find_regexp_act", "Find RegExp")
 		self.create_action("find_and_replace_act", "Search & Replace")
+		self.addSeparator()
+		self.create_action("delete_line", "Delete Line", "Ctrl+k")
+		self.create_action("line_up", "Move line up", "Ctrl+Shift+Up")
+		self.create_action("line_down", "Move line down", "Ctrl+Shift+Down")
+		self.create_action("clone_line", "Clone current line", "Ctrl+Shift+D")
+		self.create_action("line_select", "Select current line", "Ctrl+L")
+		self.create_action("indent_paste", "Paste and indent", "Shift+Ctrl+V")
 
 
 class ViewMenu(PyCodeMenu):
@@ -613,6 +738,19 @@ class ThemesMenu(PyCodeMenu):
 		self.create_action("invert_act", "Inverse Theme Colors")
 
 
+class SyntaxMenu(PyCodeMenu):
+	"""The Syntax sub-menu is defined here. If any additions need to be made,
+		make them here.
+	"""
+	def __init__(self, name=None, parent=None):
+		super(SyntaxMenu, self).__init__(name, parent)
+		self.SYN_ACTIONS = self.ALL_ACTIONS
+		self.create_action("python_syn", "Python")
+		self.create_action("plain_syn", "PlainText")
+		self.create_action("html_syn", "HTML")
+		self.create_action("css_syn", "CSS")
+
+
 class FileMenuTriggers(FileMenu):
 	""" This class holds all file menu action signals and slots.
 		P_C holds the Pycode tab interface.
@@ -664,17 +802,34 @@ class EditMenuTriggers(EditMenu):
 		self.E_DICT = self.EDIT_ACTIONS.get
 		self.P_C = parent.CHILD
 		self.make_triggers_current()
-		self.triggered.connect(self.make_triggers_current)
+		self.hovered.connect(self.reset_all)
+		self.hovered.connect(self.make_triggers_current)
+
+	def reset_all(self):
+		"""Here we reset all available connections, then call 
+			make_triggers_current() to set to current tab page.
+		"""
+		for action in self.EDIT_ACTIONS.values():
+			action.disconnect(self.P_C_T)
 
 
 	def make_triggers_current(self):
+		"""This method sets all Edit menu actions' connections"""
+		self.P_C_T = self.P_C.currentWidget()
 		# Not yet implemented
 		# self.E_DICT("find_act").triggered.connect(self.P_C.currentWidget().find_text)
 		self.E_DICT("redo_act").triggered.connect(self.P_C.currentWidget().redo_last)
 		self.E_DICT("undo_act").triggered.connect(self.P_C.currentWidget().undo_last)
 		self.E_DICT("cut_act").triggered.connect(self.P_C.currentWidget().cut_selection)
 		self.E_DICT("paste_act").triggered.connect(self.P_C.currentWidget().paste_selection)
+		self.E_DICT("copy_act").triggered.connect(self.P_C.currentWidget().copy_selection)
 		self.E_DICT("clone_act").triggered.connect(self.P_C.currentWidget().clone_doc)
+		self.E_DICT("delete_line").triggered.connect(self.P_C.currentWidget().delete_line)
+		self.E_DICT("line_up").triggered.connect(self.P_C.currentWidget().line_up)
+		self.E_DICT("line_down").triggered.connect(self.P_C.currentWidget().line_down)
+		self.E_DICT("clone_line").triggered.connect(self.P_C.currentWidget().clone_line)
+		self.E_DICT("line_select").triggered.connect(self.P_C.currentWidget().current_line_select)
+		self.E_DICT("indent_paste").triggered.connect(self.P_C.currentWidget().paste_and_indent)
 
 
 class ViewMenuTriggers(ViewMenu):
@@ -683,21 +838,33 @@ class ViewMenuTriggers(ViewMenu):
 	"""
 	def __init__(self, name=None, parent=None):
 		super(ViewMenuTriggers, self).__init__(name, parent)
-		self.V_DICT = self.VIEW_ACTIONS.get
+		self.V_GET = self.VIEW_ACTIONS.get
 		self.P_C = parent.CHILD
 		self.make_triggers_current()
 		self.hovered.connect(self.make_triggers_current)
 
-	def make_triggers_current(self):
+	def reset_all(self):
+		"""Here we reset all available connections, then call 
+			make_triggers_current() to set to current tab page.
+		"""
+		for action in self.VIEW_ACTIONS.values():
+			action.disconnect(self.P_C_T)
 
-		self.V_DICT("hide_status_act").triggered.connect(self.P_C.currentWidget().hide_statusbar)
-		self.V_DICT("python_syn").triggered.connect(self.P_C.currentWidget().python_syntax)
-		self.V_DICT("plain_syn").triggered.connect(self.P_C.currentWidget().plain_text)
-		self.V_DICT("html_syn").triggered.connect(self.P_C.currentWidget().html_syntax)
+
+	def make_triggers_current(self):
+		self.P_C_T = self.P_C.currentWidget()
+
+
+		self.V_GET("hide_status_act").triggered.connect(self.P_C.currentWidget().hide_statusbar)
+		self.V_GET("python_syn").triggered.connect(self.P_C.currentWidget().python_syntax)
+		self.V_GET("plain_syn").triggered.connect(self.P_C.currentWidget().plain_text)
+		self.V_GET("html_syn").triggered.connect(self.P_C.currentWidget().html_syntax)
+		self.V_GET("css_syn").triggered.connect(self.P_C.currentWidget().css_syntax)
+
 		# not yet implemented
-		# self.V_DICT(plainL).triggered.connect(self.plain_layout)
-		# self.V_DICT(splitL).triggered.connect(self.split_screen_layout)
-		# self.V_DICT(gridL).triggered.connect(self.grid_layout)
+		# self.V_GET(plainL).triggered.connect(self.plain_layout)
+		# self.V_GET(splitL).triggered.connect(self.split_screen_layout)
+		# self.V_GET(gridL).triggered.connect(self.grid_layout)
 
 
 class ToolMenuTriggers(ToolMenu):
@@ -707,50 +874,56 @@ class ToolMenuTriggers(ToolMenu):
 	"""
 	def __init__(self, name=None, parent=None):
 		super(ToolMenuTriggers, self).__init__(name, parent)
-		self.T_DICT = self.TOOL_ACTIONS.get
+		self.T_GET = self.TOOL_ACTIONS.get
 		self.P_C = parent.CHILD
 		self.make_triggers_current()
 		self.triggered.connect(self.make_triggers_current)
 
-	def make_triggers_current(self):
+	def reset_all(self):
+		"""Here we reset all available connections, then call 
+			make_triggers_current() to set to current tab page.
+		"""
+		for action in self.TOOL_ACTIONS.values():
+			action.disconnect(self.P_C_T)
 
-		self.T_DICT("tab_act_1").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 10))
-		self.T_DICT("tab_act_2").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 20))
-		self.T_DICT("tab_act_3").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 30))
-		self.T_DICT("tab_act_4").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 40))
-		self.T_DICT("tab_act_5").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 50))
-		self.T_DICT("tab_act_6").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 60))
-		self.T_DICT("tab_act_7").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 70))
-		self.T_DICT('tab_act_8').triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 80))
+	def make_triggers_current(self):
+		self.P_C_T = self.P_C.currentWidget()
+
+		self.T_GET("tab_act_1").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 10))
+		self.T_GET("tab_act_2").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 20))
+		self.T_GET("tab_act_3").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 30))
+		self.T_GET("tab_act_4").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 40))
+		self.T_GET("tab_act_5").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 50))
+		self.T_GET("tab_act_6").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 60))
+		self.T_GET("tab_act_7").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 70))
+		self.T_GET('tab_act_8').triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 80))
 
 
 class PrefMenuTriggers(PrefMenu):
 	"""This class is responsible for all preference specific action triggers."""
 	def __init__(self, name=None, parent=None):
 		super(PrefMenuTriggers, self).__init__(name, parent)
-		self.P_DICT = self.PREF_ACTIONS.get
+		self.P_GET = self.PREF_ACTIONS.get
 		self.P_C = parent.CHILD
 		self.make_triggers_current()
 		self.hovered.connect(self.make_triggers_current)
 
+	def reset_all(self):
+		"""Here we reset all available connections, then call 
+			make_triggers_current() to set to current tab page.
+		"""
+		for action in self.PREF_ACTIONS.values():
+			action.disconnect(self.P_C_T)
+
 	def make_triggers_current(self):
-		self.P_DICT("font_inc_act").triggered.connect(self.P_C.currentWidget().increase_font_size)
-		self.P_DICT("font_dec_act").triggered.connect(self.P_C.currentWidget().decrease_font_size)
-		self.P_DICT("serif_font_act").triggered.connect(self.P_C.currentWidget().set_serif)
-		self.P_DICT("monospace_font_act").triggered.connect(self.P_C.currentWidget().set_monospace)
-		self.P_DICT("sans_serif_font_act").triggered.connect(self.P_C.currentWidget().set_sansserif)
+		self.P_C_T = self.P_C.currentWidget()
 
+		self.P_GET("font_inc_act").triggered.connect(self.P_C.currentWidget().increase_font_size)
+		self.P_GET("font_dec_act").triggered.connect(self.P_C.currentWidget().decrease_font_size)
+		self.P_GET("serif_font_act").triggered.connect(self.P_C.currentWidget().set_serif)
+		self.P_GET("monospace_font_act").triggered.connect(self.P_C.currentWidget().set_monospace)
+		self.P_GET("sans_serif_font_act").triggered.connect(self.P_C.currentWidget().set_sansserif)
 
-class SyntaxMenu(PyCodeMenu):
-	"""The Syntax sub-menu is defined here. If any additions need to be made,
-		make them here.
-	"""
-	def __init__(self, name=None, parent=None):
-		super(SyntaxMenu, self).__init__(name, parent)
-		self.SYN_ACTIONS = self.ALL_ACTIONS
-		self.create_action("python_syn", "Python")
-		self.create_action("plain_syn", "PlainText")
-		self.create_action("html_syn", "HTML")
 
 # broken
 class PyCodeDockWidget(QDockWidget):
@@ -823,7 +996,7 @@ class PyCodeSettings(QSettings):
 			try:
 				with open(tabname, "r") as f:
 					data = f.read()
-					new_page = PyCodePage(self.parent())
+					new_page = PyCodePage(self.P_C)
 					new_page.setText(data)
 					self.P_C.addTab(new_page, tabname)
 					f.close()
@@ -853,6 +1026,9 @@ class PyCodeShortcuts(QObject):
 		self.create_shortcut("move_left2", "Ctrl+Shift+Tab", parent, True)
 		self.create_shortcut("close_focused_win", "Ctrl+Shift+W", parent)
 		self.create_shortcut("close_dock", "Esc", parent)
+		self.create_shortcut("cut_act", "Ctrl+X", parent)
+		# self.create_shortcut("delete_line", "Ctrl+K", parent, True)
+		# self.create_shortcut("clone_line", "Ctrl+Shift+D", parent, True)
 
 	def create_shortcut(self, name=None, short=None, parent=None, auto=False):
 		"""Creates Shortcut"""
@@ -870,16 +1046,16 @@ class PyCodeShortcutTriggers(PyCodeShortcuts):
 
 	def __init__(self, parent=None):
 		super(PyCodeShortcutTriggers, self).__init__(parent)
-		self.SHORT_DICT = self._ALL_SHORTCUTS.get
+		self.SHORT_GET = self._ALL_SHORTCUTS.get
 		self.parent = parent
 		self.P_C = self.parent.CHILD
 
-		self.SHORT_DICT("move_right").activated.connect(self.P_C.tab_seek_right)
-		self.SHORT_DICT("move_right2").activated.connect(self.P_C.tab_seek_right)
-		self.SHORT_DICT("move_left").activated.connect(self.P_C.tab_seek_left)
-		self.SHORT_DICT("move_left2").activated.connect(self.P_C.tab_seek_left)
-		self.SHORT_DICT("close_focused_win").activated.connect
-		self.SHORT_DICT("close_dock").activated.connect
+		self.SHORT_GET("move_right").activated.connect(self.P_C.tab_seek_right)
+		self.SHORT_GET("move_right2").activated.connect(self.P_C.tab_seek_right)
+		self.SHORT_GET("move_left").activated.connect(self.P_C.tab_seek_left)
+		self.SHORT_GET("move_left2").activated.connect(self.P_C.tab_seek_left)
+		self.SHORT_GET("close_focused_win").activated.connect
+		self.SHORT_GET("close_dock").activated.connect
 
 
 class PyCodeTop(QMainWindow):
@@ -891,6 +1067,7 @@ class PyCodeTop(QMainWindow):
 	def __init__(self, parent=None):
 		super(PyCodeTop, self).__init__(parent)
 		self.initUI()
+		self.SETTINGS.read_settings()
 		self.set_stylesheet()
 
 	def initUI(self):
@@ -901,9 +1078,9 @@ class PyCodeTop(QMainWindow):
 		main = PyCodeTabInterface(self)
 		self.CHILD = self.findChild(PyCodeTabInterface)
 		menu = PyCodeMenuBar(self)
+		self.setMenuBar(menu)
 		self.SETTINGS = PyCodeSettings(self)
 		self.SHORT = PyCodeShortcutTriggers(self)
-		self.setMenuBar(menu)
 		self.setCentralWidget(main)
 		
 

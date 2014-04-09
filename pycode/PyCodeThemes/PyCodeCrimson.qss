@@ -22,28 +22,50 @@
 /* Here define Theme specific settings. i.e font family, style, size etc.
 Main Theme Colors: ( not all need to be specified ) 
 
-#800020 -> Bergundy
-#0f0f0f -> Onyx;
-#f4c2c2 -> BabyPink;
+Major colors:
+#800020 -> Bergundy; BACKGROUND COLORS
+#0f0f0f -> Onyx; FOREGROUND COLORS
+
+Minor colors:
+#f4c2c2 -> BabyPink; 
 #faebd7 -> Moccasin;
 #414a4c -> Outer Space;
 
+Default Font Styling:
+Font-family: Monospace;
+font-size
 
-set Theme Specific Syntax highlighting here
+Theme Specific Syntax Highlighting:
+Note: These are the recommended colors to go with this theme; feel free
+to personalize any way you'd like.
 
-common keywords 
-common functions
-numbers
+common keywords:
+#ffa812: Dark Tangerine;
+
+special methods/functions:
+#cc4e5c: DarkTerraCotta;
+
+common functions:
+#ffbcd9: cotton candy;
+
+single/multi comments :
+#986960: Dark Chestnut;
+
+numbers:=========
+#dc143c Crimson;
+
 assignment operators
-text strings
-etc.
+#cf1020 Lava;
+
+text strings:
+#e25822 Flame;
+
+function prefixes:
+#e48400 Ginger
+
 
 */
 
-/*QTabWidget QTextEdit { background: transparent }*/
-/*QWidget.Selection {
-  background-color: #f4c2c2;
-}*/
 
 QTabWidget {
   
@@ -63,7 +85,6 @@ QMainWindow {
 
 QMainWindow::separator
 {
-    /*background-color: QLinearGradient(x1:0, y1:0, x2:0, y2:1, stop:0 #161616, stop: 0.5 #151515, stop: 0.6 #800020, stop:1 #800020);*/
     background-color: #800020;
     color: #800020;
     padding-left: 4px;
@@ -313,10 +334,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
 {
       background: none;
 }
-
-/*QDockWidget * {
-  background-color: #414a4c;
-}*/
 
 
 QDockWidget::title
