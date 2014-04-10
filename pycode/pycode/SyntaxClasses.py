@@ -17,7 +17,7 @@
     Copyright 2014, Abu Rah 82013248a@gmail.com
 
 """
-#--coding:utf-8---
+#-*-coding:utf-8-*-
 
 from PySide.QtGui import (QSyntaxHighlighter, QTextCharFormat, QColor, QFont)
 from PySide.QtCore import QRegExp, Qt
@@ -147,7 +147,7 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
 		
 		keyword_list = ["for", "in", "while", "print", "from", 
 				"import", "not", "None", "self", "return", "pass", 
-				"True", "False"]
+				"True", "False", "if", "elif", "else"]
 
 		for word in keyword_list:
 			pattern = QRegExp("\\b"+ word +"\\b")
@@ -157,7 +157,7 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
 		# special methods
 		self.keyword_reservedF.setForeground(self.TM_GET("keyword_reserved"))
 		self.keyword_reservedF.setFontWeight(QFont.Bold)
-		keywords_reserved = ["__init__", 
+		keywords_reserved = ["__init__", "__name__",
 				"__getitem__","__new__", "__del__", "__repr__",
 				 "__str__", "__lt__", "__le__", "__eq__", 
 				 "__ne__", "__gt__", "__ge__", "__rcmp__", 
@@ -357,14 +357,14 @@ class CSSSyntax(PyCodeSyntaxHighlighter):
 			self.highlighting_rules.append(rule)
 
 		# keywords
-		keywordF.setForeground(self.TM_GET("keyword"))
-		keywordF.setFontWeight(QFont.Bold)
+		self.keywordF.setForeground(self.TM_GET("keyword"))
+		self.keywordF.setFontWeight(QFont.Bold)
 		# need to name all CSS keywords
-		keyword_list = ["\\s\w+:", "\\s\w*-*\w+:", "\\s\w*-*\w*-*\w+:",
-						"\\s\w*-*\w*-*\w*-*\w*-*\w+:"]
+		keyword_list = ["\\s+\w+:", "\\s+\w*-*\w+:", "\\s+\w*-*\w*-*\w+:",
+						"\\s+\w*-*\w*-*\w*-*\w*-*\w+:"]
 		for word in keyword_list:
 			pattern = QRegExp(word)
-			rule = HighlightingRule(pattern, keywordF)
+			rule = HighlightingRule(pattern, self.keywordF)
 			self.highlighting_rules.append(rule)
 
 	def highlightBlock(self, text):

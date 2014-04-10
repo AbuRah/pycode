@@ -17,9 +17,9 @@
     Copyright 2014, Abu Rah 82013248a@gmail.com
 
 """
-#--coding:utf-8---
 
-# IMPORTANT! This is under active development. The code is being restructured to OOP
+#-*-coding:utf-8-*-
+
 import sys, os, codecs, re
 
 from PySide.QtCore import *
@@ -43,12 +43,11 @@ class PyCodeAction(QAction):
 
 class PyCodeMenuBar(QMenuBar):
 	"""Responsible for holding all menus and menu actions.
-		PyCodeMenuBar's parent is PyCodePage, **NOT** the PyCodeTop
 
 	"""
 	def __init__(self, parent=None):
 		super(PyCodeMenuBar, self).__init__(parent)
-		self.parent = parent
+		self.P = parent
 
 		self.FILE = FileMenuTriggers("&File", parent)
 		self.EDIT = EditMenuTriggers("Edit", parent)
@@ -60,6 +59,35 @@ class PyCodeMenuBar(QMenuBar):
 		self.addMenu(self.VIEW)
 		self.addMenu(self.TOOL)
 		self.addMenu(self.PREF)
+
+	def set_CHILD_constant(self):
+		"""Sets pycodetop child to all necessary triggers menus
+			Be sure that any sub-menus that are trigger classes are updated
+			as well...e.g. encoding sub-menus
+		"""
+		self.FILE.P_C = self.P.CHILD
+		self.FILE.update_triggers()
+		self.FILE.enc_save.PP_C = self.P.CHILD
+		self.FILE.enc_open.PP_C = self.P.CHILD
+		self.EDIT.P_C = self.P.CHILD
+		self.VIEW.P_C = self.P.CHILD
+		self.TOOL.P_C = self.P.CHILD
+		self.PREF.P_C = self.P.CHILD
+		self.P.CHILD.currentChanged.connect(self.update_triggers)
+
+
+	def update_triggers(self):
+		"""Here, we set all triggermenu actions to appropriate slots
+			Everytime the user changes a tab page, all menubar relevant actions
+			will point to the current tab page, disconnecting from the previous
+			tab page first.
+		"""
+		self.FILE.enc_save.update_connections()
+		self.FILE.enc_open.update_connections()
+		self.EDIT.update_connections()
+		self.VIEW.update_connections()
+		self.TOOL.update_connections()
+		self.PREF.update_connections()
 
 	def __repr__(self):
 		return "PyCodeMenuBar Instance"
@@ -87,10 +115,24 @@ class PyCodeIdentifier(QObject):
 			return PlainText
 
 
+class PyCodeDialogWindow(QDialog):
+	def __init__(self, parent=None):
+		super(PyCodeDialogWindow, self).__init__(parent)
+		self.set_attributes()
+
+	def set_attributes(self):
+		self.setSizeGripEnabled(True)
+
+		
+	def initUI(self):
+		self.ok = QPushButton("OK", self)
+		self.cancel = QPushButton("CANCEL", self)
+
 class PyCodeTabInterface(QTabWidget):
 	"""This class and the PyCodePage class are where most of the relevant slots and
 		modifications will be. i.e. if you want to find where cursor manipulation takes
 		place, it would be in one of these classes.
+		
 		Whenever the actor changes tabs, the menubar and statusbar will both be automatically
 		updated to reflect the pycodepage instance's menubar and statusbar. It will then
 		set PyCodeTop to hold these updated status/menubars.
@@ -118,14 +160,8 @@ class PyCodeTabInterface(QTabWidget):
 		self.init_setup()
 		self.IDENTIFIER = PyCodeIdentifier(self)
 		self.P = parent
-		self.grab_sm_bars()
-		self.new_file()
+		# i can set signals here instead...
 		
-
-		# some signals and slots.
-		self.currentChanged.connect(self.grab_sm_bars)
-		self.currentChanged.connect(self.set_syntax)
-		self.tabCloseRequested.connect(self.close_tab)
 
 	def init_setup(self):
 		"""Sets up all options pertinent to QTabWidget"""
@@ -134,15 +170,19 @@ class PyCodeTabInterface(QTabWidget):
 		self.setMovable(True)
 		self.setElideMode(Qt.ElideRight)
 
+
+	def set_signal_slots(self):
+		self.currentChanged.connect(self.grab_sm_bars)
+		self.currentChanged.connect(self.set_syntax)
+		self.tabCloseRequested.connect(self.close_tab)
+
+
 	def set_syntax(self):
 		"""sets appropriate syntax highlighting"""
 
-		if self.count() > 0:
+		if self.count() and self.SYNTAX_DICT:
 			set_syn = self.SYNTAX_DICT.get(self.currentIndex())
-			try:
-				set_syn()
-			except TypeError:
-				print "working anyway...."
+			set_syn()
 
 	def grab_sm_bars(self):
 		"""grabs menus from mainwindow"""
@@ -155,15 +195,18 @@ class PyCodeTabInterface(QTabWidget):
 		PlainText(page.document())
 		return self.addTab(page, "Untitled")
 
-	def open_file_dialog(self):
+		#testing
+	def open_file_dialog(self, enc="utf-8"):
 		"""opens file in new tab"""
+
+		# does not pass arg if called from open w/ encoding menu...
 
 		file_name,_ = QFileDialog.getOpenFileName(self,
 			"Open File", os.getcwd())
 
 		if file_name != '':
 
-			with open(file_name, "r") as f:
+			with codecs.open(file_name, "r", enc) as f:
 				
 				data = f.read()
 				new_page = PyCodePage(self)
@@ -179,7 +222,15 @@ class PyCodeTabInterface(QTabWidget):
 				
 				self.addTab(new_page, nameOfFile)
 		else:
-			pass
+			print "open file failed"
+
+	# # practice/testing
+	# def testing(self, enc):
+	# 	# when opening file use decode(encoding specified)
+	# 	data = f.read()
+	# 	data.decode(enc)
+	# 	# when writing to file, use encode(encoding specified)
+
 
 	def get_syntax_highlighter(self, file_name):
 		"""Sets the new file's syntax highlighting,
@@ -199,7 +250,7 @@ class PyCodeTabInterface(QTabWidget):
 			return "txt"
 
 
-	def save_event(self):
+	def save_event(self, enc="utf-8"):
 		"""Saves current file, except if "Untitled"; it will prompt user
 			to save.
 		"""
@@ -212,8 +263,16 @@ class PyCodeTabInterface(QTabWidget):
 
 			with f:
 				data = self.currentWidget().toPlainText()
-				f.write(data)
-				f.close()
+				try:
+					codecs.encode(data, enc)
+					f.write(data)
+
+				except ValueError:
+					print "error processing goes here"
+
+				finally:
+					f.close()
+				
 				self.P.statusBar().showMessage(
 										"Saved %s" % file_name, 4000)
 
@@ -259,6 +318,9 @@ class PyCodeTabInterface(QTabWidget):
 
 				nameHolder = QFileInfo(file_name)
 				nameOfFile = nameHolder.fileName()
+
+				syntax = self.get_syntax_highlighter(nameOfFile)
+				syntax(new_page.document())
 
 				self.setTabText(self.currentIndex(), nameOfFile)
 		
@@ -350,7 +412,6 @@ class PyCodeTabInterface(QTabWidget):
 	# 		self.currentWidget().setTextCursor(update)
 	# 		self.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
 
-	# testing remove afterwards
 	def __repr__(self):
 		return "PyCodeTabInterface"
 
@@ -367,7 +428,7 @@ class PyCodePage(QTextEdit):
 		self.tmp_counter = 0
 		self.TI = parent
 		self.setTabStopWidth(40)
-		# don't like this here
+		# i could change this...
 		self.grab_sm_bars()
 
 		self.textChanged.connect(self.modified_since_save)
@@ -492,7 +553,7 @@ class PyCodePage(QTextEdit):
 	def clone_doc(self):
 		"""clones current document in focus"""
 		cloned_doc = self.document().clone(self)
-		new_page = PyCodePage(self)
+		new_page = PyCodePage(self.TI)
 		new_page.setDocument(cloned_doc)
 		return self.TI.addTab(new_page, "Untitled")
 
@@ -655,6 +716,7 @@ class PyCodeMenu(QMenu):
 		self.name = name
 		self.ALL_ACTIONS = {}
 		self.ACTION_GROUPS = {}
+		self.P = parent
 		self.setTitle(str(name))
 		
 	def create_action(self, name=None, menutext=None, short=None, status=None):
@@ -687,20 +749,21 @@ class FileMenu(PyCodeMenu):
 
 	def __init__(self, name="Default", parent=None):
 		super(FileMenu, self).__init__(name, parent)
+		self.enc_open = OpenEncMenuTriggers("Open With Encoding", self)
+		self.enc_save = SaveEncMenuTriggers("Save With Encoding", self)
 		self.FILE_ACTIONS = self.ALL_ACTIONS
+
 		self.addSeparator()
 		self.create_action("newF_act", "New File", "Ctrl+N", "Create New document")
 		self.create_action("newW_act", "New Window", "Ctrl+Shift+N", "Create New Window")
 		self.create_action("openF_act", "Open File", "Ctrl+O", "Open File")
-		enc_open = EncodingOpenMenu("Open With Encoding", self)
-		self.addMenu(enc_open)
+		self.addMenu(self.enc_open)
 		self.create_action("reopenF_act", "Reopen Last Tab", "Ctrl+Shift+T", "Re-open last tab")
 		self.addSeparator()
 		self.create_action("save_act", "Save", "Ctrl+S", "Save Current Document")
 		self.create_action("save_as_act", "Save as...", "Ctrl+Shift+S", "Save file as...")
 		self.create_action("save_all_act", "Save All Files")
-		enc_save = EncodingSaveMenu("Save With Encoding", self)
-		self.addMenu(enc_save)
+		self.addMenu(self.enc_save)
 		self.addSeparator()
 		self.create_action("closeF_act", "Close Tab", "Ctrl+W", "Close current Tab Page")
 		self.create_action("closeW_act", "Close Window", "Ctrl+Shift+W", "Close Active Window")
@@ -842,22 +905,21 @@ class SyntaxMenu(PyCodeMenu):
 		self.create_action("html_syn", "HTML")
 		self.create_action("css_syn", "CSS")
 
-# may make a single encoding class that 
-# all encoding menus inherit
+
 class WindowsEncodingMenu(PyCodeMenu):
 	"""Responsible for holding all Windows specific charset encodings"""
 	def __init__(self, name=None, parent=None):
 		super(WindowsEncodingMenu, self).__init__(name, parent)
 		self.WIN_ENC = self.ALL_ACTIONS
-		self.create_action("windows1250_act", "Central European", status="Windows1250")
-		self.create_action("windows1251_act", "Cyrillic", status="Windows1251")
-		self.create_action("windows1252_act", "Western", status="Windows1252")
-		self.create_action("windows1253_act", "Greek", status="Windows1253")
-		self.create_action("windows1254_act", "Turkish", status="Windows1254")
-		self.create_action("windows1255_act", "Hebrew", status="Windows1255")
-		self.create_action("windows1256_act", "Arabic", status="Windows1256")
-		self.create_action("windows1257_act", "Baltic", status="Windows1257")
-		self.create_action("windows1258_act", "Vietnamese", status="Windows1258")
+		self.create_action("windows1250_act", "Central European(Windows1250)", status="Windows1250")
+		self.create_action("windows1251_act", "Cyrillic(Windows1251)", status="Windows1251")
+		self.create_action("windows1252_act", "Western(Windows1252)", status="Windows1252")
+		self.create_action("windows1253_act", "Greek(Windows1253)", status="Windows1253")
+		self.create_action("windows1254_act", "Turkish(Windows1254)", status="Windows1254")
+		self.create_action("windows1255_act", "Hebrew(Windows1255)", status="Windows1255")
+		self.create_action("windows1256_act", "Arabic(Windows1256)", status="Windows1256")
+		self.create_action("windows1257_act", "Baltic(Windows1257)", status="Windows1257")
+		self.create_action("windows1258_act", "Vietnamese(Windows1258)", status="Windows1258")
 
 
 class EuropeanEncodingMenu(PyCodeMenu):
@@ -866,45 +928,51 @@ class EuropeanEncodingMenu(PyCodeMenu):
 		super(EuropeanEncodingMenu, self).__init__(name, parent)
 		self.ISO_ENC = self.ALL_ACTIONS
 		# need to check these out, some may be redundant
-		self.create_action("iso8859_1_act", "Western", status="ISO8859-1")
-		self.create_action("iso8859_2_act", "Western && Central Europe", status="ISO8859-2")
-		self.create_action("iso8859_3_act", "Western/Southern European", status="ISO8859-3")
-		self.create_action("iso8859_4_act", "W Europe && Baltic", status="ISO8859-4")
-		self.create_action("iso8859_5_act", "Cyrillic", status="ISO8859-5")
-		self.create_action("iso8859_6_act", "Arabic", status="ISO8859-6")
-		self.create_action("iso8859_7_act", "Greek", status="ISO8859-7")
-		self.create_action("iso8859_8_act", "Hebrew", status="ISO8859-8")
-		self.create_action("iso8859_9_act", "W Europe w/Turkish set", status="ISO8859-9")
-		self.create_action("iso8859_10_act", "W Europe w/Nordic Icelandic set", status="ISO8859-10")
-		self.create_action("iso8859_11_act", "Thai", status="ISO8859-11")
-		self.create_action("iso8859_13_act", "Baltic w/Polish set", status="ISO8859-13")
-		self.create_action("iso8859_14_act", "Celtic", status="ISO8859-14")
-		self.create_action("iso8859_15_act", "unknown", status="ISO8859-15")
-		self.create_action("iso8859_16_act", "Central/Eastern/Southern European", status="ISO8859-16")
+		self.create_action("iso8859_1_act", "Western (ISO8859-1)", status="ISO8859-1")
+		self.create_action("iso8859_2_act", "Western && Central Europe (ISO8859-2)", status="ISO8859-2")
+		self.create_action("iso8859_3_act", "Western/Southern European (ISO8859-3)", status="ISO8859-3")
+		self.create_action("iso8859_4_act", "W Europe && Baltic (ISO8859-4)", status="ISO8859-4")
+		self.create_action("iso8859_5_act", "Cyrillic (ISO8859-5)", status="ISO8859-5")
+		self.create_action("iso8859_6_act", "Arabic (ISO8859-6)", status="ISO8859-6")
+		self.create_action("iso8859_7_act", "Greek (ISO8859-7)", status="ISO8859-7")
+		self.create_action("iso8859_8_act", "Hebrew (ISO8859-8)", status="ISO8859-8")
+		self.create_action("iso8859_9_act", "W Europe w/Turkish set (ISO8859-9)", status="ISO8859-9")
+		self.create_action("iso8859_10_act", "W Europe w/Nordic Icelandic set (ISO8859-10)", status="ISO8859-10")
+		self.create_action("iso8859_11_act", "Thai (ISO8859-11)", status="ISO8859-11")
+		self.create_action("iso8859_13_act", "Baltic w/Polish set (ISO8859-13)", status="ISO8859-13")
+		self.create_action("iso8859_14_act", "Celtic (ISO8859-14)", status="ISO8859-14")
+		self.create_action("iso8859_15_act", "unknown (ISO8859-15)", status="ISO8859-15")
+		self.create_action("iso8859_16_act", "Central/Eastern/Southern European (ISO8859-16)", status="ISO8859-16")
 
 
-class EncodingSaveMenu(PyCodeMenu):
-	"""Displays the more commonly used char set encodings."""
+class MainEncodingMenu(PyCodeMenu):
+	"""Displays the more commonly used char set encodings.
+		The actions from it's sub-menus are added with update_dict()
+		The menus must be created first otherwise the program will not run.
+	"""
 	def __init__(self, name=None, parent=None):
-		super(EncodingSaveMenu, self).__init__(name, parent)
-		self.ENC_SM = self.ALL_ACTIONS
+		super(MainEncodingMenu, self).__init__(name, parent)
 		self.make_menus()
-		self.create_action("uft8_act", "UTF-8", status="UTF-8")
-		self.create_action("uft16_act", "UTF-16", status="UTF-16")
-		self.create_action("uft32_act", "UTF-32", status="UTF-32")
+		self.update_dict()
+		self.create_action("utf8_act", "UTF-8", status="UTF-8")
+		self.create_action("utf16_act", "UTF-16LE", status="UTF-16 Little Endian")
+		self.create_action("utf16_act", "UTF-16BE", status="UTF-16 Big Endian")
+		self.create_action("utf32_act", "UTF-32", status="UTF-32")
 		self.create_action("macos_roman_act", "Mac Roman", status="Mac OS Roman")
-		self.create_action("k018_u_act", "Russian", status="K018-U")
-		self.create_action("k018_r_act", "Russian", status="K018-R")
-		self.create_action("k017_act", "Russian 7-bit", status="K017")
+		self.create_action("k018_u_act", "Russian(K018-U)", status="K018-U")
+		self.create_action("k018_r_act", "Russian(K018-R)", status="K018-R")
+		self.create_action("k017_act", "Russian(K017)", status="K017")
 		self.create_action("mik_act", "DOS Cyrillic", status="MIK")
 		self.addSeparator()
 		self.addMenu(self.win_menu)
 		self.addMenu(self.iso_menu)
-		self.create_action("shift_jis_act", "Japenese", status="Shift_JIS")
-		self.create_action("iscii_act", "Indian", status="ISCII")
-		self.create_action("gbk_act", "Chinese", status="GBK")
-		self.create_action("gb18030_act", "Chinese", status="GB18030")
-		self.create_action("big5_act", "Traditional Chinese", status="Big-5")
+		self.create_action("shift_jis_act", "Japenese(Shift_JIS)", status="Shift_JIS")
+		self.create_action("iso_2022_jp_act", "Japenese(ISO-2022-JP)", status="ISO-2022-JP")
+		self.create_action("iscii_act", "Indian(ISCII)", status="ISCII")
+		self.create_action("gbk_act", "Chinese Simplified(GBK)", status="GBK")
+		self.create_action("gb18030_act", "Chinese Simplified(GB18030)", status="GB18030")
+		self.create_action("big5_act", "Chinese Traditional(Big5)", status="Big-5")
+		self.create_action("big5_act", "Chinese Traditional(Big5-HKSCS)", status="Big-5")
 		
 		# may remove later
 		# self.create_action("gb2312_act", "Chinese", "GB2312") may not use
@@ -912,37 +980,165 @@ class EncodingSaveMenu(PyCodeMenu):
 		# self.create_action("euc-kr_act", "UTF-8") may not use
 		# self.create_action("jis_x_0208_act", "Japenese", ) may not use
 		# self.create_action("euc_jis_act", "UTF-8") may not use
-		# self.create_action("iso_2022_jp_act", "UTF-8") may not use
 		# self.create_action("iso-2022_act", "UTF-8") may not use
 
+	def update_dict(self):
+		"""Adds all actions to main dictionary"""
+		self.ENC_MAIN = self.ALL_ACTIONS
+		self.ENC_MAIN.update(self.win_menu.ALL_ACTIONS)
+		self.ENC_MAIN.update(self.iso_menu.ALL_ACTIONS)
+
+	# i may be able to make a general method in pycodemenu base.
 	def make_menus(self):
+		"""Constructs submenu constants."""
 		self.win_menu = WindowsEncodingMenu("Windows", self)
 		self.iso_menu = EuropeanEncodingMenu("European", self)
 
 
-class EncodingOpenMenu(EncodingSaveMenu):
-	def __init__(self, name=None, parent=None):
-		super(EncodingOpenMenu, self).__init__(name, parent)
-
-
 # TRIGGER CLASSES ============
+class OpenEncMenuTriggers(MainEncodingMenu):
+	"""defines all encoding Menu signal/slot connections
+		This is constructed in the Filemenu class. Watch for 
+		dependencies.
+	"""
+	def __init__(self, name=None, parent=None):
+		super(OpenEncMenuTriggers, self).__init__(name, parent)
+		self.ENC_GET = self.ENC_MAIN.get
+		self.PP_C = parent.parent()
+
+	def update_connections(self):
+		"""Calls the relevant update functions"""
+		self.reset_all()
+		self.update_triggers()
+
+	def reset_all(self):
+		"""Here we reset all available connections, then call 
+			update_triggers() to set to current tab page.
+		"""
+		for action in self.ENC_MAIN.values():
+			action.disconnect(self.PP_C)
+
+
+	def update_triggers(self):
+		"""This method sets all Edit menu actions' connections"""
+
+		# testing...
+		# broken; calls open_file_dialog multiple times when used with partial().
+		for key, action in self.ENC_MAIN.items():
+			action.triggered.connect(self.PP_C.open_file_dialog, key[:-4])
+
+		# will update connections later
+		# This is only here for name reference; will remove after testing.
+		# self.ENC_GET("utf8_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("utf16_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("utf32_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("macos_roman_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("k018_u_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("k018_r_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("windows1250_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("windows1251_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("windows1252_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("windows1253_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("windows1254_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("windows1255_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("windows1256_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("windows1257_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("windows1258_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_1_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_2_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_3_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_4_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_5_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_6_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_7_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_8_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_9_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_10_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_13_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_14_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_15_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("iso8859_16_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("shift_jis_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("gbk_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("gb18030_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("big5_act").triggered.connect(self.PP_C.open_file_dialog)
+		# self.ENC_GET("big5_act").triggered.connect(self.PP_C.open_file_dialog)
+
+
+class SaveEncMenuTriggers(MainEncodingMenu):
+	def __init__(self, name=None, parent=None):
+		super(SaveEncMenuTriggers, self).__init__(name, parent)
+		self.ENC_S_GET = self.ENC_MAIN.get
+		self.PP_C = parent.parent()
+
+	def update_connections(self):
+		self.reset_all()
+		self.update_triggers()
+
+	def reset_all(self):
+		for action in self.ENC_MAIN.values():
+			action.disconnect(self.PP_C)
+
+	def update_triggers(self):
+
+		for action in self.ENC_MAIN.values():
+			action.triggered.connect(self.PP_C.save_event)
+
+		# this is here only for name reference; will remove once done testing.
+		# self.ENC_S_GET("utf8_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("utf16_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("utf32_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("macos_roman_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("k018_u_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("k018_r_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("windows1250_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("windows1251_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("windows1252_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("windows1253_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("windows1254_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("windows1255_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("windows1256_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("windows1257_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("windows1258_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_1_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_2_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_3_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_4_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_5_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_6_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_7_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_8_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_9_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_10_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_13_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_14_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_15_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("iso8859_16_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("shift_jis_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("gbk_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("gb18030_act").triggered.connect(self.PP_C.save_event)
+		# self.ENC_S_GET("big5_act").triggered.connect(self.PP_C.save_event)
+
+
 class FileMenuTriggers(FileMenu):
 	""" This class holds all file menu action signals and slots.
 		P_C holds the Pycode tab interface.
-		NOTE: For any of the trigger menu classes, if the parent isn't explicitly 
-		set, it will return None as parent.
+
 	"""
 	def __init__(self, name=None, parent=None):
 		super(FileMenuTriggers, self).__init__(name, parent)
 
 		self.F_DICT = self.FILE_ACTIONS.get
-		self.P_C = parent.CHILD
+		self.P_C = parent
 		self.TOP = parent
 
 		self.F_DICT("exit_act").triggered.connect(self.exit_event)
 		self.F_DICT("newW_act").triggered.connect(self.new_window)
 		self.F_DICT("closeW_act").triggered.connect(self.close_window)
 
+	def update_triggers(self):
+		"""updates pertinent triggers to respective slots"""
+		# these need to be set after init....
 		self.F_DICT("save_act").triggered.connect(self.P_C.save_event)
 		self.F_DICT("openF_act").triggered.connect(self.P_C.open_file_dialog)
 		self.F_DICT("save_as_act").triggered.connect(self.P_C.save_file_as)
@@ -975,36 +1171,43 @@ class EditMenuTriggers(EditMenu):
 	def __init__(self, name=None, parent=None):
 		super(EditMenuTriggers, self).__init__(name, parent)
 		self.E_DICT = self.EDIT_ACTIONS.get
-		self.P_C = parent.CHILD
-		self.make_triggers_current()
-		self.hovered.connect(self.reset_all)
-		self.hovered.connect(self.make_triggers_current)
+		# be wary of this....
+		self.P_C, self.P_C_T = parent, parent
+
+	def update_connections(self):
+		self.reset_all()
+		self.update_triggers()
 
 	def reset_all(self):
 		"""Here we reset all available connections, then call 
-			make_triggers_current() to set to current tab page.
+			update_triggers() to set to current tab page.
 		"""
 		for action in self.EDIT_ACTIONS.values():
-			action.disconnect(self.P_C_T)
+				try:
+					action.disconnect(self.P_C_T)
+				except TypeError, AttributeError:
+					print "error processed successfully for EDITS"
 
 
-	def make_triggers_current(self):
+	def update_triggers(self):
 		"""This method sets all Edit menu actions' connections"""
 		self.P_C_T = self.P_C.currentWidget()
-		# Not yet implemented
-		# self.E_DICT("find_act").triggered.connect(self.P_C.currentWidget().find_text)
-		self.E_DICT("redo_act").triggered.connect(self.P_C.currentWidget().redo_last)
-		self.E_DICT("undo_act").triggered.connect(self.P_C.currentWidget().undo_last)
-		self.E_DICT("cut_act").triggered.connect(self.P_C.currentWidget().cut_selection)
-		self.E_DICT("paste_act").triggered.connect(self.P_C.currentWidget().paste_selection)
-		self.E_DICT("copy_act").triggered.connect(self.P_C.currentWidget().copy_selection)
-		self.E_DICT("clone_act").triggered.connect(self.P_C.currentWidget().clone_doc)
-		self.E_DICT("delete_line").triggered.connect(self.P_C.currentWidget().delete_line)
-		self.E_DICT("line_up").triggered.connect(self.P_C.currentWidget().line_up)
-		self.E_DICT("line_down").triggered.connect(self.P_C.currentWidget().line_down)
-		self.E_DICT("clone_line").triggered.connect(self.P_C.currentWidget().clone_line)
-		self.E_DICT("line_select").triggered.connect(self.P_C.currentWidget().current_line_select)
-		self.E_DICT("indent_paste").triggered.connect(self.P_C.currentWidget().paste_and_indent)
+
+		if self.P_C_T:
+			# Not yet implemented
+			# self.E_DICT("find_act").triggered.connect(self.P_C.currentWidget().find_text)
+			self.E_DICT("redo_act").triggered.connect(self.P_C.currentWidget().redo_last)
+			self.E_DICT("undo_act").triggered.connect(self.P_C.currentWidget().undo_last)
+			self.E_DICT("cut_act").triggered.connect(self.P_C.currentWidget().cut_selection)
+			self.E_DICT("paste_act").triggered.connect(self.P_C.currentWidget().paste_selection)
+			self.E_DICT("copy_act").triggered.connect(self.P_C.currentWidget().copy_selection)
+			self.E_DICT("clone_act").triggered.connect(self.P_C.currentWidget().clone_doc)
+			self.E_DICT("delete_line").triggered.connect(self.P_C.currentWidget().delete_line)
+			self.E_DICT("line_up").triggered.connect(self.P_C.currentWidget().line_up)
+			self.E_DICT("line_down").triggered.connect(self.P_C.currentWidget().line_down)
+			self.E_DICT("clone_line").triggered.connect(self.P_C.currentWidget().clone_line)
+			self.E_DICT("line_select").triggered.connect(self.P_C.currentWidget().current_line_select)
+			self.E_DICT("indent_paste").triggered.connect(self.P_C.currentWidget().paste_and_indent)
 
 
 class ViewMenuTriggers(ViewMenu):
@@ -1014,36 +1217,41 @@ class ViewMenuTriggers(ViewMenu):
 	def __init__(self, name=None, parent=None):
 		super(ViewMenuTriggers, self).__init__(name, parent)
 		self.V_GET = self.VIEW_ACTIONS.get
-		self.P_C = parent.CHILD
-		self.make_triggers_current()
-		self.hovered.connect(self.reset_all)
-		self.hovered.connect(self.make_triggers_current)
+		self.P_C, self.P_C_T = parent, parent
+
+	def update_connections(self):
+		"""Updates all signal/slot connections"""
+		self.reset_all()
+		self.update_triggers()
 
 	def reset_all(self):
 		"""Here we reset all available connections, then call 
-			make_triggers_current() to set to current tab page.
+			update_triggers() to set to current tab page.
 		"""
 		for action in self.VIEW_ACTIONS.values():
-			action.disconnect(self.P_C_T)
+			try:
+				action.disconnect(self.P_C_T)
+			except TypeError, AttributeError:
+				print "error bypass set for VIEWS"
 
 
-	def make_triggers_current(self):
+	def update_triggers(self):
 		self.P_C_T = self.P_C.currentWidget()
 
+		if self.P_C_T:
+			self.V_GET("hide_status_act").triggered.connect(self.P_C.currentWidget().hide_statusbar)
+			self.V_GET("python_syn").triggered.connect(self.P_C.currentWidget().python_syntax)
+			self.V_GET("plain_syn").triggered.connect(self.P_C.currentWidget().plain_text)
+			self.V_GET("html_syn").triggered.connect(self.P_C.currentWidget().html_syntax)
+			self.V_GET("css_syn").triggered.connect(self.P_C.currentWidget().css_syntax)
+			self.V_GET("zoom_in").triggered.connect(self.P_C.currentWidget().zoom_in)
+			self.V_GET("zoom_out").triggered.connect(self.P_C.currentWidget().zoom_out)
+			self.V_GET("word_wrap_act").triggered.connect(self.P_C.currentWidget().set_word_wrap)
 
-		self.V_GET("hide_status_act").triggered.connect(self.P_C.currentWidget().hide_statusbar)
-		self.V_GET("python_syn").triggered.connect(self.P_C.currentWidget().python_syntax)
-		self.V_GET("plain_syn").triggered.connect(self.P_C.currentWidget().plain_text)
-		self.V_GET("html_syn").triggered.connect(self.P_C.currentWidget().html_syntax)
-		self.V_GET("css_syn").triggered.connect(self.P_C.currentWidget().css_syntax)
-		self.V_GET("zoom_in").triggered.connect(self.P_C.currentWidget().zoom_in)
-		self.V_GET("zoom_out").triggered.connect(self.P_C.currentWidget().zoom_out)
-		self.V_GET("word_wrap_act").triggered.connect(self.P_C.currentWidget().set_word_wrap)
-
-		# not yet implemented
-		# self.V_GET(plainL).triggered.connect(self.plain_layout)
-		# self.V_GET(splitL).triggered.connect(self.split_screen_layout)
-		# self.V_GET(gridL).triggered.connect(self.grid_layout)
+			# not yet implemented
+			# self.V_GET(plainL).triggered.connect(self.plain_layout)
+			# self.V_GET(splitL).triggered.connect(self.split_screen_layout)
+			# self.V_GET(gridL).triggered.connect(self.grid_layout)
 
 
 class ToolMenuTriggers(ToolMenu):
@@ -1054,29 +1262,32 @@ class ToolMenuTriggers(ToolMenu):
 	def __init__(self, name=None, parent=None):
 		super(ToolMenuTriggers, self).__init__(name, parent)
 		self.T_GET = self.TOOL_ACTIONS.get
-		self.P_C = parent.CHILD
-		self.make_triggers_current()
-		self.hovered.connect(self.reset_all)
-		self.hovered.connect(self.make_triggers_current)
+		self.P_C, self.P_C_T = parent, parent
+
+	def update_connections(self):
+		self.reset_all()
+		self.update_triggers()
 
 	def reset_all(self):
 		"""Here we reset all available connections, then call 
-			make_triggers_current() to set to current tab page.
+			update_triggers() to set to current tab page.
 		"""
 		for action in self.TOOL_ACTIONS.values():
-			action.disconnect(self.P_C_T)
+			try:
+				action.disconnect(self.P_C_T)
+			except TypeError, AttributeError:
+				print "error bypass set for TOOLS"
 
-	def make_triggers_current(self):
+	def update_triggers(self):
+		
 		self.P_C_T = self.P_C.currentWidget()
-
-		self.T_GET("tab_act_1").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 10))
-		self.T_GET("tab_act_2").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 20))
-		self.T_GET("tab_act_3").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 30))
-		self.T_GET("tab_act_4").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 40))
-		self.T_GET("tab_act_5").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 50))
-		self.T_GET("tab_act_6").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 60))
-		self.T_GET("tab_act_7").triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 70))
-		self.T_GET('tab_act_8').triggered.connect(partial(self.P_C.currentWidget().set_tab_width, 80))
+		
+		if self.P_C_T:
+			
+			width = 10
+			for action in self.TOOL_ACTIONS.values():
+				action.triggered.connect(partial(self.P_C_T.set_tab_width, width))
+				width += 10
 
 
 class PrefMenuTriggers(PrefMenu):
@@ -1084,26 +1295,31 @@ class PrefMenuTriggers(PrefMenu):
 	def __init__(self, name=None, parent=None):
 		super(PrefMenuTriggers, self).__init__(name, parent)
 		self.P_GET = self.PREF_ACTIONS.get
-		self.P_C = parent.CHILD
-		self.make_triggers_current()
-		self.hovered.connect(self.reset_all)
-		self.hovered.connect(self.make_triggers_current)
+		self.P_C, self.P_C_T = parent, parent
+
+	def update_connections(self):
+		self.reset_all()
+		self.update_triggers()
 
 	def reset_all(self):
 		"""Here we reset all available connections, then call 
-			make_triggers_current() to set to current tab page.
+			update_triggers() to set to current tab page.
 		"""
 		for action in self.PREF_ACTIONS.values():
-			action.disconnect(self.P_C_T)
+			try:
+				action.disconnect(self.P_C_T)
+			except TypeError, AttributeError:
+				print "error bypass for Preferences"
 
-	def make_triggers_current(self):
+	def update_triggers(self):
 		self.P_C_T = self.P_C.currentWidget()
 
-		self.P_GET("font_inc_act").triggered.connect(self.P_C.currentWidget().increase_font_size)
-		self.P_GET("font_dec_act").triggered.connect(self.P_C.currentWidget().decrease_font_size)
-		self.P_GET("serif_font_act").triggered.connect(self.P_C.currentWidget().set_serif)
-		self.P_GET("monospace_font_act").triggered.connect(self.P_C.currentWidget().set_monospace)
-		self.P_GET("sans_serif_font_act").triggered.connect(self.P_C.currentWidget().set_sansserif)
+		if self.P_C_T:
+			self.P_GET("font_inc_act").triggered.connect(self.P_C.currentWidget().increase_font_size)
+			self.P_GET("font_dec_act").triggered.connect(self.P_C.currentWidget().decrease_font_size)
+			self.P_GET("serif_font_act").triggered.connect(self.P_C.currentWidget().set_serif)
+			self.P_GET("monospace_font_act").triggered.connect(self.P_C.currentWidget().set_monospace)
+			self.P_GET("sans_serif_font_act").triggered.connect(self.P_C.currentWidget().set_sansserif)
 
 
 # MISC CLASSES================
@@ -1143,7 +1359,7 @@ class PyCodeSettings(QSettings):
 		self.settings = QSettings(QSettings.UserScope, 
 						"AD Engineering", "PyCode Text Editor")
 		self.P = parent
-		self.P_C = self.P.CHILD
+		self.P_C = self.P
 
 	def write_settings(self):
 		"""Writes the current user settings"""
@@ -1234,8 +1450,10 @@ class PyCodeShortcutTriggers(PyCodeShortcuts):
 		super(PyCodeShortcutTriggers, self).__init__(parent)
 		self.SHORT_GET = self._ALL_SHORTCUTS.get
 		self.parent = parent
-		self.P_C = self.parent.CHILD
+		self.P_C = self.parent
 
+	def set_shortcut_slots(self):
+		# should think about connecting to Qactions instead....
 		self.SHORT_GET("move_right").activated.connect(self.P_C.tab_seek_right)
 		self.SHORT_GET("move_right2").activated.connect(self.P_C.tab_seek_right)
 		self.SHORT_GET("move_left").activated.connect(self.P_C.tab_seek_left)
@@ -1246,25 +1464,37 @@ class PyCodeShortcutTriggers(PyCodeShortcuts):
 
 class PyCodeTop(QMainWindow):
 	"""This will bring all classes together to make up the final application.
-		although the PyCodeMenuBar and PyCodeStatusBar are instantiated
-		in PCPage, they will be set as the main menu/status bar for this window.
-		NOTE: that means the instantiated PyCodePage will be the parent.
+		All children after PyCodeTabInterface DEPEND upon the self.CHILD constant.
 	"""
 	def __init__(self, parent=None):
 		super(PyCodeTop, self).__init__(parent)
 		self.initUI()
+		self.set_child_connections()
 		self.SETTINGS.read_settings()
+		if not self.CHILD.currentWidget():
+			self.CHILD.new_file()
 		self.set_stylesheet()
+
+	def set_child_connections(self):
+		"""Here most of the interdependent connections take place.
+			If there's a bug, this is a good place to check...
+		"""
+		self.CHILD = self.findChild(PyCodeTabInterface)
+		self.SETTINGS.P_C = self.CHILD
+		self.SHORT.P_C = self.CHILD
+		self.SHORT.set_shortcut_slots()
+		self.CHILD.grab_sm_bars()
+		self.CHILD.set_signal_slots()
+		self.menuBar().set_CHILD_constant()
 
 	def initUI(self):
 		"""sets up intial interface"""
 		self.setWindowTitle("PyCode Text Editor")
 		status = PyCodeStatusBar(self)
-		self.setStatusBar(status)
-		main = PyCodeTabInterface(self)
-		self.CHILD = self.findChild(PyCodeTabInterface)
 		menu = PyCodeMenuBar(self)
 		self.setMenuBar(menu)
+		self.setStatusBar(status)
+		main = PyCodeTabInterface(self)
 		self.SETTINGS = PyCodeSettings(self)
 		self.SHORT = PyCodeShortcutTriggers(self)
 		self.setCentralWidget(main)

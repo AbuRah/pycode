@@ -7,3 +7,4 @@ test_editor.py
 _docs
 .archive
 PyCodeCore.py
+*.css
