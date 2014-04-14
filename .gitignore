@@ -6,7 +6,6 @@ test_editor.py
 *.html
 _docs
 .archive
-PyCodeCore.py
 *.css
 #*#
 *.py~
