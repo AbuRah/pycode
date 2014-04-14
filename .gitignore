@@ -8,3 +8,7 @@ _docs
 .archive
 PyCodeCore.py
 *.css
+#*#
+*.py~
+*OOP*
+pycodecore/
