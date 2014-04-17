@@ -16,6 +16,7 @@
     along with PyCode Text Editor.  If not, see <http://www.gnu.org/licenses/>.
 
     Copyright 2014, Abu Rah 82013248a@gmail.com
+    See COPYING for complete licensing information...
 
 """
 
@@ -176,8 +177,6 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
                         r"elif|if|or|yield|assert|else",
                         r"import|pass|break|except|in|raise")
 
-
-
         for word in keyword_list:
             pattern = QRegExp(word + "\\s+")
             rule = HighlightingRule(pattern, self.keywordF)
@@ -193,6 +192,67 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
             rule = HighlightingRule(pattern, self.keyword_reservedF)
             self.highlighting_rules.append(rule)
 
+        # number
+        self.numberF.setForeground(self.TM_GET("number"))
+        pattern = QRegExp("(?<!\w)+[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?")
+        pattern.setMinimal(True)
+        rule = HighlightingRule(pattern, self.numberF)
+        self.highlighting_rules.append(rule)
+
+        # builtin functions
+        self.keyword_builtinF.setForeground(self.TM_GET("keyword_builtin"))
+        keywords_builtin_list = (r"abs|divmod|input|open|staticmethod|all",
+                                 r"enumerate|int|ord",  
+                                 r"str|any|eval|isinstance|pow|sum", 
+                                 r"basestring|execfile|issubclass|print", 
+                                 r"super|bin|file|iter|property", 
+                                 r"tuple|bool|filter|len|range|type", 
+                                 r"bytearray|float|list|raw_input|unichr",
+                                 r"callable|format|locals|reduce|unicode",
+                                 r"chr|frozenset|long|reload|vars",
+                                 r"classmethod|getattr|map|repr|xrange",
+                                 r"cmp|globals|max|reversed|zip",
+                                 r"compile|hasattr|memoryview|round", 
+                                 r"complex|hash|min|set", 
+                                 r"apply|delattr|help|next|setattr", 
+                                 r"buffer|dict|hex|object|slice|coerce",
+                                 r"dir|id|oct|sorted|intern",)
+        
+        # this (?<!\.) belongs in the following list
+        keywords_exceptions_list = (r"ArithmeticError|AssertionError|AttributeError|"
+                                    r"BaseException|DeprecationWarning|EOFError|EnvironmentError|"
+                                    r"Exception|FloatingPointError|FutureWarning|GeneratorExit|IOError|"
+                                    r"ImportError|ImportWarning|IndentationError|IndexError|KeyError|"
+                                    r"KeyboardInterrupt|LookupError|MemoryError|NameError|"
+                                    r"NotImplemented|NotImplementedError|OSError|OverflowError|"
+                                    r"OverflowWarning|PendingDeprecationWarning|ReferenceError|"
+                                    r"RuntimeError|RuntimeWarning|StandardError|StopIteration|"
+                                    r"SyntaxError|SyntaxWarning|SystemError|SystemExit|TabError|"
+                                    r"TypeError|UnboundLocalError|UnicodeDecodeError|"
+                                    r"UnicodeEncodeError|UnicodeError|UnicodeTranslateError|"
+                                    r"UnicodeWarning|UserWarning|ValueError|VMSError|Warning|"
+                                    r"WindowsError|ZeroDivisionError",)
+        
+        for word in keywords_builtin_list:
+            pattern = QRegExp("\\b"+word+"(?=[(])+")
+            rule = HighlightingRule(pattern, self.keyword_builtinF)
+            self.highlighting_rules.append(rule)
+
+        for word in keywords_exceptions_list:
+            pattern = QRegExp("\\b"+word+"\\b")
+            rule = HighlightingRule(pattern, self.keyword_builtinF)
+            self.highlighting_rules.append(rule)
+
+        # names
+        self.name_builtinF.setForeground(self.TM_GET("name_builtin"))
+        name_pattern_list = ["(def)((\s)+)(?:.*)(?=[(])",
+                             "(class)((\s)+)(?:.*)(?=[(])",
+                             ]
+        for word in name_pattern_list:
+            pattern = QRegExp(word)
+            rule = HighlightingRule(pattern, self.name_builtinF)
+            self.highlighting_rules.append(rule)
+
         # function keywords
         self.keyword_functionF.setForeground(self.TM_GET("keyword_function"))
         keywords_functions = (r"class|def",)
@@ -201,67 +261,36 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
             pattern = QRegExp("\\b"+ word +"\\b")
             rule = HighlightingRule(pattern, self.keyword_functionF)
             self.highlighting_rules.append(rule)
-        
-        # func/class names
-        self.name_functionF.setForeground(self.TM_GET("name_function"))
-        self.name_functionF.setFontWeight(QFont.Bold)
-        for word in keywords_functions:
-            pattern = QRegExp("([^"+ word +"\\s])+.*(")
-            rule = HighlightingRule(pattern, self.name_functionF)
-            self.highlighting_rules.append(rule)
 
-        # text between parens after name
-        self.name_otherF.setFontItalic(True)
-        for word in keywords_functions:
-            pattern = QRegExp("\(.*(?=\))\\b")
-            rule = HighlightingRule(pattern, self.name_otherF)
-            self.highlighting_rules.append(rule)
-
-        # number
-        self.numberF.setForeground(self.TM_GET("number"))
-        pattern = QRegExp("[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?")
-        pattern.setMinimal(True)
-        rule = HighlightingRule(pattern, self.numberF)
+        # decorator's
+        self.name_decoratorF.setForeground(self.TM_GET("name_decorator"))
+        pattern = (r"@[A-z0-9_.]+")
+        rule = HighlightingRule(pattern, self.name_decoratorF)
         self.highlighting_rules.append(rule)
 
-        # builtin functions
-        self.keyword_builtinF.setForeground(self.TM_GET("keyword_builtin"))
-        keywords_builtin_list = (r"abs|divmod|input|open|staticmethod|all"
-                                 r"enumerate|int|ord"  
-                                 r"str|any|eval|isinstance|pow|sum" 
-                                 r"basestring|execfile|issubclass|print" 
-                                 r"super|bin|file|iter|property" 
-                                 r"tuple|bool|filter|len|range|type" 
-                                 r"bytearray|float|list|raw_input|unichr"
-                                 r"callable|format|locals|reduce|unicode"
-                                 r"chr|frozenset|long|reload|vars"
-                                 r"classmethod|getattr|map|repr|xrange"
-                                 r"cmp|globals|max|reversed|zip"
-                                 r"compile|hasattr|memoryview|round" 
-                                 r"complex|hash|min|set" 
-                                 r"apply|delattr|help|next|setattr" 
-                                 r"buffer|dict|hex|object|slice|coerce"
-                                 r"dir|id|oct|sorted|intern",)
-        
-        for word in keywords_builtin_list:
-            pattern = QRegExp("\\b"+word+"(?<!\w+)")
-            rule = HighlightingRule(pattern, self.keyword_builtinF)
-            self.highlighting_rules.append(rule)
-
         # string
-        self.string_doubleF.setBackground(self.TM_GET("string_double"))
-        string_patterns = ("\".*\"",)
-        for word in string_patterns:
-            pattern = QRegExp(word)
+        self.string_doubleF.setForeground(self.TM_GET("string_double"))
+        pattern = QRegExp("[rR]?[uU]?\".*\"")
         rule = HighlightingRule(pattern, self.string_doubleF)
+        self.highlighting_rules.append(rule)
+
+        # single-quote string
+        self.string_singleF.setForeground(self.TM_GET("string_single"))
+        pattern = QRegExp( "[rR]?[uU]?\'.*\'")
+        rule = HighlightingRule(pattern, self.string_singleF)
         self.highlighting_rules.append(rule)
         
         # multi-line comment
-        self.string_docF.setBackground(self.TM_GET("string_doc"))
-        pattern = QRegExp(r"^(\s*)('''(?:.|\n)*?''')",)
+        self.string_docF.setForeground(self.TM_GET("string_doc"))
+        pattern = QRegExp(r'^(\s*)("""(?:.|\n)*?""")',)
         rule = HighlightingRule(pattern, self.string_docF)
         self.highlighting_rules.append(rule)
 
+        # multi-line single quote
+        self.string_docF.setForeground(self.TM_GET("string_doc"))
+        pattern = QRegExp(r"^(\s*)('''(?:.|\n)*?''')",)
+        rule = HighlightingRule(pattern, self.string_docF)
+        self.highlighting_rules.append(rule)
 
         # comments
         self.commentF.setForeground(self.TM_GET("comment"))
@@ -280,6 +309,22 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
                 self.setFormat( index, length, rule.format )
                 index = expression.indexIn( text, index + length )
         self.setCurrentBlockState( 0 )
+
+
+
+class LuaSyntax(PyCodeSyntaxHighlighter):
+    def __init__(self, parent=None):
+        super(LuaSyntax, self).__init__(parent)
+
+    def hightlightBlock(self, text):
+        pass
+
+class PerlSyntax(PyCodeSyntaxHighlighter):
+    def __init__(self, parent=None):
+        super(PerlSyntax, self).__init__(parent)
+
+    def highlightBlock(self, text):
+        pass
 
 
 class HtmlSyntax(PyCodeSyntaxHighlighter):
@@ -378,6 +423,14 @@ class CSSSyntax(PyCodeSyntaxHighlighter):
                 self.setFormat(index, length, rule.format)
                 index = expression.indexIn(text, index+length)
         self.setCurrentBlockState(0)
+
+# incomplete
+class JavaScriptSyntax(PyCodeSyntaxHighlighter):
+    def __init__(self, parent=None):
+        super(JavaScriptSyntax, self).__init__(parent)
+
+    def highlightBlock(self, text):
+        pass
 
 
 class PlainText(PyCodeSyntaxHighlighter):

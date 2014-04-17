@@ -111,8 +111,9 @@ class PyCodeTabInterface(QTabWidget):
         """Saves current file, except if "Untitled"; it will prompt user
             to save.
         """
-            
+        # TODO: grab name from with os.path    
         file_name = self.tabText(self.currentIndex())       
+
         save_file = QFile(file_name)
 
         if file_name != "Untitled":
@@ -186,6 +187,8 @@ class PyCodeTabInterface(QTabWidget):
         # need to take the file either using the os module or
                 # PySide's QFile, QDir etc....
         file_name = self.tabText(self.currentIndex())
+        # TODO: ask user if they would like to save IF file is untitled
+        # if file_name == "Untitled":
 
         self._CLOSED_TABS.append(file_name)
         self.removeTab(self.currentIndex())
@@ -233,6 +236,7 @@ class PyCodePage(QTextEdit):
         
 
     """
+    # TODO implement find, find_regexp, Open_folder
     def __init__(self, parent=None):
         super(PyCodePage, self).__init__(parent)
         self.TI = parent
@@ -264,23 +268,27 @@ class PyCodePage(QTextEdit):
 
     def clone_line(self):
         """Clones current line cursor is found in"""
-        cursor = self.textCursor()
         cursor.beginEditBlock()
-        cursor.movePosition(QTextCursor.StartOfLine)
-        cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
-        self.setTextCursor(cursor)
-        self.copy()
-        cursor.clearSelection()
+        self.copy_selection()
+        cursor = self.textCursor()
         cursor.insertBlock()
-        self.setTextCursor(cursor)
         cursor.insertText(self.paste())
+        self.setTextCursor(cursor)
         cursor.endEditBlock()
 
+    # TODO: have line_up/down SWAP block above/below respectively
     def line_up(self):
         """Moves current line block up one block level"""
         cursor = self.textCursor()
         cursor.beginEditBlock()
-
+        cursor.movePosition(QTextCursor.StartOfLine)
+        cursor.select(QTextCursor.LineUnderCursor)
+        cursor.movePosition(QTextCursor.Up)
+        cursor.insertText(cursor.selectedText())
+        self.setTextCursor(cursor)
+        cursor.removeSelectedText()
+        # cursor.setKeepPositionOnInsert(True)
+        self.setTextCursor(cursor)
         cursor.endEditBlock()
     
     def line_down(self):
@@ -311,7 +319,6 @@ class PyCodePage(QTextEdit):
 
     def kill_to_end_of_line(self):
         """kills text from cursor position to end of line"""
-        # not yet used in main program...
         cursor = self.textCursor()
 
         if not self.textCursor().atBlockEnd():
@@ -338,11 +345,6 @@ class PyCodePage(QTextEdit):
         """Steps forward in operation history"""
         return self.redo()
 
-    def find_regexp(self):
-        """finds text in doc using regexp"""
-        #todo: implement regex search & replace, find etc...
-        pass
-
     def increase_font_size(self):
         """Incrementally increases font point size"""
         self.selectAll()
@@ -353,6 +355,15 @@ class PyCodePage(QTextEdit):
         # cursor = self.textCursor()
         # cursor.clearSelection()
         # self.setTextCursor(cursor)
+
+    # def find_text(self):
+    #     """Find text in current document"""
+    #     pass
+
+    # def find_regexp(self):
+    #     """finds text in doc using regexp"""
+    #     #todo: implement regex search & replace, find etc...
+    #     pass
 
     def decrease_font_size(self):
         """Incrementally decreases font point size"""
@@ -370,10 +381,8 @@ class PyCodePage(QTextEdit):
         off = QTextOption.NoWrap
 
         if self.wordWrapMode() != QTextOption.NoWrap:
-            print "shuting off"
             self.setWordWrapMode(QTextOption.NoWrap)
         else:
-            print "turning on"
             self.setWordWrapMode(QTextOption.WordWrap)
 
 
@@ -429,15 +438,15 @@ class PyCodePage(QTextEdit):
             self.setTextCursor(cursor)
             return self.cut()
 
-    def hide_statusbar(self):
-        """Hides status bar"""
-        # this may be more specific for an instance of this class
-        if self.tmp_counter == 0 and self.STATUS:
-            self.STATUS.hide()
-            self.tmp_counter += 1
-        elif self.STATUS:
-            self.STATUS.show()
-            self.tmp_counter -= 1
+    # def hide_statusbar(self):
+    #     """Hides status bar"""
+    #     # this may be more specific for an instance of this class
+    #     if self.tmp_counter == 0 and self.STATUS:
+    #         self.STATUS.hide()
+    #         self.tmp_counter += 1
+    #     elif self.STATUS:
+    #         self.STATUS.show()
+    #         self.tmp_counter -= 1
 
 
 
@@ -527,7 +536,6 @@ class PyCodeMenu(QMenu):
         return self.name
 
 
-# broken
 class PyCodeDockWidget(QDockWidget):
     """This class holds the main window dock widget for pop-ups, i.e. search & replace, find
         etc.
@@ -541,11 +549,9 @@ class PyCodeDockWidget(QDockWidget):
         self.setFloating(False)
         self.setObjectName('Main Dock')
         self.setWidget(self.user_input)
-        # self.parent().addDockWidget(Qt.BottomDockWidgetArea, self)
         self.hide()
 
         self.user_input.returnPressed.connect(self.select_current_text)
-        # self.user_input.textChanged.connect(self.find_text)
 
     def select_current_text(self):
         """Selects text in find bar when enter is pressed"""

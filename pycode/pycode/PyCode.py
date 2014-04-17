@@ -36,7 +36,7 @@ PyCodeStatusBar, PyCodeAction, PyCodeMenu, PyCodeSettings, PyCodeShortcuts)
 
 
 
-#Do Note the following:
+# Do Note the following:
 # at the moment, PyCodeMenuBar isn't decoupled from this module. It *may* not 
 # run due to current code transformations occuring. Just a reminder to address 
 # this issue.
@@ -220,6 +220,10 @@ class TabInterface(PyCodeTabInterface):
         PlainText(page.document())
         return self.addTab(page, "Untitled")
 
+    def open_folder(self):
+        """Opens every file supported in a user-selected folder"""
+        # TODO: open a tree-view into folder from which user can select files.
+        pass
 
     def open_file_dialog(self):
         """opens file in new tab
@@ -301,23 +305,8 @@ class TabInterface(PyCodeTabInterface):
 
         else:
             pass
-# broken
-    # def find_text(self):
-    #       """Find the indicated text within the current tab page"""
- #              #need to add auto-complete, find & replace
-    #   # i can make this called from the DockWidget instance
-    #       Dock_widget = self.P.parent().DOCKW
-    #       Dock_widget.show()
-    #       Dock_widget.user_input.setFocus()
 
-    #       _TESTING = QTextCursor(self.currentWidget().textCursor())
-        
-    #       if self.currentWidget().textCursor().position() != 0:
             
-    #       update = self.currentWidget().DOC.find(self.user_input.text())
-    #           self.currentWidget().setTextCursor(update)
-    #           self.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
-
 
 
 class Page(PyCodePage):
@@ -344,6 +333,36 @@ class Page(PyCodePage):
         else:
             self.STATUS.show()
             self.tmp_counter -= 1
+
+    def find_text(self):
+        """Find the indicated text within the current tab page"""
+        # need to add auto-complete, find & replace
+        # i can make this called from the DockWidget instance
+        Dock_widget = self.TI.parent().DOCKW
+        Dock_widget.show()
+        Dock_widget.user_input.setFocus()
+        Dock_widget.set_slot_connections()
+
+        update = self.TI.currentWidget().document().find(Dock_widget.user_input.text())
+        self.TI.currentWidget().setTextCursor(update)
+        self.TI.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
+            
+
+    def find_regexp(self):
+        """Find the indicated text within the current tab page"""
+        # need to add auto-complete, find & replace
+        # i can make this called from the DockWidget instance
+        Dock_widget = self.TI.parent().DOCKW
+        Dock_widget.show()
+        Dock_widget.user_input.setFocus()
+        Dock_widget.set_slot_connections_regexp()
+
+        user_regexp = QRegExp(Dock_widget.user_input.text())
+        update = self.TI.currentWidget().document().find(user_regexp, Qt.MatchRegExp)
+        self.TI.currentWidget().setTextCursor(update)
+        self.TI.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
+    
+
 
     # i'm going to have to find a better way to set syntax highlighting,
     # this class should *not* depend upon the SyntaxClasses module
@@ -404,6 +423,7 @@ class FileMenu(PyCodeMenu):
         self.create_action("newF_act", "New File", "Ctrl+N", "Create New document")
         self.create_action("newW_act", "New Window", "Ctrl+Shift+N", "Create New Window")
         self.create_action("openF_act", "Open File", "Ctrl+O", "Open File")
+        self.create_action("OpenFolder_act", "Open Folder", "Open Folder")
         self.addMenu(self.enc_open)
         self.create_action("reopenF_act", "Reopen Last Tab", "Ctrl+Shift+T", "Re-open last tab")
         self.addSeparator()
@@ -438,7 +458,8 @@ class EditMenu(PyCodeMenu):
         self.create_action("find_regexp_act", "Find RegExp")
         self.create_action("find_and_replace_act", "Search & Replace")
         self.addSeparator()
-        self.create_action("delete_line", "Delete Line", "Ctrl+k")
+        self.create_action("kill_line", "Kill Line", "Ctrl+k")
+        self.create_action("delete_line", "Delete Line", "Ctrl+Shift+K")
         self.create_action("line_up", "Move line up", "Ctrl+Shift+Up")
         self.create_action("line_down", "Move line down", "Ctrl+Shift+Down")
         self.create_action("clone_line", "Clone current line", "Ctrl+Shift+D")
@@ -745,6 +766,7 @@ class FileMenuTriggers(FileMenu):
         self.F_DICT("close_all_act").triggered.connect(self.P_C.close_all)
         self.F_DICT("reopenF_act").triggered.connect(self.P_C.reopen_last_tab)
         self.F_DICT("closeF_act").triggered.connect(self.P_C.close_tab)
+        # self.F_DICT("OpenFolder_act").triggered.connect(self.P_C.open_folder)
 
     # to me, these feel out of place. They should be encapsulated elsewhere...
     def new_window(self):
@@ -795,13 +817,15 @@ class EditMenuTriggers(EditMenu):
 
         if self.P_C_T:
             # Not yet implemented
-            # self.E_DICT("find_act").triggered.connect(self.P_C.currentWidget().find_text)
+            self.E_DICT("find_act").triggered.connect(self.P_C_T.find_text)
+            self.E_DICT("find_regexp_act").triggered.connect(self.P_C_T.find_regexp)
             self.E_DICT("redo_act").triggered.connect(self.P_C_T.redo_last)
             self.E_DICT("undo_act").triggered.connect(self.P_C_T.undo_last)
             self.E_DICT("cut_act").triggered.connect(self.P_C_T.cut_selection)
             self.E_DICT("paste_act").triggered.connect(self.P_C_T.paste_selection)
             self.E_DICT("copy_act").triggered.connect(self.P_C_T.copy_selection)
             self.E_DICT("clone_act").triggered.connect(self.P_C_T.clone_doc)
+            self.E_DICT("kill_line").triggered.connect(self.P_C_T.kill_to_end_of_line)
             self.E_DICT("delete_line").triggered.connect(self.P_C_T.delete_line)
             self.E_DICT("line_up").triggered.connect(self.P_C_T.line_up)
             self.E_DICT("line_down").triggered.connect(self.P_C_T.line_down)
@@ -940,8 +964,8 @@ class SettingsTmp(PyCodeSettings):
         #               "PyCode Text Editor")
         # that ^^^ is only for reference purposes, ignore...
 
-        # re-open any files left open from last session
         
+        # re-open any files left open from last session
         self.settings.beginGroup("Main Window")
         size = self.settings.beginReadArray("files")
         for i in xrange(size):
@@ -970,8 +994,40 @@ class SettingsTmp(PyCodeSettings):
 
 # dock widget testing....
 class DockWidget(PyCodeDockWidget):
+    """This dockWidget will serve as the bottom line bar for searches, find operations
+        and other simple tasks.
+    """
     def __init__(self, parent=None):
         super(DockWidget, self).__init__(parent)
+        self.P_C = parent
+
+    def set_slot_connections(self):
+        """This method will update the current method and page DockWidget
+            is connected to.
+        """
+        self.P_C_T = self.P_C.currentWidget()
+        
+        try:
+            self.user_input.disconnect(self.P_C_T)
+            self.user_input.textChanged.connect(self.P_C_T.find_text)
+        
+        except AttributeError:
+            print "error processed"
+
+    def set_slot_connections_regexp(self):
+        """This method will update the current method and page DockWidget
+            is connected to.
+        """
+        self.P_C_T = self.P_C.currentWidget()
+        
+        try:
+            self.user_input.disconnect(self.P_C_T)
+            self.user_input.textChanged.connect(self.P_C_T.find_regexp)
+        
+        except AttributeError:
+            print "error processed"
+
+
 
 
 class PyCodeTop(QMainWindow):
@@ -996,6 +1052,7 @@ class PyCodeTop(QMainWindow):
         """
         self.CHILD = self.findChild(TabInterface)
         self.SETTINGS.P_C = self.CHILD
+        self.DOCKW.P_C = self.CHILD
         self.SHORT.P_C = self.CHILD
         self.SHORT.set_shortcut_slots()
         self.CHILD.grab_sm_bars()
@@ -1017,13 +1074,14 @@ class PyCodeTop(QMainWindow):
         
         self.SETTINGS = SettingsTmp(self)
         self.SHORT = PyCodeShortcutTriggers(self)
-        # self.DOCKW = DockWidget(self)
+        self.DOCKW = DockWidget(self)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.DOCKW)
 
     def set_stylesheet(self):
         """sets PyCode Stylesheet"""
         # todo: make this customizable.i.e. load user settings.
         try:
-            with open("../PyCodeThemes/PyCodeCrimson.qss") as f:
+            with open("../PyCodeThemes/PyCodeDeepViolet.qss") as f:
                 stylesheet = f.read()
                 self.setStyleSheet(stylesheet)
         except IOError:
