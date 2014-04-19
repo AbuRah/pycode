@@ -58,9 +58,13 @@ class PyCodeMenuBar(QMenuBar):
         self.VIEW = ViewMenuTriggers("View", parent)
         self.TOOL = ToolMenuTriggers("&Tool", parent)
         self.PREF = PrefMenuTriggers("&Preferences", parent)
+        self.IDEM = IDEMenu("&IDE", parent)
+        self.COMPILE = CompileMenu("&Compiler", parent)
         self.addMenu(self.FILE)
         self.addMenu(self.EDIT)
         self.addMenu(self.VIEW)
+        self.addMenu(self.IDEM)
+        self.addMenu(self.COMPILE)
         self.addMenu(self.TOOL)
         self.addMenu(self.PREF)
 
@@ -96,7 +100,7 @@ class PyCodeMenuBar(QMenuBar):
     def __repr__(self):
         return "PyCodeMenuBar Instance"
 
-# this class has been suspended until encoding features are implemented.
+# the PyCodeDialogWindow class has been suspended until encoding features are implemented.
 class PyCodeDialogWindow(QDialog):
     def __init__(self, parent=None):
         super(PyCodeDialogWindow, self).__init__(parent)
@@ -230,7 +234,7 @@ class TabInterface(PyCodeTabInterface):
            In the middle of testing at the moment.
         """
 
-        # i think the encoding feature should come later...
+        # the encoding feature should come later...
         # does not pass arg if called from open w/ encoding menu...
         # I'm trying to create my own Dialog class in order to 
         # avoid dependence upon the PySide Framework.
@@ -336,22 +340,23 @@ class Page(PyCodePage):
 
     def find_text(self):
         """Find the indicated text within the current tab page"""
-        # need to add auto-complete, find & replace
-        # i can make this called from the DockWidget instance
+        #TODO: make both find methods move from one term to next and wrap if at end
         Dock_widget = self.TI.parent().DOCKW
         Dock_widget.show()
         Dock_widget.user_input.setFocus()
         Dock_widget.set_slot_connections()
 
-        update = self.TI.currentWidget().document().find(Dock_widget.user_input.text())
-        self.TI.currentWidget().setTextCursor(update)
-        self.TI.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
+
+        return self.TI.currentWidget().document().toPlainText()
+
+        # update = self.TI.currentWidget().document().find(Dock_widget.user_input.text(), Qt.MatchWrap)
+        # self.TI.currentWidget().setTextCursor(update)
+        # self.TI.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
             
 
     def find_regexp(self):
         """Find the indicated text within the current tab page"""
-        # need to add auto-complete, find & replace
-        # i can make this called from the DockWidget instance
+        
         Dock_widget = self.TI.parent().DOCKW
         Dock_widget.show()
         Dock_widget.user_input.setFocus()
@@ -557,8 +562,32 @@ class PrefFontMenu(PyCodeMenu):
 
 
 class IDEMenu(PyCodeMenu):
-    def __init__(self, parent=None):
-        super(IDEMenu, self).__init__(parent)
+    """This class menu holds all lightweight IDE tools.
+        This is *only* for looks at the moment. 
+        When finished, it will be able to do simple class/object
+        browsing and code folding.
+    """
+    def __init__(self, name=None, parent=None):
+        super(IDEMenu, self).__init__(name, parent)
+        self.IDE_ACTIONS = self.ALL_ACTIONS
+        # TODO: implement appropriate methods for these actions.
+        self.create_action("class_browser_act", "View current class hierarchy")
+        self.create_action("object_browser_act", "Object Browser")
+        self.create_action("code_folding_act", "Code Folding")
+
+
+class CompileMenu(PyCodeMenu):
+    """This compilemenu class is for automated running for a sepecificed
+        compiler. the auto run act will automatically run the compiler after
+        a specific amount of time since last user input. Can be toggled on and off.
+        There will be a sub-menu that holds the different build engines to select from.
+    """
+    def __init__(self, name=None, parent=None):
+        super(CompileMenu, self).__init__(name, parent)
+        self.COMP_ACTIONS = self.ALL_ACTIONS
+        self.create_action("auto_run_act", "Auto-Build", status="Runs specified build option automatically")
+        self.COMP_ACTIONS.get("auto_run_act").setCheckable(True)
+        self.addSeparator()
 
 
 class ThemesMenu(PyCodeMenu):
@@ -1001,6 +1030,7 @@ class DockWidget(PyCodeDockWidget):
         super(DockWidget, self).__init__(parent)
         self.P_C = parent
 
+
     def set_slot_connections(self):
         """This method will update the current method and page DockWidget
             is connected to.
@@ -1009,7 +1039,7 @@ class DockWidget(PyCodeDockWidget):
         
         try:
             self.user_input.disconnect(self.P_C_T)
-            self.user_input.textChanged.connect(self.P_C_T.find_text)
+            self.user_input.textChanged.connect(self.simple_find)
         
         except AttributeError:
             print "error processed"
@@ -1026,6 +1056,18 @@ class DockWidget(PyCodeDockWidget):
         
         except AttributeError:
             print "error processed"
+
+    def simple_find(self):
+        """searches entire text document for entered term."""
+        current_doc = self.P_C_T.find_Text()
+
+        if self.user_input.text().find(current_doc):
+
+            self.TI.currentWidget().setTextCursor(update)
+            self.TI.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
+            yield 
+
+
 
 
 
@@ -1081,7 +1123,7 @@ class PyCodeTop(QMainWindow):
         """sets PyCode Stylesheet"""
         # todo: make this customizable.i.e. load user settings.
         try:
-            with open("../PyCodeThemes/PyCodeDeepViolet.qss") as f:
+            with open("../PyCodeThemes/Monokai.qss") as f:
                 stylesheet = f.read()
                 self.setStyleSheet(stylesheet)
         except IOError:

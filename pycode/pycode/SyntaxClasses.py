@@ -76,7 +76,7 @@ class PyCodeSyntaxHighlighter(QSyntaxHighlighter):
         self.string_otherF = QTextCharFormat()
         self.numberF = QTextCharFormat()
         self.number_integerF = QTextCharFormat()
-        self.number_int_longF = QTextCharFormat()
+        self.number_longF = QTextCharFormat()
         self.number_floatF = QTextCharFormat()
         self.number_hexF = QTextCharFormat()
         self.number_octF = QTextCharFormat()
@@ -121,6 +121,7 @@ class PyCodeSyntaxHighlighter(QSyntaxHighlighter):
                         "string_regex": QColor("#de3163"),
                         "string_symbol": QColor("#e25822"), 
                         "number": QColor("#dc143c"), 
+                        "number_long": QColor("#dc143c"), 
                         "number_integer": QColor("#dc143c"), 
                         "number_float": QColor("#dc143c"), 
                         "number_hex": QColor("#de3163"), 
@@ -133,6 +134,24 @@ class PyCodeSyntaxHighlighter(QSyntaxHighlighter):
                         }
 
         self.TM_GET = self.THEME_DICT.get
+
+    def add_list_of_rules(self, lst=None, format=None, prefix="", suffix=""):
+        """adds predefined lists to highlighting rules
+            The prefix denotes any regexp syntax that is to come BEFORE the actual
+            word in the list. The suffix denotes the regexp syntax to come AFTER the 
+            word. Both default to no string...
+            Use the *prefix* and *suffix* args only if they will occur for EVERY word in
+            the list. If not, include the ENTIRE regex as a single element in the list.
+            lst is the list of hightlighting syntax rules to append.
+            Format is the user defined format to utilize for highlighting.
+        """
+        if lst:
+            for word in lst:
+                # needs to be tested
+                pattern = QRegExp(prefix + word + suffix)
+                new_rule = HighlightingRule(pattern, format)
+                self.highlighting_rules.append(new_rule)
+
 # don't think this will work well in the long run...need to find an alternative
 class PyCodeIdentifier(QObject):
     """Responsible for holding all supported extension types for syntax highlighting.
@@ -194,9 +213,15 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
 
         # number
         self.numberF.setForeground(self.TM_GET("number"))
-        pattern = QRegExp("(?<!\w)+[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?")
+        pattern = QRegExp("(?<!\\w)[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?")
         pattern.setMinimal(True)
         rule = HighlightingRule(pattern, self.numberF)
+        self.highlighting_rules.append(rule)
+
+        #number long
+        self.number_longF.setForeground(self.TM_GET("number_long"))
+        pattern = QRegExp(r"\d+L")
+        rule = HighlightingRule(pattern, self.number_longF)
         self.highlighting_rules.append(rule)
 
         # builtin functions
@@ -431,6 +456,130 @@ class JavaScriptSyntax(PyCodeSyntaxHighlighter):
 
     def highlightBlock(self, text):
         pass
+
+
+class LuaSyntax(PyCodeSyntaxHighlighter):
+    def __init__(self, parent=None):
+        super(LuaSyntax, self).__init__(parent)
+
+    
+        """
+            For `Lua <http://www.lua.org>`_ source code.
+        """
+        # filenames = ['*.lua', '*.wlua']
+        # mimetypes = ['text/x-lua', 'application/x-lua']
+
+    
+        # keyword
+        self.keywordF.setForeground(self.TM_GET("keyword"))
+        keyword_list = (r"and|break|do|else|elseif|end", 
+                        r"false|for|function|goto|if|in|local",
+                        r"nil|not|or|repeat|return",
+                        r"then|true|until|while")
+        
+        self.add_list_of_rules(lst=keyword_list, format=self.keywordF)
+        
+
+        # keyword reserved
+        self.keyword_reservedF.setForeground(self.TM_GET("keyword_reserved"))
+        keyword_reserved_list = ("_+[A-Z]+")
+
+        self.add_list_of_rules(lst=keyword_reserved_list, format=keyword_reservedF)
+
+
+        # operators
+        self.operatorF.setForeground(self.TM_GET("operator"))
+        operator_list = (r"+|-|*|[/]|%|[^]|#",
+                         r"==|~=|<=|>=|<|>|=",
+                         r"\(|\)|\{|\}|\[|\] |::",
+                         r";|:|,|\.|\.\.|\.\.\.")
+        self.add_list_of_rules(lst=operator_list, format=self.operatorF) 
+
+
+        #comment
+        self.commentF.setForeground(self.TM_GET("comment"))
+        comment_list = (r'#!(.*?)$',"--.*$")    
+        
+
+            # (r'', Text, 'base'),
+
+        # number float
+        self.number_floatF.setForeground(self.TM_GET("number_float"))
+        float_list = (r'(?i)(\d*\.\d+|\d+\.\d*)(e[+-]?\d+)?', 
+                      r'(?i)\d+e[+-]?\d+')
+        self.add_list_of_rules(lst=float_list, format=self.number_floatF)
+        
+        
+        # hex
+        self.number_hexF.setForeground(self.TM_GET("number_hex"))
+        hex_list = ('(?i)0x[0-9a-f]*')
+        self.add_list_of_rules(hex_list, self.number_hexF)
+
+        # integer
+        self.number_integerF.setForeground(self.TM_GET("number_integer"))
+        int_list =  (r'\d+')
+        self.add_list_of_rules(int_list, self.number_integerF)
+
+        # string
+        self.string_singleF.setForeground(self.TM_GET("string_single"))
+        single_string_list = (r"\n", r"[^\S\n]")
+        self.add_list_of_rules(single_string_list, self.string_singleF)            
+        
+        # multiline strings
+        self.string_doubleF.setForeground(self.TM_GET("string_double"))
+        double_string_list = (r"(?s)\[(=*)\[.*?\]\1\]", r"(?s)--\[(=*)\[.*?\]\1\]")
+        self.add_list_of_rules(double_string_list, self.string_doubleF)
+
+        # operator
+        self.punctuationF.setForeground(self.TM_GET("punctuation"))
+        punctuation_list = (r"[\[\]\{\}\(\)\.,:;]",)
+        self.add_list_of_rules(punctuation_list, self.punctuationF)
+
+
+    # (r'(function)\b', Keyword, 'funcname'),
+
+    # (r'[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?', Name),
+
+    # ("'", String.Single, combined('stringescape', 'sqs')),
+    # ('"', String.Double, combined('stringescape', 'dqs'))
+
+    #     'funcname': [
+    # (r'\s+', Text),
+    # ('(?:([A-Za-z_][A-Za-z0-9_]*)(\.))?([A-Za-z_][A-Za-z0-9_]*)',
+    #         # inline function
+    # ('\(', Punctuation, '#pop'),
+    #     ],
+
+    #     # if I understand correctly, every character is valid in a lua string,
+    #     # so this state is only for later corrections
+    #     'string': [
+    #         ('.', String)
+    #     ],
+
+    #     'stringescape': [
+    #         (r'''\\([abfnrtv\\"']|\d{1,3})''', String.Escape)
+    #     ],
+
+    #     'sqs': [
+    #         ("'", String, '#pop'),
+    #         include('string')
+    #     ],
+
+    #     'dqs': [
+    #         ('"', String, '#pop'),
+    #         include('string')
+    #     ]
+    # }
+
+    def highlightBlock(self, text):
+        for rule in self.highlighting_rules:
+            expression = QRegExp(rule.pattern)
+            index = expression.indexIn(text)
+            while index >= 0:
+                length = expression.matchedLength()
+                self.setFormat(index, length, rule.format)
+                index = expression.indexIn(text, index+length)
+        self.setCurrentBlockState(0)
 
 
 class PlainText(PyCodeSyntaxHighlighter):

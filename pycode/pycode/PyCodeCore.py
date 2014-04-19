@@ -257,6 +257,7 @@ class PyCodePage(QTextEdit):
         return self.TI.tabBar().setTabTextColor(
             self.TI.currentIndex(), QColor("#fff5ee"))
 
+    # the tab width should be set elsewhere with a different, higher level method
     def set_tab_width(self, num):
         return self.setTabStopWidth(num)
 
@@ -304,6 +305,26 @@ class PyCodePage(QTextEdit):
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
         self.setTextCursor(cursor)
 
+    def delete_next_word(self):
+        """deletes next word from cursor current position"""
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        cursor.movePosition(QTextCursor.NoMove)
+        cursor.select(QTextCursor.WordUnderCursor)
+        cursor.removeSelectedText()
+        self.setTextCursor(cursor)
+        cursor.endEditBlock()
+
+    def delete_previous_word(self):
+        """deletes previous word from cursor current position"""
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        cursor.movePosition(QTextCursor.PreviousWord)
+        cursor.select(QTextCursor.WordUnderCursor)
+        cursor.removeSelectedText()
+        self.setTextCursor(cursor)
+        cursor.endEditBlock()
+
     def delete_line(self):
         """Deletes current line cursor is found in"""
         cursor = self.textCursor()
@@ -326,6 +347,17 @@ class PyCodePage(QTextEdit):
             cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
             self.setTextCursor(cursor)
             self.cut()
+
+    def delete_to_beginning(self):
+        """Deletes text from current cursor position to start of current line"""
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        cursor.movePosition(QTextCursor.NoMove)
+        cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
+        cursor.removeSelectedText()
+        self.setTextCursor(cursor)
+        cursor.endEditBlock()
+
 
     def paste_and_indent(self):
         """Paste from clipboard with indent"""
@@ -356,15 +388,6 @@ class PyCodePage(QTextEdit):
         # cursor.clearSelection()
         # self.setTextCursor(cursor)
 
-    # def find_text(self):
-    #     """Find text in current document"""
-    #     pass
-
-    # def find_regexp(self):
-    #     """finds text in doc using regexp"""
-    #     #todo: implement regex search & replace, find etc...
-    #     pass
-
     def decrease_font_size(self):
         """Incrementally decreases font point size"""
         self.selectAll()
@@ -377,7 +400,7 @@ class PyCodePage(QTextEdit):
 
     def set_word_wrap(self):
         # does not work. After toggling
-        # back on, it will not auto-wrap extended text
+        # back on, it will not auto-wrap off-screen text
         off = QTextOption.NoWrap
 
         if self.wordWrapMode() != QTextOption.NoWrap:
@@ -437,16 +460,6 @@ class PyCodePage(QTextEdit):
             cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
             self.setTextCursor(cursor)
             return self.cut()
-
-    # def hide_statusbar(self):
-    #     """Hides status bar"""
-    #     # this may be more specific for an instance of this class
-    #     if self.tmp_counter == 0 and self.STATUS:
-    #         self.STATUS.hide()
-    #         self.tmp_counter += 1
-    #     elif self.STATUS:
-    #         self.STATUS.show()
-    #         self.tmp_counter -= 1
 
 
 
