@@ -11,3 +11,4 @@ _docs
 *.py~
 *OOP*
 pycodecore/
+pycode/tests/

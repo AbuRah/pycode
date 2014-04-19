@@ -18,8 +18,18 @@
 
 */
 /*
+NOTE: Whenever possible, attempt to keep the theme colors as simple as possible. *Always* ensure
+  that the them palette is clearly written here...;
 Monokai
 =======
+
+#272822 Sundried Clay
+#F92672 Orchid
+#66D9EF Bounded Rationality
+#A6E22E Henn1nk
+#FD971F Pumpkin Spice
+
+
 foreground #F8F8F8
  
 background #272822
@@ -109,6 +119,7 @@ typeParameter #BFA4A4
 constant #EFB571
  
 
+! fill out the relevant fields to their corresponding desired color here.
 
 self.THEME_DICT = {"comment": QColor("#75715E"),
                     "comment_short": QColor("#75715E"),

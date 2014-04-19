@@ -138,7 +138,8 @@ class PyCodeSyntaxHighlighter(QSyntaxHighlighter):
     def add_list_of_rules(self, lst=None, format=None, prefix="", suffix=""):
         """adds predefined lists to highlighting rules
             The prefix denotes any regexp syntax that is to come BEFORE the actual
-            word in the list. The suffix denotes the regexp syntax to come AFTER the 
+            word in the list. 
+            The suffix denotes the regexp syntax to come AFTER the 
             word. Both default to no string...
             Use the *prefix* and *suffix* args only if they will occur for EVERY word in
             the list. If not, include the ENTIRE regex as a single element in the list.
