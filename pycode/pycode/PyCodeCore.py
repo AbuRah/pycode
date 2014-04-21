@@ -105,13 +105,47 @@ class PyCodeTabInterface(QTabWidget):
     #   data.decode(enc)
     #   # when writing to file, use encode(encoding specified)
 
+    def auto_save_event(self):
+        """When toggled, this method will automate file saving.
+            In order to prevent unwanted saving for modifications,
+            this method will save file name as, then save the newly
+            named file. e.g. some_file.txt, would be saved as,
+            some_file~.txt. 
+        """
+        # TODO: make this method run at intervals.
+        file_name = self.tabText(self.currentIndex())
+        
+        if file_name[0] != "~":
+            file_name = "~" + file_name
+
+        save_file = QFile(file_name)
+
+        f = open(file_name, "w")
+
+        with f:
+            data = self.currentWidget().toPlainText()
+            try:
+                # codecs.encode(data, enc)
+                f.write(data)
+
+            except ValueError:
+                print "error processing goes here"
+
+            finally:
+                f.close()
+            
+            self.P.statusBar().showMessage(
+                                    "Saved %s" % file_name, 4000)
+
+
+
+
 
 
     def save_event(self, enc="utf-8"):
         """Saves current file, except if "Untitled"; it will prompt user
             to save.
         """
-        # TODO: grab name from with os.path    
         file_name = self.tabText(self.currentIndex())       
 
         save_file = QFile(file_name)
@@ -143,7 +177,7 @@ class PyCodeTabInterface(QTabWidget):
             
             file_name = self.tabText(i)
             if file_name != "Untitled":
-            
+                # not sure why this is here...
                 save_file = QFile(file_name)
 
                 with open(file_name, "w") as f:
@@ -269,9 +303,9 @@ class PyCodePage(QTextEdit):
 
     def clone_line(self):
         """Clones current line cursor is found in"""
-        cursor.beginEditBlock()
         self.copy_selection()
         cursor = self.textCursor()
+        cursor.beginEditBlock()
         cursor.insertBlock()
         cursor.insertText(self.paste())
         self.setTextCursor(cursor)
@@ -628,9 +662,10 @@ class PyCodeShortcuts(QObject):
         self.create_shortcut("cut_act", "Ctrl+X", parent)
         # self.create_shortcut("delete_line", "Ctrl+K", parent, True)
         # self.create_shortcut("clone_line", "Ctrl+Shift+D", parent, True)
+        
 
 
-    def create_shortcut(self, name=None, short=None, parent=None, auto=False):
+    def create_shortcut(self, name=None, short=None, parent=None, auto=False, ctxt=None):
         """Creates Shortcut
            For convience, the most likely to be used aspects of QShortcut
            are placed as optional args.
@@ -638,3 +673,5 @@ class PyCodeShortcuts(QObject):
         self._ALL_SHORTCUTS[str(name)] = QShortcut(short, parent)
         if auto:
             self._ALL_SHORTCUTS.get(name).setAutoRepeat(auto)
+        if ctxt:
+            self._ALL_SHORTCUTS.get(name).setContext(ctxt)

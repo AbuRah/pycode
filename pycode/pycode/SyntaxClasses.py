@@ -86,52 +86,53 @@ class PyCodeSyntaxHighlighter(QSyntaxHighlighter):
         self.operator_otherF = QTextCharFormat()
         self.punctuationF = QTextCharFormat()
 
-        self.THEME_DICT = {"comment": QColor("#b94e48"),
-                        "comment_short": QColor("#b94e48"),
-                        "comment_long": QColor("#b94e48"), 
-                        "comment_special": QColor("#b94e48"),
-                        "comment_other": QColor("#b94e48"),
-                        "keyword": QColor("#fdee00"), 
-                        "keyword_pseudo": QColor("#fe6f5e"),
-                        "keyword_builtin": QColor("#ffa812"),
-                        "keyword_constant": QColor("#ffa812"),
-                        "keyword_function": QColor("#e48400"),
-                        "keyword_class": QColor("#e48400"),
-                        "keyword_namespace": QColor("#e48400"),
-                        "keyword_reserved": QColor("#e48400"), 
-                        "keyword_type": QColor("#e48400"),
-                        "name": QColor("#cc5500"), 
-                        "name_attribute": QColor("#933d41"),
-                        "name_tag": QColor("#cd5700"),
-                        "name_builtin": QColor("#e08d3c"),
-                        "name_decorator": QColor("#e08d3c"),
-                        "name_class": QColor("#cc5500"), 
-                        "name_entity": QColor("#933d41"),
-                        "name_exception": QColor("#933d41"),
-                        "name_function": QColor("#cc5500"),
-                        "name_namespace": QColor("#933d41"), 
-                        "name_variable": QColor("#cc5500"), 
-                        "name_other": QColor("#cc5500"), 
-                        "literal": QColor("#e25822"), 
-                        "string": QColor("#e25822"), 
-                        "string_single": QColor("#e25822"),
-                        "string_double": QColor("#e25822"),
-                        "string_doc": QColor("#e30b5d"),
-                        "string_escape": QColor("#ab4e52"), 
-                        "string_regex": QColor("#de3163"),
-                        "string_symbol": QColor("#e25822"), 
-                        "number": QColor("#dc143c"), 
-                        "number_long": QColor("#dc143c"), 
-                        "number_integer": QColor("#dc143c"), 
-                        "number_float": QColor("#dc143c"), 
-                        "number_hex": QColor("#de3163"), 
-                        "number_oct": QColor("#b31b1b"),
-                        "number_other": QColor("#dc143c"),
-                        "operator": QColor("#d2691e"), 
-                        "operator_word": QColor("#cf1020"), 
-                        "operator_other": QColor("#cf1020"),
-                        "punctuation": QColor("#a40000"),
-                        }
+        # monokai
+        self.THEME_DICT = {"comment": QColor("#75715E"),
+                    "comment_short": QColor("#75715E"),
+                    "comment_long": QColor("#75715E"), 
+                    "comment_special": QColor("#75715E"),
+                    "comment_other": QColor("#75715E"),
+                    "keyword": QColor("#EFB571"), 
+                    "keyword_pseudo": QColor("#fe6f5e"),
+                    "keyword_builtin": QColor("#A6E22E"),
+                    "keyword_constant": QColor("#A6E22E"),
+                    "keyword_function": QColor("#BED6FF"),
+                    "keyword_class": QColor("#FFFFFF"),
+                    "keyword_namespace": QColor("#e48400"),
+                    "keyword_reserved": QColor("#e48400"), 
+                    "keyword_type": QColor("#e48400"),
+                    "name": QColor("#F92672"), 
+                    "name_attribute": QColor("#933d41"),
+                    "name_tag": QColor("#cd5700"),
+                    "name_builtin": QColor("#F92672"),
+                    "name_decorator": QColor("#F92672"),
+                    "name_class": QColor("#F92672"), 
+                    "name_entity": QColor("#933d41"),
+                    "name_exception": QColor("#933d41"),
+                    "name_function": QColor("#F92672"),
+                    "name_namespace": QColor("#933d41"), 
+                    "name_variable": QColor("#F92672"), 
+                    "name_other": QColor("#cc5500"), 
+                    "literal": QColor("#A6E22E"), 
+                    "string": QColor("#A6E22E"), 
+                    "string_single": QColor("#A6E22E"),
+                    "string_double": QColor("#A6E22E"),
+                    "string_doc": QColor("#e30b5d"),
+                    "string_escape": QColor("#ab4e52"), 
+                    "string_regex": QColor("#de3163"),
+                    "string_symbol": QColor("#A6E22E"), 
+                    "number": QColor("#F92672"), 
+                    "number_long": QColor("#F92672"), 
+                    "number_integer": QColor("#F92672"), 
+                    "number_float": QColor("#F92672"), 
+                    "number_hex": QColor("#de3163"), 
+                    "number_oct": QColor("#b31b1b"),
+                    "number_other": QColor("#F92672"),
+                    "operator": QColor("#d2691e"), 
+                    "operator_word": QColor("#cf1020"), 
+                    "operator_other": QColor("#cf1020"),
+                    "punctuation": QColor("#a40000"),
+                    }
 
         self.TM_GET = self.THEME_DICT.get
 
@@ -198,7 +199,7 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
                         r"import|pass|break|except|in|raise")
 
         for word in keyword_list:
-            pattern = QRegExp(word + "\\s+")
+            pattern = QRegExp("\\b" + word +"\\b")
             rule = HighlightingRule(pattern, self.keywordF)
             self.highlighting_rules.append(rule)
 
@@ -214,7 +215,8 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
 
         # number
         self.numberF.setForeground(self.TM_GET("number"))
-        pattern = QRegExp("(?<!\\w)[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?")
+        pattern = QRegExp("[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?")
+
         pattern.setMinimal(True)
         rule = HighlightingRule(pattern, self.numberF)
         self.highlighting_rules.append(rule)
@@ -260,12 +262,12 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
                                     r"WindowsError|ZeroDivisionError",)
         
         for word in keywords_builtin_list:
-            pattern = QRegExp("\\b"+word+"(?=[(])+")
+            pattern = QRegExp(r"\b"+word+"(?=[(])+")
             rule = HighlightingRule(pattern, self.keyword_builtinF)
             self.highlighting_rules.append(rule)
 
         for word in keywords_exceptions_list:
-            pattern = QRegExp("\\b"+word+"\\b")
+            pattern = QRegExp("\b"+word+"\\b")
             rule = HighlightingRule(pattern, self.keyword_builtinF)
             self.highlighting_rules.append(rule)
 
@@ -337,13 +339,6 @@ class PythonSyntax(PyCodeSyntaxHighlighter):
         self.setCurrentBlockState( 0 )
 
 
-
-class LuaSyntax(PyCodeSyntaxHighlighter):
-    def __init__(self, parent=None):
-        super(LuaSyntax, self).__init__(parent)
-
-    def hightlightBlock(self, text):
-        pass
 
 class PerlSyntax(PyCodeSyntaxHighlighter):
     def __init__(self, parent=None):

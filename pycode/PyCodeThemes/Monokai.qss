@@ -34,140 +34,59 @@ foreground #F8F8F8
  
 background #272822
 ========================= 
-selectionForeground #D0D0D0
- 
-selectionBackground #757575
- 
-currentLine #3E3D32
- 
-lineNumber #F8F8F2
- 
-searchResultIndication #1E90FF
- 
-filteredSearchResultIndication #1E90FF
- 
-occurrenceIndication #000000
- 
-writeOccurrenceIndication #000000
- 
-findScope #000000
- 
-sourceHoverBackground #000000
-======================================
-singleLineComment #75715E
- 
-multiLineComment #75715e
- 
-commentTaskTag #CCDF32
- 
-javadoc #D9E577
- 
-javadocLink #D9E577
- 
-javadocTag #D9E577
- 
-javadocKeyword #D9E577
- 
-class #FFFFFF
- 
-interface #D197D9
- 
-method #FFFFFF
- 
-methodDeclaration #BED6FF
- 
-bracket #D8D8D8
- 
-number #7FB347
- 
-string #E6BB74
- 
-operator #D8D8D8
- 
-keyword #66CCB3
- 
-annotation #FFFFFF
- 
-staticMethod #BED6FF
- 
-localVariable #79ABFF
- 
-localVariableDeclaration #BED6FF
- 
-field #BED6FF
- 
-staticField #EFC090
- 
-staticFinalField #EFC090
- 
-deprecatedMember #F8F8F2
- 
-deletionIndication #D25252
- 
-enum #66D9EF
- 
-inheritedMethod #BED6FF
- 
-abstractMethod #BED6FF
- 
-parameterVariable #79ABFF
- 
-typeArgument #BFA4A4
- 
-typeParameter #BFA4A4
- 
-constant #EFB571
  
 
 ! fill out the relevant fields to their corresponding desired color here.
 
+# monokai
 self.THEME_DICT = {"comment": QColor("#75715E"),
-                    "comment_short": QColor("#75715E"),
-                    "comment_long": QColor("#75715E"), 
-                    "comment_special": QColor("#75715E"),
-                    "comment_other": QColor("#75715E"),
-                    "keyword": QColor("#EFB571"), 
-                    "keyword_pseudo": QColor("#fe6f5e"),
-                    "keyword_builtin": QColor("#ffa812"),
-                    "keyword_constant": QColor("#ffa812"),
-                    "keyword_function": QColor("#BED6FF"),
-                    "keyword_class": QColor("#FFFFFF"),
-                    "keyword_namespace": QColor("#e48400"),
-                    "keyword_reserved": QColor("#e48400"), 
-                    "keyword_type": QColor("#e48400"),
-                    "name": QColor("#cc5500"), 
-                    "name_attribute": QColor("#933d41"),
-                    "name_tag": QColor("#cd5700"),
-                    "name_builtin": QColor("#e08d3c"),
-                    "name_decorator": QColor("#e08d3c"),
-                    "name_class": QColor("#cc5500"), 
-                    "name_entity": QColor("#933d41"),
-                    "name_exception": QColor("#933d41"),
-                    "name_function": QColor("#cc5500"),
-                    "name_namespace": QColor("#933d41"), 
-                    "name_variable": QColor("#cc5500"), 
-                    "name_other": QColor("#cc5500"), 
-                    "literal": QColor("#e25822"), 
-                    "string": QColor("#e25822"), 
-                    "string_single": QColor("#e25822"),
-                    "string_double": QColor("#e25822"),
-                    "string_doc": QColor("#e30b5d"),
-                    "string_escape": QColor("#ab4e52"), 
-                    "string_regex": QColor("#de3163"),
-                    "string_symbol": QColor("#e25822"), 
-                    "number": QColor("#dc143c"), 
-                    "number_long": QColor("#dc143c"), 
-                    "number_integer": QColor("#dc143c"), 
-                    "number_float": QColor("#dc143c"), 
-                    "number_hex": QColor("#de3163"), 
-                    "number_oct": QColor("#b31b1b"),
-                    "number_other": QColor("#dc143c"),
-                    "operator": QColor("#d2691e"), 
-                    "operator_word": QColor("#cf1020"), 
-                    "operator_other": QColor("#cf1020"),
-                    "punctuation": QColor("#a40000"),
-                    }
+            "comment_short": QColor("#75715E"),
+            "comment_long": QColor("#75715E"), 
+            "comment_special": QColor("#75715E"),
+            "comment_other": QColor("#75715E"),
+            "keyword": QColor("#EFB571"), 
+            "keyword_pseudo": QColor("#fe6f5e"),
+            "keyword_builtin": QColor("#A6E22E"),
+            "keyword_constant": QColor("#A6E22E"),
+            "keyword_function": QColor("#BED6FF"),
+            "keyword_class": QColor("#FFFFFF"),
+            "keyword_namespace": QColor("#e48400"),
+            "keyword_reserved": QColor("#e48400"), 
+            "keyword_type": QColor("#e48400"),
+            "name": QColor("#F92672"), 
+            "name_attribute": QColor("#933d41"),
+            "name_tag": QColor("#cd5700"),
+            "name_builtin": QColor("#F92672"),
+            "name_decorator": QColor("#F92672"),
+            "name_class": QColor("#F92672"), 
+            "name_entity": QColor("#933d41"),
+            "name_exception": QColor("#933d41"),
+            "name_function": QColor("#F92672"),
+            "name_namespace": QColor("#933d41"), 
+            "name_variable": QColor("#F92672"), 
+            "name_other": QColor("#cc5500"), 
+            "literal": QColor("#A6E22E"), 
+            "string": QColor("#A6E22E"), 
+            "string_single": QColor("#A6E22E"),
+            "string_double": QColor("#A6E22E"),
+            "string_doc": QColor("#e30b5d"),
+            "string_escape": QColor("#ab4e52"), 
+            "string_regex": QColor("#de3163"),
+            "string_symbol": QColor("#A6E22E"), 
+            "number": QColor("#F92672"), 
+            "number_long": QColor("#F92672"), 
+            "number_integer": QColor("#F92672"), 
+            "number_float": QColor("#F92672"), 
+            "number_hex": QColor("#de3163"), 
+            "number_oct": QColor("#b31b1b"),
+            "number_other": QColor("#F92672"),
+            "operator": QColor("#d2691e"), 
+            "operator_word": QColor("#cf1020"), 
+            "operator_other": QColor("#cf1020"),
+            "punctuation": QColor("#a40000"),
+            }
 */
+
 /*QWidget=====================================================*/
 QWidget {}
 QWidget:focus{}
@@ -186,6 +105,32 @@ QTabWidget {
 
 }
 QTabWidget::pane {}
+
+/*testing....*/
+/*QTextBlock=================================================*/
+QTextBlock:focus {
+  background-color: #800020;
+  color: #800020;
+
+}
+
+QTextBlock:item {
+  background-color: #800020;
+  color: #800020;
+
+}
+
+QTextBlock {
+  background-color: #800020;
+  color: #800020;
+
+}
+
+QTextBlock:item:selected{
+  background-color: #800020;
+  color: #800020;
+
+}
 
 /*QLabel=====================================================*/
 

@@ -17,7 +17,56 @@
     Copyright 2014, Abu Rah 82013248a@gmail.com
 
 */
+/*
 
+self.THEME_DICT = {"comment": QColor("#b94e48"),
+                        "comment_short": QColor("#b94e48"),
+                        "comment_long": QColor("#b94e48"), 
+                        "comment_special": QColor("#b94e48"),
+                        "comment_other": QColor("#b94e48"),
+                        "keyword": QColor("#fdee00"), 
+                        "keyword_pseudo": QColor("#fe6f5e"),
+                        "keyword_builtin": QColor("#ffa812"),
+                        "keyword_constant": QColor("#ffa812"),
+                        "keyword_function": QColor("#e48400"),
+                        "keyword_class": QColor("#e48400"),
+                        "keyword_namespace": QColor("#e48400"),
+                        "keyword_reserved": QColor("#e48400"), 
+                        "keyword_type": QColor("#e48400"),
+                        "name": QColor("#cc5500"), 
+                        "name_attribute": QColor("#933d41"),
+                        "name_tag": QColor("#cd5700"),
+                        "name_builtin": QColor("#e08d3c"),
+                        "name_decorator": QColor("#e08d3c"),
+                        "name_class": QColor("#cc5500"), 
+                        "name_entity": QColor("#933d41"),
+                        "name_exception": QColor("#933d41"),
+                        "name_function": QColor("#cc5500"),
+                        "name_namespace": QColor("#933d41"), 
+                        "name_variable": QColor("#cc5500"), 
+                        "name_other": QColor("#cc5500"), 
+                        "literal": QColor("#e25822"), 
+                        "string": QColor("#e25822"), 
+                        "string_single": QColor("#e25822"),
+                        "string_double": QColor("#e25822"),
+                        "string_doc": QColor("#e30b5d"),
+                        "string_escape": QColor("#ab4e52"), 
+                        "string_regex": QColor("#de3163"),
+                        "string_symbol": QColor("#e25822"), 
+                        "number": QColor("#dc143c"), 
+                        "number_long": QColor("#dc143c"), 
+                        "number_integer": QColor("#dc143c"), 
+                        "number_float": QColor("#dc143c"), 
+                        "number_hex": QColor("#de3163"), 
+                        "number_oct": QColor("#b31b1b"),
+                        "number_other": QColor("#dc143c"),
+                        "operator": QColor("#d2691e"), 
+                        "operator_word": QColor("#cf1020"), 
+                        "operator_other": QColor("#cf1020"),
+                        "punctuation": QColor("#a40000"),
+                        }
+
+*/
 
 /* 
 

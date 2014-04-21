@@ -26,13 +26,16 @@ import codecs
 import re
 
 from functools import partial
+# AFTER development, I will import *only* the specific PySide classes
+# I need, instead of the whole QtCore/QtGui modules.
 from PySide.QtCore import *
 from PySide.QtGui import *
-from SyntaxClasses import (PythonSyntax, HtmlSyntax, PlainText, CSSSyntax,
-PyCodeIdentifier)
 
 from PyCodeCore import (PyCodeTabInterface, PyCodePage, PyCodeDockWidget,
 PyCodeStatusBar, PyCodeAction, PyCodeMenu, PyCodeSettings, PyCodeShortcuts)
+from SyntaxClasses import (PythonSyntax, HtmlSyntax, PlainText, CSSSyntax,
+PyCodeIdentifier)
+
 
 
 
@@ -40,8 +43,6 @@ PyCodeStatusBar, PyCodeAction, PyCodeMenu, PyCodeSettings, PyCodeShortcuts)
 # at the moment, PyCodeMenuBar isn't decoupled from this module. It *may* not 
 # run due to current code transformations occuring. Just a reminder to address 
 # this issue.
-# Also, due to tab constraints in emacs, i've mixed spaces and tabs in this
-# module and the PyCodeCore module (GASP!)
 
 # Need to test this...
 
@@ -59,12 +60,10 @@ class PyCodeMenuBar(QMenuBar):
         self.TOOL = ToolMenuTriggers("&Tool", parent)
         self.PREF = PrefMenuTriggers("&Preferences", parent)
         self.IDEM = IDEMenu("&IDE", parent)
-        self.COMPILE = CompileMenu("&Compiler", parent)
         self.addMenu(self.FILE)
         self.addMenu(self.EDIT)
         self.addMenu(self.VIEW)
         self.addMenu(self.IDEM)
-        self.addMenu(self.COMPILE)
         self.addMenu(self.TOOL)
         self.addMenu(self.PREF)
 
@@ -101,15 +100,17 @@ class PyCodeMenuBar(QMenuBar):
         return "PyCodeMenuBar Instance"
 
 # the PyCodeDialogWindow class has been suspended until encoding features are implemented.
-class PyCodeDialogWindow(QDialog):
+class PyCodeDialogWindow(QWidget):
     def __init__(self, parent=None):
         super(PyCodeDialogWindow, self).__init__(parent)
-        self.setLayout(None)
-        self.set_attributes()
         self.initUI()
-        self.set_signal_slots()
+        # self.set_signal_slots()
+        self.show()
 
+
+    #NOTE: toolbutton has 'triggered' signal
     def set_attributes(self):
+        # this should be removed
         self.setSizeGripEnabled(True)
 
     def initUI(self):
@@ -123,19 +124,21 @@ class PyCodeDialogWindow(QDialog):
 
 
         # hides file name entry line
-        self.main.addWidget(self.dialog_header)
-        self.main.addWidget(self.center)
-        self.main.addWidget(self.file_name_line)
-        self.main.addWidget(self.command_line_buttons)
+        self.main.addLayout(self.dialog_header)
+        self.main.addLayout(self.center)
+        self.main.addLayout(self.file_name_line)
+        self.main.addLayout(self.command_line_buttons)
 
         self.main.addSpacing(1)
 
         self.setLayout(self.main)
+        self.setGeometry(400, 150, 600, 400)
 
     def set_signal_slots(self):
         """sets up all necessary signals and slots."""
-        self.default_button.triggered.connect(self.accept)
-        self.cancel_button.triggered.connect(self.reject)
+        # TODO: create slots for each button
+        self.default_button.clicked.connect(self.accept)
+        self.cancel_button.clicked.connect(self.reject)
 
     
     def set_view_mode(self):
@@ -148,11 +151,11 @@ class PyCodeDialogWindow(QDialog):
 
     def header_layout(self):
         """Sets the upper portion layout of the dialog window."""
-        self.dialog_header = QHBoxLayout(self)
-        self.file_header = QLineEdit(self)
-        self.up_button = QToolButton(self)
-        self.down_button = QToolButton(self)
-        self.new_folder_buttom = QToolButton(self)
+        self.dialog_header = QHBoxLayout()
+        self.file_header = QLineEdit()
+        self.up_button = QToolButton()
+        self.down_button = QToolButton()
+        self.new_folder_buttom = QToolButton()
 
         self.dialog_header.addWidget(self.new_folder_buttom)
         self.dialog_header.addWidget(self.file_header)
@@ -161,19 +164,20 @@ class PyCodeDialogWindow(QDialog):
 
     def file_name_entry_layout(self):
         """lays out the file entry bar..."""
-        self.file_name_line = QHBoxLayout(self)
-        self.file_name = QLineEdit(self)
+        self.file_name_line = QHBoxLayout()
+        self.file_name = QLineEdit()
 
-        self.folder_search = QToolButton(self)
+        self.folder_search = QToolButton()
 
         self.file_name_line.addWidget(self.file_name)
 
     def view_window_layout(self):
         """sets up the layout for the file view area..."""
-        self.center = QHBoxLayout(self)
-        self.main_splitter = QSplitter(self)
+        self.center = QHBoxLayout()
+        self.main_splitter = QSplitter()
+        self.main_splitter.setHandleWidth(8)
         
-        self.file_model = QFileSystemModel(self)
+        self.file_model = QFileSystemModel()
         self.testing_dir = QDir(os.getcwd())
         self.file_list_view = QListView(self)
         self.folder_tree_view = QTreeView(self)
@@ -183,9 +187,12 @@ class PyCodeDialogWindow(QDialog):
         self.file_list_view.setModel(self.file_model)
         self.folder_tree_view.setModel(self.file_model)
         
-
         self.main_splitter.addWidget(self.file_list_view)
         self.main_splitter.addWidget(self.folder_tree_view)
+        self.center.addWidget(self.main_splitter)
+
+        # self.center.addWidget(self.file_list_view)
+        # self.center.addWidget(self.folder_tree_view)
 
         self.file_list_view.setLayoutMode(QListView.Batched)
         self.file_list_view.setBatchSize(25)
@@ -197,7 +204,7 @@ class PyCodeDialogWindow(QDialog):
             'cancel', etc...
             """
 
-        self.command_line_buttons = QHBoxLayout(self)
+        self.command_line_buttons = QHBoxLayout()
         self.default_button = QPushButton("TESTING", self)
         self.cancel_button = QPushButton("CANCEL", self)
         self.default_button.setDefault(True)
@@ -436,9 +443,11 @@ class FileMenu(PyCodeMenu):
         self.create_action("save_as_act", "Save as...", "Ctrl+Shift+S", "Save file as...")
         self.create_action("save_all_act", "Save All Files")
         self.addMenu(self.enc_save)
+        self.create_action("auto_save_act", "Auto-Save", status="Saves at regular intervals")
+        self.FILE_ACTIONS.get("auto_save_act").setCheckable(True)
         self.addSeparator()
         self.create_action("closeF_act", "Close Tab", "Ctrl+W", "Close current Tab Page")
-        self.create_action("closeW_act", "Close Window", "Ctrl+Shift+W", "Close Active Window")
+        self.create_action("closeW_act", "Close Window", status="Close Active Window")
         self.create_action("close_all_act", "Close all Files", status="Close all open tabs")
         self.create_action("exit_act", "Exit", "Ctrl+Q", "Exit the Application")
 
@@ -514,7 +523,6 @@ class ToolMenu(PyCodeMenu):
         self.addSeparator()
         # not yet implemented
         self.create_action("snippet_act", "Code Snippets", status="Browse Snippet lib")
-        self.create_action("build_act", "Build", status="builds current code")
         self.addSeparator()
 
 
@@ -574,23 +582,17 @@ class IDEMenu(PyCodeMenu):
         self.create_action("class_browser_act", "View current class hierarchy")
         self.create_action("object_browser_act", "Object Browser")
         self.create_action("code_folding_act", "Code Folding")
-
-
-class CompileMenu(PyCodeMenu):
-    """This compilemenu class is for automated running for a sepecificed
-        compiler. the auto run act will automatically run the compiler after
-        a specific amount of time since last user input. Can be toggled on and off.
-        There will be a sub-menu that holds the different build engines to select from.
-    """
-    def __init__(self, name=None, parent=None):
-        super(CompileMenu, self).__init__(name, parent)
-        self.COMP_ACTIONS = self.ALL_ACTIONS
-        self.create_action("auto_run_act", "Auto-Build", status="Runs specified build option automatically")
-        self.COMP_ACTIONS.get("auto_run_act").setCheckable(True)
+        self.create_action("term_act", "Terminal", "Ctrl+Shift+T")
         self.addSeparator()
+        self.create_action("build_act", "Build", status="builds current code")
+        self.create_action("auto_run_act", "Auto-Build", status="Runs specified build option automatically")
+        self.IDE_ACTIONS.get("auto_run_act").setCheckable(True)
 
 
 class ThemesMenu(PyCodeMenu):
+    """this class will hold the available themes for PyCode
+        It is a *sub-menu* under PrefMenu.
+    """
     def __init__(self, name=None, parent=None):
         super(ThemesMenu, self).__init__(name, parent)
         self.THEMES_ACTIONS = self.ALL_ACTIONS
@@ -693,7 +695,7 @@ class MainEncodingMenu(PyCodeMenu):
         # self.create_action("iso-2022_act", "UTF-8") python supports this
         # self.create_action("iscii_act", "Indian(ISCII)", status="ISCII") # not supported
 
-    # i may be able to make this an inherited method in pycodemenu core.
+    # i may be able to make this as an inherited method in pycodemenu core.
     def make_menus(self):
         """Constructs submenu constants."""
         self.win_menu = WindowsEncodingMenu("Windows", self)
@@ -795,9 +797,11 @@ class FileMenuTriggers(FileMenu):
         self.F_DICT("close_all_act").triggered.connect(self.P_C.close_all)
         self.F_DICT("reopenF_act").triggered.connect(self.P_C.reopen_last_tab)
         self.F_DICT("closeF_act").triggered.connect(self.P_C.close_tab)
+        # TODO: ensure that this will *only* run when toggled....
+        self.F_DICT("auto_save_act").toggled.connect(self.P_C.auto_save_event)
         # self.F_DICT("OpenFolder_act").triggered.connect(self.P_C.open_folder)
 
-    # to me, these feel out of place. They should be encapsulated elsewhere...
+    # to me, these methods feel out of place. They should be encapsulated elsewhere...
     def new_window(self):
         """opens a completely new window."""
         self.new_window_instance = PyCodeTop()
@@ -962,6 +966,7 @@ class PyCodeShortcutTriggers(PyCodeShortcuts):
         super(PyCodeShortcutTriggers, self).__init__(parent)
         self.SHORT_GET = self._ALL_SHORTCUTS.get
         self.P_C = parent
+        self.P_M = parent
 
 
     def set_shortcut_slots(self):
@@ -970,9 +975,9 @@ class PyCodeShortcutTriggers(PyCodeShortcuts):
         self.SHORT_GET("move_right2").activated.connect(self.P_C.tab_seek_right)
         self.SHORT_GET("move_left").activated.connect(self.P_C.tab_seek_left)
         self.SHORT_GET("move_left2").activated.connect(self.P_C.tab_seek_left)
-        self.SHORT_GET("close_focused_win").activated.connect
-        self.SHORT_GET("close_dock").activated.connect
-        # self.SHORT_GET("cut_act").activated.connect(self.P_C.cut_selection)
+        self.SHORT_GET("close_focused_win").activated.connect(self.parent().close)
+        self.SHORT_GET("close_dock").activated.connect(self.parent().DOCKW.hide)
+        # self.SHORT_GET("cut_act").activated.connect(self.P_C.currentWidget().cut_selection)
 
 
 
@@ -1060,16 +1065,13 @@ class DockWidget(PyCodeDockWidget):
     def simple_find(self):
         """searches entire text document for entered term."""
         current_doc = self.P_C_T.find_Text()
-
+        # incomplete
+        #TODO: implement custom find...
         if self.user_input.text().find(current_doc):
 
             self.TI.currentWidget().setTextCursor(update)
             self.TI.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
             yield 
-
-
-
-
 
 
 class PyCodeTop(QMainWindow):
@@ -1084,6 +1086,7 @@ class PyCodeTop(QMainWindow):
         # this checks if there are any opened tabs from the last session...
         if not self.CHILD.currentWidget():
             self.CHILD.new_file()
+        self.SHORT.set_shortcut_slots()
         self.set_stylesheet()
 
     def set_child_connections(self):
@@ -1096,7 +1099,6 @@ class PyCodeTop(QMainWindow):
         self.SETTINGS.P_C = self.CHILD
         self.DOCKW.P_C = self.CHILD
         self.SHORT.P_C = self.CHILD
-        self.SHORT.set_shortcut_slots()
         self.CHILD.grab_sm_bars()
         self.CHILD.set_signal_slots()
         self.menuBar().set_CHILD_constant()
