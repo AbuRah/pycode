@@ -15,7 +15,7 @@ I have some basic functionality, namely thus:
 
 A LOT is still missing, so expect bugs...
 
-TO DO:
+-TO DO:
 
 Just to name of the missing functionality:
 
