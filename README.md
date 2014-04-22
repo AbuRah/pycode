@@ -12,7 +12,6 @@ I have some basic functionality, namely thus:
 - some incomplete syntax highlighting
 - common delete/kill operations
 - auto-save
-- 
 
 A LOT is still missing, so expect bugs...
 
