@@ -798,7 +798,7 @@ class FileMenuTriggers(FileMenu):
         self.F_DICT("reopenF_act").triggered.connect(self.P_C.reopen_last_tab)
         self.F_DICT("closeF_act").triggered.connect(self.P_C.close_tab)
         # TODO: ensure that this will *only* run when toggled....
-        self.F_DICT("auto_save_act").toggled.connect(self.P_C.auto_save_event)
+        self.F_DICT("auto_save_act").toggled.connect(self.P_C.auto_save_check)
         # self.F_DICT("OpenFolder_act").triggered.connect(self.P_C.open_folder)
 
     # to me, these methods feel out of place. They should be encapsulated elsewhere...
@@ -814,7 +814,9 @@ class FileMenuTriggers(FileMenu):
     def exit_event(self):
         """Exits without prompting"""
         if self.P.SETTINGS:
-                    self.P.SETTINGS.write_settings()
+            self.P.SETTINGS.write_settings()
+        if self.F_DICT("auto_save_act").isChecked():
+            self.P.CHILD.auto_save_thread.halt = True
         sys.exit()
 
 

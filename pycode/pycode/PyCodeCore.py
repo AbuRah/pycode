@@ -20,6 +20,8 @@
 #--coding:utf-8---
 import re
 import os
+import threading
+import time
 
 from PySide.QtGui import *
 from PySide.QtCore import *
@@ -27,6 +29,17 @@ from PySide.QtCore import *
 
 
 # NOTE: the classes are *not* organized...
+
+class PyCodeAutoSaveThread(threading.Thread):
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs={}):
+        super(PyCodeAutoSaveThread, self).__init__(group, target, name, args, kwargs)
+        self.halt = False
+
+    # def run(self):
+    #     pass
+
+
+
 
 class PyCodeTabInterface(QTabWidget):
     """This class and the PyCodePage class are where most of the relevant slots and
@@ -62,11 +75,10 @@ class PyCodeTabInterface(QTabWidget):
         super(PyCodeTabInterface, self).__init__(parent)
         self.init_setup()
         self.P = parent
-        # the need to wrap the document in a class causes a
-        # class dependency to arise. I may have to move this
-        # to the main module
+        self.auto_save_thread = PyCodeAutoSaveThread(group=None, target=self.auto_save_event,
+                                                name="auto_save_thread")
 
-        
+
 
     def init_setup(self):
         """Sets up all options pertinent to QTabWidget"""
@@ -85,60 +97,69 @@ class PyCodeTabInterface(QTabWidget):
 
     def set_syntax(self):
         """sets appropriate syntax highlighting whenever a tab page is switched
-                   First we check to ensure there are tabs and there are entries in the 
-                   *_SYNTAX_DICT* constant...
-                   The value stored there is the syntax_setting specific method which only needs
-                   to be called, hence the empty parens at the end...
-                """
+            First we check to ensure there are tabs and there are entries in the 
+            *_SYNTAX_DICT* constant...
+            The value stored there is the syntax_setting specific method which only needs
+            to be called, hence the empty parens at the end...
+        """
 
         if self.count() and self._SYNTAX_DICT:
                     
-                        self._SYNTAX_DICT.get(self.currentIndex())()
+            self._SYNTAX_DICT.get(self.currentIndex())()
             #set_syn = self._SYNTAX_DICT.get(self.currentIndex())
             #set_syn()
 
-
-    # # practice/testing
-    # def testing(self, enc):
-    #   # when opening file use decode(encoding specified)
-    #   data = f.read()
-    #   data.decode(enc)
-    #   # when writing to file, use encode(encoding specified)
+    def auto_save_check(self):
+        """Checks if auto_save_thread is currently running, if so, it halts
+            the thread, otherwise it starts it up.
+        """
+        if self.auto_save_thread.is_alive():
+            self.auto_save_thread.halt = True
+        else:
+            self.auto_save_thread.start()
 
     def auto_save_event(self):
         """When toggled, this method will automate file saving.
             In order to prevent unwanted saving for modifications,
             this method will save file name as, then save the newly
             named file. e.g. some_file.txt, would be saved as,
-            some_file~.txt. 
+            ~some_file.txt. 
         """
-        # TODO: make this method run at intervals.
-        file_name = self.tabText(self.currentIndex())
-        
-        if file_name[0] != "~":
-            file_name = "~" + file_name
-
-        save_file = QFile(file_name)
-
-        f = open(file_name, "w")
-
-        with f:
-            data = self.currentWidget().toPlainText()
-            try:
-                # codecs.encode(data, enc)
-                f.write(data)
-
-            except ValueError:
-                print "error processing goes here"
-
-            finally:
-                f.close()
+        # TODO: allow user defined interval times.
+        # 
+        while not self.auto_save_thread.halt:
             
-            self.P.statusBar().showMessage(
-                                    "Saved %s" % file_name, 4000)
+            file_name = self.tabText(self.currentIndex())
+            if file_name[0] != "~":
+                file_name = "~" + file_name
 
+            save_file = QFile(file_name)
 
+            f = open(file_name, "w")
 
+            with f:
+                data = self.currentWidget().toPlainText()
+
+                try:
+                    # codecs.encode(data, enc)
+                    f.write(data)
+
+                except ValueError:
+                    print "error processing goes here"
+
+                finally:
+                    f.close()
+                
+                print "the problem is the commented out line of code."
+                
+                time.sleep(360.0)
+
+                if self.auto_save_thread.halt:
+                    break
+                print "running again..."
+            # currently, attempting to update the status bar in the main thread fails...
+            # self.P.statusBar().showMessage(
+            #                         "Auto-Saved %s" % file_name, 4000)
 
 
 
