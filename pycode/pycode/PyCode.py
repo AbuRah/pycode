@@ -348,6 +348,7 @@ class Page(PyCodePage):
     def find_text(self):
         """Find the indicated text within the current tab page"""
         #TODO: make both find methods move from one term to next and wrap if at end
+        # testing...
         Dock_widget = self.TI.parent().DOCKW
         Dock_widget.show()
         Dock_widget.user_input.setFocus()
@@ -363,7 +364,7 @@ class Page(PyCodePage):
 
     def find_regexp(self):
         """Find the indicated text within the current tab page"""
-        
+        # testing...
         Dock_widget = self.TI.parent().DOCKW
         Dock_widget.show()
         Dock_widget.user_input.setFocus()
@@ -439,12 +440,12 @@ class FileMenu(PyCodeMenu):
         self.addMenu(self.enc_open)
         self.create_action("reopenF_act", "Reopen Last Tab", "Ctrl+Shift+T", "Re-open last tab")
         self.addSeparator()
+        self.create_action("auto_save_act", "Auto-Save", status="Saves at regular intervals")
+        self.FILE_ACTIONS.get("auto_save_act").setCheckable(True)
         self.create_action("save_act", "Save", "Ctrl+S", "Save Current Document")
         self.create_action("save_as_act", "Save as...", "Ctrl+Shift+S", "Save file as...")
         self.create_action("save_all_act", "Save All Files")
         self.addMenu(self.enc_save)
-        self.create_action("auto_save_act", "Auto-Save", status="Saves at regular intervals")
-        self.FILE_ACTIONS.get("auto_save_act").setCheckable(True)
         self.addSeparator()
         self.create_action("closeF_act", "Close Tab", "Ctrl+W", "Close current Tab Page")
         self.create_action("closeW_act", "Close Window", status="Close Active Window")
@@ -474,11 +475,15 @@ class EditMenu(PyCodeMenu):
         self.addSeparator()
         self.create_action("kill_line", "Kill Line", "Ctrl+k")
         self.create_action("delete_line", "Delete Line", "Ctrl+Shift+K")
-        self.create_action("line_up", "Move line up", "Ctrl+Shift+Up")
-        self.create_action("line_down", "Move line down", "Ctrl+Shift+Down")
+        self.create_action("line_block_up_act", "Move line up", "Ctrl+Shift+Up")
+        self.create_action("line_block_down_act", "Move line down", "Ctrl+Shift+Down")
         self.create_action("clone_line", "Clone current line", "Ctrl+Shift+D")
         self.create_action("line_select", "Select current line", "Ctrl+L")
         self.create_action("indent_paste", "Paste and indent", "Shift+Ctrl+V")
+        self.create_action("del_word_front_act", "Delete next word", "Ctrl+Del")
+        self.create_action("del_word_back_act", "Delete previous word", "Ctrl+BackSpace")
+        self.create_action("kill_word_front_act", "Kill front word", "Alt+Del")
+        self.create_action("kill_word_back_act", "Kill previous word", "Alt+BackSpace")
 
 
 class ViewMenu(PyCodeMenu):
@@ -507,6 +512,8 @@ class ViewMenu(PyCodeMenu):
         self.create_action("word_wrap_act", "Word Wrapping")
         self.VIEW_ACTIONS.get("word_wrap_act").setCheckable(True)
         self.VIEW_ACTIONS.get("word_wrap_act").setChecked(True)
+        self.create_action("code_folding_act", "Code Folding")
+
 
 
 class ToolMenu(PyCodeMenu):
@@ -569,6 +576,33 @@ class PrefFontMenu(PyCodeMenu):
         self.create_action("sans_serif_font_act", "Sans-Serif")
 
 
+class BuildMenu(PyCodeMenu):
+    """This sub-menu holds all available build engines
+        and relevant options.
+
+    """
+    def __init__(self, parent=None):
+        super(BuildMenu, self).__init__(parent)
+        self.BD_ACTIONS = self.ALL_ACTIONS
+        self.create_action_group("build_engine_group")
+        self.create_action("python_build_act", "Python", status="Build python module")
+        self.create_action("cpp_build_act", "C++", status="Compile C++ code")
+        self.create_action("c_build_act", "C++", status="Compile C code")
+        self.add_to_action_group("build_engine_group", comprun=True)
+
+
+class DebuggerMenu(PyCodeMenu):
+    """This class will hold all debugging options relevant to the current set-up
+        It will be available *only if* the current syntax set-up supports a debugging
+        option. NOTE: user should be able to set debugger manually, but the choosen debugger should
+        *NOT* blindly run just any code...
+    """
+    def __init__(self, parent=None):
+        super(DebuggerMenu, self).__init__(parent)
+
+
+
+
 class IDEMenu(PyCodeMenu):
     """This class menu holds all lightweight IDE tools.
         This is *only* for looks at the moment. 
@@ -579,13 +613,17 @@ class IDEMenu(PyCodeMenu):
         super(IDEMenu, self).__init__(name, parent)
         self.IDE_ACTIONS = self.ALL_ACTIONS
         # TODO: implement appropriate methods for these actions.
-        self.create_action("class_browser_act", "View current class hierarchy")
+        # TODO: add buildmenu, debuggermenu classes as sub-menus
+        self.create_action("class_browser_act", "Class Browser", status="View current class hierarchy")
         self.create_action("object_browser_act", "Object Browser")
-        self.create_action("code_folding_act", "Code Folding")
-        self.create_action("term_act", "Terminal", "Ctrl+Shift+T")
+        # may make a code folding sub-menu class
+        self.create_action("term_act", "Terminal", "Ctrl+Shift+T", "Access Local Terminal")
         self.addSeparator()
         self.create_action("build_act", "Build", status="builds current code")
         self.create_action("auto_run_act", "Auto-Build", status="Runs specified build option automatically")
+        self.addSeparator()
+        # make this debug action into a menu with more comprehensive actions.
+        self.create_action("debug_act", "Debugger", status="will set debugger operations")
         self.IDE_ACTIONS.get("auto_run_act").setCheckable(True)
 
 
@@ -619,15 +657,15 @@ class WindowsEncodingMenu(PyCodeMenu):
     def __init__(self, name=None, parent=None):
         super(WindowsEncodingMenu, self).__init__(name, parent)
         self.WIN_ENC = self.ALL_ACTIONS
-        self.create_action("windows1250_act", "Central European(Windows1250)", status="Windows1250")
-        self.create_action("windows1251_act", "Cyrillic(Windows1251)", status="Windows1251")
-        self.create_action("windows1252_act", "Western(Windows1252)", status="Windows1252")
-        self.create_action("windows1253_act", "Greek(Windows1253)", status="Windows1253")
-        self.create_action("windows1254_act", "Turkish(Windows1254)", status="Windows1254")
-        self.create_action("windows1255_act", "Hebrew(Windows1255)", status="Windows1255")
-        self.create_action("windows1256_act", "Arabic(Windows1256)", status="Windows1256")
-        self.create_action("windows1257_act", "Baltic(Windows1257)", status="Windows1257")
-        self.create_action("windows1258_act", "Vietnamese(Windows1258)", status="Windows1258")
+        self.create_action("windows1250_act", "Central European (Windows1250)", status="Windows1250")
+        self.create_action("windows1251_act", "Cyrillic (Windows1251)", status="Windows1251")
+        self.create_action("windows1252_act", "Western (Windows1252)", status="Windows1252")
+        self.create_action("windows1253_act", "Greek (Windows1253)", status="Windows1253")
+        self.create_action("windows1254_act", "Turkish (Windows1254)", status="Windows1254")
+        self.create_action("windows1255_act", "Hebrew (Windows1255)", status="Windows1255")
+        self.create_action("windows1256_act", "Arabic (Windows1256)", status="Windows1256")
+        self.create_action("windows1257_act", "Baltic (Windows1257)", status="Windows1257")
+        self.create_action("windows1258_act", "Vietnamese (Windows1258)", status="Windows1258")
 
 
 class EuropeanEncodingMenu(PyCodeMenu):
@@ -709,6 +747,8 @@ class MainEncodingMenu(PyCodeMenu):
    all works...
 
 """
+
+
 class OpenEncMenuTriggers(MainEncodingMenu):
     """defines all encoding Menu signal/slot connections
        specific to the OpenEncMenu sub-menu.
@@ -740,7 +780,8 @@ class OpenEncMenuTriggers(MainEncodingMenu):
 
         # testing...  broken; Here is the issue i'm currently
         # having, this calls open_file_dialog multiple times
-        # when used with partial().  when partial is left out
+        # when used with partial().  partial() is used in order to pass 
+        # an argument. So, when partial is left out
         # of the equation, one only call is made for each
         # signal emission. That means i cannot, with my current
         # set-up, pass an argument to the slot...
@@ -778,28 +819,28 @@ class FileMenuTriggers(FileMenu):
     """
     def __init__(self, name=None, parent=None):
         super(FileMenuTriggers, self).__init__(name, parent)
-        self.F_DICT = self.FILE_ACTIONS.get
+        self.F_DICT_GET = self.FILE_ACTIONS.get
         # self.P_C = parent.CHILD this may not work...
         self.P = parent
-        self.F_DICT("exit_act").triggered.connect(self.exit_event)
-        self.F_DICT("newW_act").triggered.connect(self.new_window)
-        self.F_DICT("closeW_act").triggered.connect(self.close_window)
+        self.F_DICT_GET("exit_act").triggered.connect(self.exit_event)
+        self.F_DICT_GET("newW_act").triggered.connect(self.new_window)
+        self.F_DICT_GET("closeW_act").triggered.connect(self.close_window)
 
 
     def update_triggers(self):
         """updates pertinent triggers to respective slots"""
         # these need to be set after init due to coupling issues....
-        self.F_DICT("save_act").triggered.connect(self.P_C.save_event)
-        self.F_DICT("openF_act").triggered.connect(self.P_C.open_file_dialog)
-        self.F_DICT("save_as_act").triggered.connect(self.P_C.save_file_as)
-        self.F_DICT("newF_act").triggered.connect(self.P_C.new_file)
-        self.F_DICT("save_all_act").triggered.connect(self.P_C.save_all)
-        self.F_DICT("close_all_act").triggered.connect(self.P_C.close_all)
-        self.F_DICT("reopenF_act").triggered.connect(self.P_C.reopen_last_tab)
-        self.F_DICT("closeF_act").triggered.connect(self.P_C.close_tab)
+        self.F_DICT_GET("save_act").triggered.connect(self.P_C.save_event)
+        self.F_DICT_GET("openF_act").triggered.connect(self.P_C.open_file_dialog)
+        self.F_DICT_GET("save_as_act").triggered.connect(self.P_C.save_file_as)
+        self.F_DICT_GET("newF_act").triggered.connect(self.P_C.new_file)
+        self.F_DICT_GET("save_all_act").triggered.connect(self.P_C.save_all)
+        self.F_DICT_GET("close_all_act").triggered.connect(self.P_C.close_all)
+        self.F_DICT_GET("reopenF_act").triggered.connect(self.P_C.reopen_last_tab)
+        self.F_DICT_GET("closeF_act").triggered.connect(self.P_C.close_tab)
         # TODO: ensure that this will *only* run when toggled....
-        self.F_DICT("auto_save_act").toggled.connect(self.P_C.auto_save_check)
-        # self.F_DICT("OpenFolder_act").triggered.connect(self.P_C.open_folder)
+        self.F_DICT_GET("auto_save_act").toggled.connect(self.P_C.auto_save_check)
+        # self.F_DICT_GET("OpenFolder_act").triggered.connect(self.P_C.open_folder)
 
     # to me, these methods feel out of place. They should be encapsulated elsewhere...
     def new_window(self):
@@ -815,7 +856,8 @@ class FileMenuTriggers(FileMenu):
         """Exits without prompting"""
         if self.P.SETTINGS:
             self.P.SETTINGS.write_settings()
-        if self.F_DICT("auto_save_act").isChecked():
+        if self.F_DICT_GET("auto_save_act").isChecked():
+            # TODO: make this immediately kill the auto-save thread.
             self.P.CHILD.auto_save_thread.halt = True
         sys.exit()
 
@@ -831,7 +873,7 @@ class EditMenuTriggers(EditMenu):
     """
     def __init__(self, name=None, parent=None):
         super(EditMenuTriggers, self).__init__(name, parent)
-        self.E_DICT = self.EDIT_ACTIONS.get
+        self.E_DICT_GET = self.EDIT_ACTIONS.get
         # self.P_C should be set to parent.CHILD in PyCodeTop
         # class.  if there are any issues, it's because a
         # trigger menu method is being called before self.P_C
@@ -852,21 +894,25 @@ class EditMenuTriggers(EditMenu):
 
         if self.P_C_T:
             # Not yet implemented
-            self.E_DICT("find_act").triggered.connect(self.P_C_T.find_text)
-            self.E_DICT("find_regexp_act").triggered.connect(self.P_C_T.find_regexp)
-            self.E_DICT("redo_act").triggered.connect(self.P_C_T.redo_last)
-            self.E_DICT("undo_act").triggered.connect(self.P_C_T.undo_last)
-            self.E_DICT("cut_act").triggered.connect(self.P_C_T.cut_selection)
-            self.E_DICT("paste_act").triggered.connect(self.P_C_T.paste_selection)
-            self.E_DICT("copy_act").triggered.connect(self.P_C_T.copy_selection)
-            self.E_DICT("clone_act").triggered.connect(self.P_C_T.clone_doc)
-            self.E_DICT("kill_line").triggered.connect(self.P_C_T.kill_to_end_of_line)
-            self.E_DICT("delete_line").triggered.connect(self.P_C_T.delete_line)
-            self.E_DICT("line_up").triggered.connect(self.P_C_T.line_up)
-            self.E_DICT("line_down").triggered.connect(self.P_C_T.line_down)
-            self.E_DICT("clone_line").triggered.connect(self.P_C_T.clone_line)
-            self.E_DICT("line_select").triggered.connect(self.P_C_T.current_line_select)
-            self.E_DICT("indent_paste").triggered.connect(self.P_C_T.paste_and_indent)
+            self.E_DICT_GET("find_act").triggered.connect(self.P_C_T.find_text)
+            self.E_DICT_GET("find_regexp_act").triggered.connect(self.P_C_T.find_regexp)
+            self.E_DICT_GET("redo_act").triggered.connect(self.P_C_T.redo_last)
+            self.E_DICT_GET("undo_act").triggered.connect(self.P_C_T.undo_last)
+            self.E_DICT_GET("cut_act").triggered.connect(self.P_C_T.cut_selection)
+            self.E_DICT_GET("paste_act").triggered.connect(self.P_C_T.paste_selection)
+            self.E_DICT_GET("copy_act").triggered.connect(self.P_C_T.copy_selection)
+            self.E_DICT_GET("clone_act").triggered.connect(self.P_C_T.clone_doc)
+            self.E_DICT_GET("kill_line").triggered.connect(self.P_C_T.kill_to_end_of_line)
+            self.E_DICT_GET("delete_line").triggered.connect(self.P_C_T.delete_line)
+            self.E_DICT_GET("line_block_up_act").triggered.connect(self.P_C_T.line_block_up)
+            self.E_DICT_GET("line_block_down_act").triggered.connect(self.P_C_T.line_block_down)
+            self.E_DICT_GET("clone_line").triggered.connect(self.P_C_T.clone_line)
+            self.E_DICT_GET("line_select").triggered.connect(self.P_C_T.current_line_select)
+            self.E_DICT_GET("indent_paste").triggered.connect(self.P_C_T.paste_and_indent)
+            self.E_DICT_GET("del_word_front_act").triggered.connect(self.P_C_T.delete_next_word)
+            self.E_DICT_GET("del_word_back_act").triggered.connect(self.P_C_T.delete_previous_word)
+            # self.E_DICT_GET("kill_word_front_act").triggered.connect(self.kill_next)
+            # self.E_DICT_GET("kill_word_back_act").triggered.connect(self.kill_previous)
 
 
 class ViewMenuTriggers(ViewMenu):
@@ -876,7 +922,6 @@ class ViewMenuTriggers(ViewMenu):
     def __init__(self, name=None, parent=None):
         super(ViewMenuTriggers, self).__init__(name, parent)
         self.V_GET = self.VIEW_ACTIONS.get
-
 
 
     def update_connections(self):
@@ -907,13 +952,18 @@ class ToolMenuTriggers(ToolMenu):
     """This class holds all tool action connections. i.e. signals and slots 
         for the tool menu.
         The functools; partial import is used here.
+        NOTE: major issue with passing args to a function and connecting
+        to the desired QAction. 
+
     """
     def __init__(self, name=None, parent=None):
         super(ToolMenuTriggers, self).__init__(name, parent)
         self.T_GET = self.TOOL_ACTIONS.get
+        self.mapper = QSignalMapper()
         
 
     def update_connections(self):
+        # self.reset_all(self.TOOL_ACTIONS.values(), self.P_C_T)
         self.reset_all(self.TOOL_ACTIONS.values(), self.P_C_T)
         self.update_triggers()
 
@@ -922,13 +972,17 @@ class ToolMenuTriggers(ToolMenu):
         self.P_C_T = self.P_C.currentWidget()
         
         if self.P_C_T:
-            
-            for action in self.TOOL_ACTIONS.values():
-                # partial also causes this to connect multiple times after the 
-                # signal connects to the initial connection...
-                # to/do find a way to pass arg without multiple function calls...
-                action.triggered.connect(self.P_C_T.set_tab_width)
-            
+
+            self.T_GET("tab_act_1").triggered.connect(self.P_C_T.set_tab_width1)
+            self.T_GET("tab_act_2").triggered.connect(self.P_C_T.set_tab_width2)
+            self.T_GET("tab_act_3").triggered.connect(self.P_C_T.set_tab_width3)
+            self.T_GET("tab_act_4").triggered.connect(self.P_C_T.set_tab_width4)
+            self.T_GET("tab_act_5").triggered.connect(self.P_C_T.set_tab_width5)
+            self.T_GET("tab_act_6").triggered.connect(self.P_C_T.set_tab_width6)
+            self.T_GET("tab_act_7").triggered.connect(self.P_C_T.set_tab_width7)
+            self.T_GET("tab_act_8").triggered.connect(self.P_C_T.set_tab_width8)
+
+
 
 
 class PrefMenuTriggers(PrefMenu):
@@ -998,7 +1052,7 @@ class SettingsTmp(PyCodeSettings):
         """
         # self.settings = QSettings("AD Engineering", 
         #               "PyCode Text Editor")
-        # that ^^^ is only for reference purposes, ignore...
+        # that ^^^ is only for reference purposes, *IGNORE*...
 
         
         # re-open any files left open from last session
@@ -1046,7 +1100,7 @@ class DockWidget(PyCodeDockWidget):
         
         try:
             self.user_input.disconnect(self.P_C_T)
-            self.user_input.textChanged.connect(self.simple_find)
+            self.user_input.textChanged.connect(self.P_C_T.find_text)
         
         except AttributeError:
             print "error processed"
@@ -1093,7 +1147,7 @@ class PyCodeTop(QMainWindow):
 
     def set_child_connections(self):
         """Here most of the interdependent connections take place.
-                   If there's a bug, this would be THE place to check...
+           If there's a bug, this would be THE place to start debugging...
            I've attempted to condense all signal/slot connection coupling in this
            ONE function. Everything that needs to be coupled occurs here.
         """
@@ -1116,6 +1170,7 @@ class PyCodeTop(QMainWindow):
         self.setMenuBar(menu)
         self.setStatusBar(status)
         main = TabInterface(self)
+
         self.setCentralWidget(main)
         
         self.SETTINGS = SettingsTmp(self)

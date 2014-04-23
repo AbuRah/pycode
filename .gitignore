@@ -12,3 +12,5 @@ _docs
 *OOP*
 pycodecore/
 pycode/tests/
+*.php
+

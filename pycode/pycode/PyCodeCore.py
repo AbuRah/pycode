@@ -35,8 +35,39 @@ class PyCodeAutoSaveThread(threading.Thread):
         super(PyCodeAutoSaveThread, self).__init__(group, target, name, args, kwargs)
         self.halt = False
 
+    # may not use, REMOVE after testing
     # def run(self):
     #     pass
+
+
+class PyCodeBuildEngine(QObject):
+    """Holds all build engine related methods and
+        attributes
+        This class will determine all pertinent checks/settings
+        for OS specific builds. 
+        I want this to work across multiple platforms
+    """
+    def __init__(self, parent=None):
+        super(PyCodeBuildEngine, self).__init__(parent)
+
+    def python_build(self, *args, **kwargs):
+        """Builds current Python module with given *args 
+            and **kwargs.
+        """
+        pass
+
+    def c_build(self):
+        """compiles c code and outputs results"""
+        pass
+    
+    def cpp_build(self):
+        """compiles c++ code and outputs results"""
+        pass
+
+    def html_build(self, strict=False):
+        """runs html script, checking for errors"""
+        pass
+
 
 
 
@@ -118,19 +149,25 @@ class PyCodeTabInterface(QTabWidget):
         else:
             self.auto_save_thread.start()
 
-    def auto_save_event(self):
+    def auto_save_event(self, time_to_wait=300.0):
         """When toggled, this method will automate file saving.
             In order to prevent unwanted saving for modifications,
             this method will save file name as, then save the newly
             named file. e.g. some_file.txt, would be saved as,
             ~some_file.txt. 
+            The time_to_wait arg is used to set the amount of time this
+            process should wait before executing again. It will depend 
+            upon the user's choice; defaults to 6 min.
+            *Ideally* this should automatically save after a certain
+            amount of time since last registered user input.
         """
         # TODO: allow user defined interval times.
         # 
         while not self.auto_save_thread.halt:
             
             file_name = self.tabText(self.currentIndex())
-            if file_name[0] != "~":
+
+            if not re.search(r"^~", file_name):
                 file_name = "~" + file_name
 
             save_file = QFile(file_name)
@@ -149,14 +186,14 @@ class PyCodeTabInterface(QTabWidget):
 
                 finally:
                     f.close()
-                
-                print "the problem is the commented out line of code."
-                
-                time.sleep(360.0)
-
+                # print statements for testing...
+                print "run confirmed"
+                time.sleep(30.0)
+                print "checking auto_save halt status..."
                 if self.auto_save_thread.halt:
                     break
                 print "running again..."
+
             # currently, attempting to update the status bar in the main thread fails...
             # self.P.statusBar().showMessage(
             #                         "Auto-Saved %s" % file_name, 4000)
@@ -313,14 +350,56 @@ class PyCodePage(QTextEdit):
             self.TI.currentIndex(), QColor("#fff5ee"))
 
     # the tab width should be set elsewhere with a different, higher level method
-    def set_tab_width(self, num):
-        return self.setTabStopWidth(num)
+    def set_tab_width1(self):
+        """ Sets the tab width.
+
+            NOTE: All of variations of the set_tab_width method will have to be writtern
+            out explicitly until i can find a way to pass args from slot connections
+            *without* it connecting multiple times. More info in the ViewMenuTriggers class
+            in the main module.
+            
+        """
+        print "running 1"
+        return self.setTabStopWidth(10)
+
+    def set_tab_width2(self):
+        print "running 2"
+        return self.setTabStopWidth(20)
+
+    def set_tab_width3(self):
+        print "running 3"
+        return self.setTabStopWidth(30)
+
+    def set_tab_width4(self):
+        print "running 4"
+        return self.setTabStopWidth(40)
+
+    def set_tab_width5(self):
+        print "running 5"
+        return self.setTabStopWidth(50)
+
+    def set_tab_width6(self):
+        print "running 6"
+        return self.setTabStopWidth(60)
+
+    def set_tab_width7(self):
+        print "running 7"
+        return self.setTabStopWidth(70)
+
+    def set_tab_width8(self):
+        print "running 8"
+        return self.setTabStopWidth(80)
+
 
     def column_line_update(self):
         """updates current cursor position in document"""
         return self.STATUS.line_count.setText("Line: %d, Column: %d" % (
-            self.textCursor().blockNumber()+1, 
-            self.textCursor().columnNumber()+1))
+                                        self.textCursor().blockNumber()+1, 
+                                        self.textCursor().columnNumber()+1))
+
+    def goto_line(self, linenum):
+        """jumps to specified line block"""
+        pass
 
     def clone_line(self):
         """Clones current line cursor is found in"""
@@ -333,7 +412,7 @@ class PyCodePage(QTextEdit):
         cursor.endEditBlock()
 
     # TODO: have line_up/down SWAP block above/below respectively
-    def line_up(self):
+    def line_block_up(self):
         """Moves current line block up one block level"""
         cursor = self.textCursor()
         cursor.beginEditBlock()
@@ -347,37 +426,54 @@ class PyCodePage(QTextEdit):
         self.setTextCursor(cursor)
         cursor.endEditBlock()
     
-    def line_down(self):
+    def line_block_down(self):
         """Moves current line block down one level"""
         # need to make this a block swapping operation
         cursor = self.textCursor()
 
     def current_line_select(self):
         """Selects current line cursor is found in"""
-        # shortcut for this will be Ctrl+L
         cursor = self.textCursor()
         cursor.movePosition(QTextCursor.StartOfLine)
         cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
         self.setTextCursor(cursor)
 
-    def delete_next_word(self):
-        """deletes next word from cursor current position"""
+    def delete_next_word(self, kill=False):
+        """deletes next word from cursor current position
+            If kill is True, removed word will be copied to the
+            clipboard
+        """
+        #NOTE: does not select word if a space is precedes the next word.
+        #TODO: allow space detection and skip...
         cursor = self.textCursor()
         cursor.beginEditBlock()
         cursor.movePosition(QTextCursor.NoMove)
-        cursor.select(QTextCursor.WordUnderCursor)
-        cursor.removeSelectedText()
+        cursor.movePosition(QTextCursor.NextWord, QTextCursor.KeepAnchor)
+        # cursor.select(QTextCursor.WordUnderCursor)
         self.setTextCursor(cursor)
+        if kill:
+            print "ran"
+            self.cut()
+        else:
+            cursor.removeSelectedText()
         cursor.endEditBlock()
 
-    def delete_previous_word(self):
-        """deletes previous word from cursor current position"""
+    def delete_previous_word(self, kill=False):
+        """deletes previous word from cursor current position
+            If kill is True, removed word will be copied to the
+            clipboard
+        """
         cursor = self.textCursor()
         cursor.beginEditBlock()
-        cursor.movePosition(QTextCursor.PreviousWord)
-        cursor.select(QTextCursor.WordUnderCursor)
-        cursor.removeSelectedText()
+        cursor.movePosition(QTextCursor.NoMove)
+        cursor.movePosition(QTextCursor.PreviousWord, QTextCursor.KeepAnchor)
+        # cursor.select(QTextCursor.WordUnderCursor)
         self.setTextCursor(cursor)
+        if kill:
+            print "ran"
+            self.cut()
+        else:
+            cursor.removeSelectedText()
         cursor.endEditBlock()
 
     def delete_line(self):
@@ -556,7 +652,6 @@ class PyCodeMenu(QMenu):
         self.ALL_ACTIONS = {}
         self.ACTION_GROUPS = {}
         self.setTitle(str(name))
-        # this is here for testing purposes
         # these are used to establish connections between the triggermenu classes and 
         # the main tabinterface class methods...
         self.P_C, self.P_C_T = parent, parent
@@ -571,11 +666,21 @@ class PyCodeMenu(QMenu):
         self.addAction(self.ALL_ACTIONS.get(name))
 
     def create_action_group(self, name=None):
+        """Creates an action group"""
         self.ACTION_GROUPS[name] = QActionGroup(self)
 
-    def add_to_action_group(self, name=None, actionname=None):
+    def add_to_action_group(self, groupname=None, actionname=None, comprun=False):
+        """adds a created action to an the specified action group
+            if -comprun- is True, it will add ALL avalible actions to group.
+        """
         actionname = self.ALL_ACTIONS.get(actionname)
-        return self.ACTION_GROUPS.get(name).addAction(actionname)
+        
+        if comprun and self.ACTION_GROUPS:
+            for action in self.ALL_ACTIONS.values():
+                self.ACTION_GROUPS.get(groupname).addAction(action)
+
+        elif self.ACTION_GROUPS:
+            return self.ACTION_GROUPS.get(groupname).addAction(actionname)
 
     def update_dict(self, dict_name=None, dict_to_add=None):
         """Adds all actions to main dictionary
@@ -594,7 +699,7 @@ class PyCodeMenu(QMenu):
             try:
                 action.disconnect(slot_name)
             except TypeError, AttributeError:
-                # NOTE this errors occur in the trigger menu classes.
+                # NOTE these errors occur in the trigger menu classes.
                 # this is due to the signal *currentChange* of the PyCodeTabInterface class
                 # being emitted when there are no open tabs; the act of opening a new tab in such 
                 # a state raises another error that this is meant to catch...
@@ -630,7 +735,7 @@ class PyCodeSettings(QSettings):
     """ Here the user specific settings are written and kept.
         These methods, and the methods defined in other classes *expect* to 
         see a tab interface class at **some** point. This is important to remember.
-        The *read_settings* method has been moved to the OOPEdit module
+        The *read_settings* method has been moved to the PyCode module
         due to class dependency. 
     """
 
@@ -681,6 +786,9 @@ class PyCodeShortcuts(QObject):
         self.create_shortcut("close_focused_win", "Ctrl+Shift+W", parent)
         self.create_shortcut("close_dock", "Esc", parent)
         self.create_shortcut("cut_act", "Ctrl+X", parent)
+        
+        # activates ambiguously due to shortcut being set during the __Init__
+        # run of QAction.
         # self.create_shortcut("delete_line", "Ctrl+K", parent, True)
         # self.create_shortcut("clone_line", "Ctrl+Shift+D", parent, True)
         
