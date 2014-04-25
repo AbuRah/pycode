@@ -43,6 +43,10 @@ PyCodeIdentifier)
 # at the moment, PyCodeMenuBar isn't decoupled from this module. It *may* not 
 # run due to current code transformations occuring. Just a reminder to address 
 # this issue.
+# Also, due to the way i currently connect and disconnect slots for 
+# the main menubar/statusbar, passing any amount of args to a slot
+# will cause multiple connections of slots. So when triggered, the connected slot
+# runs N number of times.
 
 # Need to test this...
 
@@ -352,14 +356,12 @@ class Page(PyCodePage):
         Dock_widget = self.TI.parent().DOCKW
         Dock_widget.show()
         Dock_widget.user_input.setFocus()
-        Dock_widget.set_slot_connections()
+        Dock_widget.set_find_connection()
 
 
-        return self.TI.currentWidget().document().toPlainText()
-
-        # update = self.TI.currentWidget().document().find(Dock_widget.user_input.text(), Qt.MatchWrap)
-        # self.TI.currentWidget().setTextCursor(update)
-        # self.TI.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
+        update = self.TI.currentWidget().document().find(Dock_widget.user_input.text(), Qt.MatchWrap)
+        self.TI.currentWidget().setTextCursor(update)
+        self.TI.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
             
 
     def find_regexp(self):
@@ -368,13 +370,25 @@ class Page(PyCodePage):
         Dock_widget = self.TI.parent().DOCKW
         Dock_widget.show()
         Dock_widget.user_input.setFocus()
-        Dock_widget.set_slot_connections_regexp()
+        Dock_widget.set_regex_connection()
 
         user_regexp = QRegExp(Dock_widget.user_input.text())
         update = self.TI.currentWidget().document().find(user_regexp, Qt.MatchRegExp)
         self.TI.currentWidget().setTextCursor(update)
         self.TI.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
     
+    def goto_line(self):
+        """Jumps to given line number, does nothing if line number not found"""
+        Dock_widget = self.TI.parent().DOCKW
+        Dock_widget.show()
+        Dock_widget.user_input.setFocus()
+        Dock_widget.set_goto_connection()
+
+
+        if Dock_widget.user_input.text():
+            linenum = Dock_widget.user_input.text()
+            self.goto_set_cursor(int(linenum))
+            Dock_widget.hide()
 
 
     # i'm going to have to find a better way to set syntax highlighting,
@@ -513,6 +527,7 @@ class ViewMenu(PyCodeMenu):
         self.VIEW_ACTIONS.get("word_wrap_act").setCheckable(True)
         self.VIEW_ACTIONS.get("word_wrap_act").setChecked(True)
         self.create_action("code_folding_act", "Code Folding")
+        self.create_action("goto_act", "GoTo", "Ctrl+G")
 
 
 
@@ -551,6 +566,9 @@ class PrefMenu(PyCodeMenu):
 
 
 class TabWidthMenu(PyCodeMenu):
+    """Tab width menu holds all tab indentation settings available.
+        This is a sub-menu.
+    """
     def __init__(self, name=None, parent=None):
         super(TabWidthMenu, self).__init__(name, parent)
         self.TABW_ACTIONS = self.ALL_ACTIONS
@@ -565,6 +583,7 @@ class TabWidthMenu(PyCodeMenu):
 
 
 class PrefFontMenu(PyCodeMenu):
+    """Holds all actions relevant to user preferences"""
     def __init__(self, name=None, parent=None):
         super(PrefFontMenu, self).__init__(name, parent)
         self.PREF_FONT_ACTIONS = self.ALL_ACTIONS
@@ -584,11 +603,13 @@ class BuildMenu(PyCodeMenu):
     def __init__(self, parent=None):
         super(BuildMenu, self).__init__(parent)
         self.BD_ACTIONS = self.ALL_ACTIONS
+        self.BD_GROUPS = self.ALL_GROUPS
         self.create_action_group("build_engine_group")
         self.create_action("python_build_act", "Python", status="Build python module")
         self.create_action("cpp_build_act", "C++", status="Compile C++ code")
         self.create_action("c_build_act", "C++", status="Compile C code")
         self.add_to_action_group("build_engine_group", comprun=True)
+        self.BD_GROUPS.get("build_engine_group").setExclusive(True)
 
 
 class DebuggerMenu(PyCodeMenu):
@@ -644,10 +665,16 @@ class SyntaxMenu(PyCodeMenu):
     def __init__(self, name=None, parent=None):
         super(SyntaxMenu, self).__init__(name, parent)
         self.SYN_ACTIONS = self.ALL_ACTIONS
-        self.create_action("python_syn", "Python")
-        self.create_action("plain_syn", "PlainText")
-        self.create_action("html_syn", "HTML")
+        self.create_action("c_syn", "C")
+        self.create_action("cpp_syn", "C++")
         self.create_action("css_syn", "CSS")
+        self.create_action("html_syn", "HTML")
+        self.create_action("js_syn", "JavaScript")
+        self.create_action("perl_syn", "Perl")
+        self.create_action("php_syn", "PHP")
+        self.create_action("plain_syn", "PlainText")
+        self.create_action("python_syn", "Python")
+
 
 # the encoding menu classes need to be changed. Windows specific encoding along with a menu for just
 # European languages is not the most intuitive. The menu should display language options with the avaliable
@@ -742,10 +769,7 @@ class MainEncodingMenu(PyCodeMenu):
 
 # TRIGGER CLASSES ============
 """These trigger classes are where a LOT of the inter-dependent connections occur.
-   I will attempt to make this as much as will allow an easy time with debugging
-   OR to the degree that will allow easy assimilation of how this
-   all works...
-
+   I will attempt to make this as the GO-TO area for debugging
 """
 
 
@@ -941,6 +965,7 @@ class ViewMenuTriggers(ViewMenu):
             self.V_GET("zoom_in").triggered.connect(self.P_C_T.zoom_in)
             self.V_GET("zoom_out").triggered.connect(self.P_C_T.zoom_out)
             self.V_GET("word_wrap_act").triggered.connect(self.P_C_T.set_word_wrap)
+            self.V_GET("goto_act").triggered.connect(self.P_C_T.goto_line)
 
             # not yet implemented
             # self.V_GET(plainL).triggered.connect(self.plain_layout)
@@ -1092,25 +1117,25 @@ class DockWidget(PyCodeDockWidget):
         self.P_C = parent
 
 
-    def set_slot_connections(self):
+    def set_find_connection(self):
         """This method will update the current method and page DockWidget
             is connected to.
         """
         self.P_C_T = self.P_C.currentWidget()
         
         try:
+            # print self.user_input.receivers(SIGNAL("textChanged()"))
             self.user_input.disconnect(self.P_C_T)
             self.user_input.textChanged.connect(self.P_C_T.find_text)
         
         except AttributeError:
             print "error processed"
 
-    def set_slot_connections_regexp(self):
-        """This method will update the current method and page DockWidget
-            is connected to.
-        """
+    def set_regex_connection(self):
+        """This method will connect the find input to it's appropriate slot. """
         self.P_C_T = self.P_C.currentWidget()
-        
+
+        # check if connected before running disconnect.
         try:
             self.user_input.disconnect(self.P_C_T)
             self.user_input.textChanged.connect(self.P_C_T.find_regexp)
@@ -1118,16 +1143,20 @@ class DockWidget(PyCodeDockWidget):
         except AttributeError:
             print "error processed"
 
-    def simple_find(self):
-        """searches entire text document for entered term."""
-        current_doc = self.P_C_T.find_Text()
-        # incomplete
-        #TODO: implement custom find...
-        if self.user_input.text().find(current_doc):
+    def set_goto_connection(self):
+        """calls the current page goto_line method. 
+            This will move the text cursor o specified line
+            number.
+        """
+        self.P_C_T = self.P_C.currentWidget()
 
-            self.TI.currentWidget().setTextCursor(update)
-            self.TI.currentWidget().textCursor().select(QTextCursor.WordUnderCursor)
-            yield 
+        try:
+            self.user_input.disconnect(self.P_C_T)
+            self.user_input.returnPressed.connect(self.P_C_T.goto_line)
+        
+        except AttributeError:
+            print "goto error processed"
+
 
 
 class PyCodeTop(QMainWindow):

@@ -389,13 +389,13 @@ class CSSSyntax(PyCodeSyntaxHighlighter):
         self.highlighting_rules.append(rule)
 
         # double quotes string
-        self.string_doubleF.setBackground(self.TM_GET("string_double"))
+        self.string_doubleF.setForeground(self.TM_GET("string_double"))
         pattern = QRegExp("\".*\"")
         rule = HighlightingRule(pattern, self.string_doubleF)
         self.highlighting_rules.append(rule)
 
         # single quotes string
-        self.string_singleF.setBackground(self.TM_GET("string_single"))
+        self.string_singleF.setForeground(self.TM_GET("string_single"))
         pattern = QRegExp("\'.*\'")
         rule = HighlightingRule(pattern, self.string_singleF)
         self.highlighting_rules.append(rule)
@@ -407,7 +407,7 @@ class CSSSyntax(PyCodeSyntaxHighlighter):
         self.highlighting_rules.append(rule)
 
         # comments multi/single
-        self.comment_multiF.setBackground(self.TM_GET("comment"))
+        self.comment_multiF.setForeground(self.TM_GET("comment"))
         pattern = QRegExp("/\*.*\*/")
         rule = HighlightingRule(pattern, self.comment_multiF)
         self.highlighting_rules.append(rule)

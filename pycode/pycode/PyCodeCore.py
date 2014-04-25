@@ -359,35 +359,35 @@ class PyCodePage(QTextEdit):
             in the main module.
             
         """
-        print "running 1"
+        print "Sets Tab Width to 1"
         return self.setTabStopWidth(10)
 
     def set_tab_width2(self):
-        print "running 2"
+        print "Sets Tab Width to 2"
         return self.setTabStopWidth(20)
 
     def set_tab_width3(self):
-        print "running 3"
+        print "Sets Tab Width to 3"
         return self.setTabStopWidth(30)
 
     def set_tab_width4(self):
-        print "running 4"
+        print "Sets Tab Width to 4"
         return self.setTabStopWidth(40)
 
     def set_tab_width5(self):
-        print "running 5"
+        print "Sets Tab Width to 5"
         return self.setTabStopWidth(50)
 
     def set_tab_width6(self):
-        print "running 6"
+        print "Sets Tab Width to 6"
         return self.setTabStopWidth(60)
 
     def set_tab_width7(self):
-        print "running 7"
+        print "Sets Tab Width to 7"
         return self.setTabStopWidth(70)
 
     def set_tab_width8(self):
-        print "running 8"
+        print "Sets Tab Width to 8"
         return self.setTabStopWidth(80)
 
 
@@ -397,9 +397,14 @@ class PyCodePage(QTextEdit):
                                         self.textCursor().blockNumber()+1, 
                                         self.textCursor().columnNumber()+1))
 
-    def goto_line(self, linenum):
-        """jumps to specified line block"""
-        pass
+    def goto_set_cursor(self, linenum):
+        """returns new cursor in specified block line."""
+        # cursor = self.textCursor()
+        # testing...
+        blk = self.document().findBlockByLineNumber(linenum)
+        cursor = QTextCursor(blk)
+        return self.setTextCursor(cursor)
+
 
     def clone_line(self):
         """Clones current line cursor is found in"""
@@ -641,6 +646,15 @@ class PyCodeStatusBar(QStatusBar):
     def __repr__(self):
         return "PyCodeStatusBar Instance"
 
+# testing....
+class PyCodeTerminalInterface(QObject):
+    """Holds all relevant terminal methods and attributes"""
+    def __init__(self, parent=None):
+        super(PyCodeTerminalInterface, self).__init__(parent)
+        # from subprocess import call, check_output, PIPE, STDOUT
+
+
+
 
 class PyCodeMenu(QMenu):
     """ This Menu will hold all of the common functionality between 
@@ -717,18 +731,25 @@ class PyCodeDockWidget(QDockWidget):
     def __init__(self, parent=None):
         super(PyCodeDockWidget, self).__init__(parent)
 
+        # self.find_input = QLineEdit(self)
+        # self.regex_input = QLineEdit(self)
+        # self.goto_input = QLineEdit(self)
         self.user_input = QLineEdit(self)
         self.setAllowedAreas(Qt.BottomDockWidgetArea)
         self.setFloating(False)
         self.setObjectName('Main Dock')
-        self.setWidget(self.user_input)
+        self.add_widget(self.user_input)
         self.hide()
 
-        self.user_input.returnPressed.connect(self.select_current_text)
 
     def select_current_text(self):
         """Selects text in find bar when enter is pressed"""
         self.user_input.setSelection(0, len(self.user_input.text()))
+
+    def add_widget(self, widget):
+        """Convience function for adding and removing widgets"""
+        self.setWidget(None)
+        self.setWidget(widget)
 
 
 class PyCodeSettings(QSettings):
