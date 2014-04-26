@@ -558,19 +558,18 @@ class PyCodePage(QTextEdit):
             pass
 
     def set_word_wrap(self):
-        off = QTextOption.NoWrap
-
+        """Toggles word wrapping on and off..."""
         if self.lineWrapMode() != QTextEdit.NoWrap:
             self.setLineWrapMode(QTextEdit.NoWrap)
         else:
             self.setLineWrapMode(QTextEdit.WidgetWidth)
 
-
-    #testing zoom functions
     def zoom_in(self):
+        """Zooms in by increasing font size"""
         return self.zoomIn()
 
     def zoom_out(self):
+        """Zooms out by decreasing font size"""
         return self.zoomOut()
 
     def set_serif(self):
