@@ -22,6 +22,7 @@ import re
 import os
 import threading
 import time
+import subprocess
 
 from PySide.QtGui import *
 from PySide.QtCore import *
@@ -50,11 +51,12 @@ class PyCodeBuildEngine(QObject):
     def __init__(self, parent=None):
         super(PyCodeBuildEngine, self).__init__(parent)
 
-    def python_build(self, *args, **kwargs):
+    def python_build(self, modulename):
         """Builds current Python module with given *args 
             and **kwargs.
         """
-        pass
+        subprocess.check_call(["python", modulename])
+        # TODO: allow terminal output to display in a QLineEdit()
 
     def c_build(self):
         """compiles c code and outputs results"""
@@ -340,7 +342,7 @@ class PyCodePage(QTextEdit):
     def init_setup(self):
         """This defines the cursor color and width"""
         self.tmp_counter = 0
-        self.setCursorWidth(5)
+        self.setCursorWidth(3)
         self.setTabStopWidth(40)
 
     def modified_since_save(self):
@@ -422,13 +424,13 @@ class PyCodePage(QTextEdit):
         cursor = self.textCursor()
         cursor.beginEditBlock()
         cursor.movePosition(QTextCursor.StartOfLine)
-        cursor.select(QTextCursor.LineUnderCursor)
-        cursor.movePosition(QTextCursor.Up)
-        cursor.insertText(cursor.selectedText())
+        cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
         self.setTextCursor(cursor)
-        cursor.removeSelectedText()
-        # cursor.setKeepPositionOnInsert(True)
+        self.cut_selection()
+        cursor = self.textCursor()
+        cursor.movePosition(QTextCursor.Up, int=3)
         self.setTextCursor(cursor)
+        self.paste()
         cursor.endEditBlock()
     
     def line_block_down(self):
@@ -512,6 +514,7 @@ class PyCodePage(QTextEdit):
         cursor.movePosition(QTextCursor.StartOfLine, QTextCursor.KeepAnchor)
         cursor.removeSelectedText()
         self.setTextCursor(cursor)
+        self.cut()
         cursor.endEditBlock()
 
 
@@ -555,14 +558,12 @@ class PyCodePage(QTextEdit):
             pass
 
     def set_word_wrap(self):
-        # does not work. After toggling
-        # back on, it will not auto-wrap off-screen text
         off = QTextOption.NoWrap
 
-        if self.wordWrapMode() != QTextOption.NoWrap:
-            self.setWordWrapMode(QTextOption.NoWrap)
+        if self.lineWrapMode() != QTextEdit.NoWrap:
+            self.setLineWrapMode(QTextEdit.NoWrap)
         else:
-            self.setWordWrapMode(QTextOption.WordWrap)
+            self.setLineWrapMode(QTextEdit.WidgetWidth)
 
 
     #testing zoom functions

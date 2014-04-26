@@ -415,10 +415,10 @@ class CSSSyntax(PyCodeSyntaxHighlighter):
         # pseudo classes
         self.keyword_pseudoF.setForeground(self.TM_GET("keyword_pseudo"))
         self.keyword_pseudoF.setFontItalic(True)
-        keyword_pseudo_list = [":+\w*\(?\)?\\s", ":+\w*\(?\)?\\s", ":+\w*-*\w*\(?\)?\\s",
+        keyword_pseudo_list = (":+\w*\(?\)?\\s", ":+\w*\(?\)?\\s", ":+\w*-*\w*\(?\)?\\s",
                         ":+\w*-*\w*-*\w*\(?\)?\\s", ":+\w*-*\w*-*\w*-*\w*\(?\)?\\s",
                         ":+\w*\(?\)?\.?", ":+\w*\(?\)?\.?", ":+\w*-*\w*\(?\)?\.?",
-                        ":+\w*-*\w*-*\w*\(?\)?\.?", ":+\w*-*\w*-*\w*-*\w*\(?\)?\.?"]
+                        ":+\w*-*\w*-*\w*\(?\)?\.?", ":+\w*-*\w*-*\w*-*\w*\(?\)?\.?")
         for key in keyword_pseudo_list:
             pattern = QRegExp(key)
             rule = HighlightingRule(pattern, self.keyword_pseudoF)
@@ -428,8 +428,8 @@ class CSSSyntax(PyCodeSyntaxHighlighter):
         self.keywordF.setForeground(self.TM_GET("keyword"))
         self.keywordF.setFontWeight(QFont.Bold)
         # need to name all CSS keywords
-        keyword_list = ["\\s+\w+:", "\\s+\w*-*\w+:", "\\s+\w*-*\w*-*\w+:",
-                        "\\s+\w*-*\w*-*\w*-*\w*-*\w+:"]
+        keyword_list = ("\\s+\w+:", "\\s+\w*-*\w+:", "\\s+\w*-*\w*-*\w+:",
+                        "\\s+\w*-*\w*-*\w*-*\w*-*\w+:")
         for word in keyword_list:
             pattern = QRegExp(word)
             rule = HighlightingRule(pattern, self.keywordF)

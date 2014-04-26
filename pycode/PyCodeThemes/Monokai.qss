@@ -99,6 +99,7 @@ QWidget:item:hover
 }
 
 /*QTabWidget=====================================================*/
+
 QTabWidget {
   
   background-color: #272822;
@@ -108,6 +109,8 @@ QTabWidget::pane {}
 
 /*testing....*/
 /*QTextBlock=================================================*/
+/*none of these work*/
+
 QTextBlock:focus {
   background-color: #800020;
   color: #800020;
@@ -125,7 +128,6 @@ QTextBlock {
   color: #800020;
 
 }
-
 QTextBlock:item:selected{
   background-color: #800020;
   color: #800020;
@@ -171,9 +173,13 @@ QTextEdit {
   background-color: #272822;
   font-family: "monospace";
   color: #F8F8F8;
+  
+  /*padding-top: .5em;*/
+
 }
 
 QTextEdit:focus{}
+
 
 
 
